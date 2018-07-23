@@ -1,0 +1,19 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <Preference
+        android:fragment="org.peercast.pecaplay.prefs.TabHostFavoritePrefsFragment"
+        android:title="@string/pref_header_favorites" />
+
+    <Preference
+        android:fragment="org.peercast.pecaplay.prefs.YellowPagePrefsFragment"
+        android:title="@string/pref_header_yellow_page" />
+
+    <Preference
+        android:fragment="org.peercast.pecaplay.prefs.ViewerPrefsFragment"
+        android:title="@string/pref_header_viewer" />
+
+    <Preference
+        android:fragment="org.peercast.pecaplay.prefs.GeneralPrefsFragment"
+        android:title="@string/pref_header_general" />
+
+</PreferenceScreen>

@@ -1,0 +1,65 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:auto="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/menu_search"
+        android:icon="@drawable/ic_search_24px"
+        android:title="@string/search"
+        auto:showAsAction="always|collapseActionView" />
+
+    <item
+        android:id="@+id/menu_reload"
+        android:icon="@drawable/ic_refresh_24px"
+        android:title="@string/reload"
+        auto:showAsAction="ifRoom" />
+
+
+    <item
+        android:id="@+id/menu_notification"
+        android:checkable="true"
+        android:icon="@drawable/selector_notifications_24px"
+        android:title="@string/notification"
+        auto:showAsAction="ifRoom" />
+
+
+    <item
+        android:id="@+id/menu_sort_order"
+        android:icon="@drawable/ic_sort_24px"
+        android:title="@string/sort_order"
+        auto:showAsAction="ifRoom">
+        <menu>
+            <item
+                android:id="@+id/menu_sort_listener_desc"
+                android:checkable="true"
+                android:orderInCategory="0"
+                android:title="@string/sort_listener_desc" />
+            <item
+                android:id="@+id/menu_sort_listener_asc"
+                android:checkable="true"
+                android:orderInCategory="1"
+                android:title="@string/sort_listener_asc" />
+            <item
+                android:id="@+id/menu_sort_age_desc"
+                android:checkable="true"
+                android:orderInCategory="2"
+                android:title="@string/sort_age_desc" />
+            <item
+                android:id="@+id/menu_sort_age_asc"
+                android:checkable="true"
+                android:orderInCategory="3"
+                android:title="@string/sort_age_asc" />
+        </menu>
+    </item>
+
+    <item
+        android:id="@+id/menu_speed_test"
+        android:title="@string/speed_test"
+        auto:showAsAction="never" />
+    <item
+        android:id="@+id/menu_settings"
+        android:orderInCategory="100"
+        android:title="@string/settings"
+        auto:showAsAction="never" />
+
+
+</menu>

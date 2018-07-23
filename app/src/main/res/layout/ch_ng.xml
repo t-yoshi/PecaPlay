@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="?attr/selectableItemBackground"
+    android:paddingBottom="6sp"
+    android:paddingLeft="3sp"
+    android:paddingRight="3sp"
+    android:paddingTop="6sp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="10dp"
+        android:alpha="0.6"
+        android:gravity="right|top"
+        android:text="@string/favorite_ng"
+        android:textStyle="italic"
+        android:visibility="visible" />
+
+</FrameLayout>

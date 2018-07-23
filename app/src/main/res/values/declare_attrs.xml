@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources >
+<!--
+    <declare-styleable name="StaticDrawerLayout">
+        <attr name="drawerShadow" format="reference"/>
+        <attr name="drawerWidth" format="dimension"/>
+    </declare-styleable>
+-->
+</resources>

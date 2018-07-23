@@ -1,0 +1,58 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <Preference
+        android:fragment="org.peercast.pecaplay.prefs.FavoritePrefsFragment"
+        android:title="@string/pref_header_favorites" />
+
+    <Preference
+        android:fragment="org.peercast.pecaplay.prefs.YellowPagePrefsFragment"
+        android:title="@string/pref_header_yellow_page" />
+
+    <Preference
+        android:fragment="org.peercast.pecaplay.prefs.ViewerPrefsFragment"
+        android:title="@string/pref_header_viewer" />
+
+    <Preference android:selectable="false" />
+
+    <EditTextPreference
+        android:defaultValue="http://localhost:7144/"
+        android:inputType="textUri"
+        android:key="pref_peercast_server_url"
+        android:maxLines="1"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:title="@string/pref_peercast_url" />
+
+    <SwitchPreference
+        android:defaultValue="false"
+        android:key="pref_ng_hidden"
+        android:title="@string/ng_hidden" />
+
+    <ListPreference
+        android:entries="@array/pref_night_mode_entries"
+        android:entryValues="@array/pref_night_mode_entries"
+        android:key="pref_night_mode"
+        android:title="@string/pref_night_mode" />
+
+    <PreferenceCategory
+        android:key="pref_category_about"
+        android:title="@string/pref_header_about">
+        <Preference
+            android:key="pref_about"
+            android:selectable="false"
+            android:title="@string/app_name" />
+
+        <Preference
+            android:key="pref_opensource_license"
+            android:persistent="false"
+            android:title="@string/oss_license" />
+        <!-- 動的生成
+                <SwitchPreference
+                    android:defaultValue="false"
+                    android:key="pref_app_debug_mode"
+                    andrnameabel="@string/t_debug_mode" />
+        -->
+    </PreferenceCategory>
+
+
+</PreferenceScreen>

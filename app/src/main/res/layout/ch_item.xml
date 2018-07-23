@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+
+        <variable
+            name="viewModel"
+            type="org.peercast.pecaplay.YpIndexFragment.ItemViewModel" />
+
+        <variable
+            name="favoPresenter"
+            type="org.peercast.pecaplay.YpIndexFragment.FavoritePresenter" />
+
+        <import type="android.view.View" />
+    </data>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingBottom="6sp"
+        android:paddingLeft="3sp"
+        android:paddingRight="3sp"
+        android:paddingTop="6sp"
+        android:background="?attr/selectableItemBackground"
+        >
+
+        <CheckBox
+            android:id="@+id/vStarred"
+            style="@android:style/Widget.Material.CompoundButton.Star"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_alignParentLeft="true"
+            android:layout_centerVertical="true"
+            android:checked="@{favoPresenter.isStarred}"
+            android:enabled="@{viewModel.starEnabled}"
+            android:focusable="false"
+            android:gravity="center"
+            android:onCheckedChanged="@{(cb, isChecked)->favoPresenter.starred(isChecked)}"
+            android:padding="5dp" />
+        <!-- NOTE: リストアイテムのCheckBoxはfocusable="false"にしないと 他のアイテムへイベントが渡らない -->
+
+
+        <TextView
+            android:id="@+id/vName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_toRightOf="@id/vStarred"
+            android:gravity="center_vertical"
+            android:minHeight="40sp"
+            android:scrollHorizontally="true"
+            android:text="@{viewModel.name}"
+            android:textColor="@color/ch_name"
+            android:textIsSelectable="false"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentTop="true">
+
+            <CheckedTextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="2sp"
+                android:background="@android:color/transparent"
+                android:checked="@{viewModel.newlyChecked}"
+                android:text="@string/newly"
+                android:textColor="@color/ch_newly"
+                android:textIsSelectable="false"
+                android:typeface="monospace"
+                android:visibility="@{viewModel.newlyVisible ? View.VISIBLE : View.GONE}" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:paddingLeft="8sp"
+                android:text="@{viewModel.age}"
+                android:textIsSelectable="false"
+                android:typeface="monospace"
+                android:visibility="@{viewModel.ageVisible ? View.VISIBLE : View.INVISIBLE}" />
+
+            <ImageView
+                android:layout_width="12sp"
+                android:layout_height="12sp"
+                android:layout_gravity="center"
+                android:alpha="0.7"
+                android:padding="0dp"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_notifications_active_16dp"
+                android:tint="?android:attr/textColorSecondary"
+                android:visibility="@{favoPresenter.isNotificated ? View.VISIBLE : View.GONE}" />
+
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/vDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/vName"
+            android:layout_toRightOf="@id/vStarred"
+            android:text="@{viewModel.description}"
+            android:textIsSelectable="false"
+            android:textStyle="bold" />
+        <!-- chDescription.scrollHorizontally := (chComment.length > 0) -->
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/vDescription"
+            android:layout_toRightOf="@id/vStarred"
+            android:layout_alignParentRight="true"
+            android:paddingBottom="2dp"
+            android:paddingTop="4dp"
+            android:text="@{viewModel.comment}"
+            android:textIsSelectable="false" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentRight="true"
+            android:paddingLeft="2dp"
+            android:text="@{viewModel.listener}"
+            android:textAppearance="?android:attr/textAppearanceSmall"
+            android:textIsSelectable="false"
+            android:typeface="monospace" />
+    </RelativeLayout>
+
+
+</layout>

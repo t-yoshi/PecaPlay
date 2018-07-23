@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+
+        <variable
+            name="viewModel"
+            type="org.peercast.pecaplay.prefs.FavoriteEditorViewModel" />
+
+        <variable
+            name="isAdvancedMode"
+            type="boolean" />
+
+        <import type="android.view.View" />
+    </data>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="@{isAdvancedMode ? View.INVISIBLE : View.VISIBLE}">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:labelFor="@+id/vName"
+            android:text="@string/favorite_label" />
+
+        <EditText
+            android:id="@+id/vName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="textCapSentences"
+            android:maxLines="1"
+            android:text="@={viewModel.name}" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="35dp"
+            android:labelFor="@id/vPattern"
+            android:text="@string/favorite_expr" />
+
+        <EditText
+            android:id="@+id/vPattern"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ems="10"
+            android:inputType="text"
+            android:maxLines="1"
+            android:text="@={viewModel.pattern}" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="1dp"
+            android:layout_marginTop="1dp"
+            android:text="@{viewModel.errorRegex}"
+            android:textColor="@android:color/holo_red_dark" />
+
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="right"
+            android:layout_marginBottom="1dp"
+            android:layout_marginRight="2dp"
+            android:layout_marginTop="2dp">
+
+            <CheckBox
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center_vertical"
+                android:layout_marginRight="32dp"
+                android:button="@drawable/selector_notifications_24px"
+                android:checked="@={viewModel.flagNotification}"
+                android:enabled="@{!viewModel.flagNG}"
+                android:padding="3dp"
+                android:tint="@color/teal_500"
+                app:buttonTint="@color/icon_color_favo_alert" />
+
+            <CheckBox
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:checked="@={viewModel.flagNG}"
+                android:text="@string/favorite_ng" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</layout>
