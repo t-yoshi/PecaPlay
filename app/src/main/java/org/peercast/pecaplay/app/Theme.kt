@@ -1,77 +1,65 @@
 package org.peercast.pecaplay.app
 
-import android.app.Application
 import android.app.UiModeManager
 import android.content.Context
-import android.content.res.ColorStateList
-import android.support.annotation.AttrRes
-import android.support.annotation.ColorInt
-import android.support.annotation.DrawableRes
 import android.util.TypedValue
-import org.peercast.pecaplay.prefs.AppPreferences
-import timber.log.Timber
+import androidx.annotation.ColorInt
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.content.res.ResourcesCompat
 
-object AppNightMode {
 
-    fun init(a: Application) {
-        val mode = AppPreferences(a).nightMode
-        setMode(a, mode)
-    }
+object AppTheme {
 
-    fun setMode(c: Context, mode: String) {
-        val manager = c.getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
-        manager.nightMode = when (mode.toLowerCase()) {
-            "daylight" -> UiModeManager.MODE_NIGHT_NO
-            "night" -> UiModeManager.MODE_NIGHT_YES
-            "auto" -> UiModeManager.MODE_NIGHT_AUTO
-            else -> UiModeManager.MODE_NIGHT_YES
+    fun initNightMode(c: Context, isNightMode:  Boolean){
+        val uiMan = c.getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
+        if (isNightMode){
+            uiMan.nightMode = UiModeManager.MODE_NIGHT_YES
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
+        } else {
+            uiMan.nightMode = UiModeManager.MODE_NIGHT_NO
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
         }
-        Timber.i("set night mode: $mode")
+    }
+/*
+
+    private val nightModes = mutableListOf(
+        "Night" to UiModeManager.MODE_NIGHT_YES,
+        "Daylight" to UiModeManager.MODE_NIGHT_NO
+    ).also {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+            it += "Auto" to UiModeManager.MODE_NIGHT_AUTO
+    }.toMap()
+
+
+    fun setNightMode(c: Context, mode: String) {
+        val manager = c.getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
+        val nmode = nightModes[mode] ?: kotlin.run {
+            Timber.w("Invalid night mode: $mode")
+            UiModeManager.MODE_NIGHT_YES
+        }
+        //Timber.i("set night mode: $mode[$nmode]")
+
+        //Android6から動的にナイトモードを切り替えられる
+        manager.nightMode = nmode
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            AppCompatDelegate.setDefaultNightMode(nmode)
+        }
     }
 
-    val MODES = listOf("daylight", "night", "auto")
-}
-
-
-class AppTheme(val context: Context) {
-    val theme = context.theme!!
-    val resource = context.resources!!
-
-    private fun resolveAttribute(@AttrRes attr: Int): Int {
-        val tv = TypedValue()
-        theme.resolveAttribute(attr, tv, true)
-        return tv.resourceId
-    }
+    /**Android5でナイトモードを適用にするにはActivity.onCreate前に呼ぶ。 */
+    fun applyLocalNightModeLollipop(a: AppCompatActivity) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            //Timber.d("nmode=${AppCompatDelegate.getDefaultNightMode()}")
+            a.delegate.setLocalNightMode(AppCompatDelegate.getDefaultNightMode())
+        }
+    }*/
 
     @ColorInt
-    private fun resolveColor(@AttrRes attr: Int): Int {
-        return context.getColor(resolveAttribute(attr))
+    fun getIconColor(c: Context): Int {
+        val tv = TypedValue()
+        c.theme.resolveAttribute(android.R.attr.textColorSecondary, tv, true)
+        return ResourcesCompat.getColor(c.resources, tv.resourceId, c.theme)
     }
-
-    val textColorPrimary: Int
-        @ColorInt get() = resolveColor(android.R.attr.textColorPrimary)
-
-    val textColorSecondary: Int
-        @ColorInt get() = resolveColor(android.R.attr.textColorSecondary)
-
-    val actionBarIconTint: ColorStateList
-        get() = resource.getColorStateList(
-                resolveAttribute(android.R.attr.textColorPrimary),
-                theme)!!
-
-    val iconTint: ColorStateList
-        get() = resource.getColorStateList(
-                resolveAttribute(android.R.attr.textColorSecondary),
-                theme)!!
-
-    fun getActionBarIcon(@DrawableRes icon: Int) =
-            resource.getDrawable(icon, theme).apply {
-                setTint(textColorPrimary)
-            }
-
-    fun getIcon(@DrawableRes icon: Int) =
-            resource.getDrawable(icon, theme).apply {
-                setTint(textColorSecondary)
-            }!!
 }
 

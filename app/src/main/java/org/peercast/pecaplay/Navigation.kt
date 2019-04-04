@@ -1,432 +1,398 @@
 package org.peercast.pecaplay
 
-import android.arch.lifecycle.LifecycleOwner
-import android.arch.lifecycle.Observer
 import android.content.Context
 import android.os.Bundle
-import android.support.annotation.DrawableRes
-import android.support.annotation.IdRes
-import android.support.annotation.LayoutRes
-import android.support.design.widget.NavigationView
-import android.support.v4.view.MenuItemCompat
-import android.support.v7.widget.PopupMenu
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
-import kotlinx.android.synthetic.main.navigation_action_view_edit.view.*
-import kotlinx.android.synthetic.main.navigation_action_view_normal.view.*
-import kotlinx.coroutines.experimental.android.UI
-import kotlinx.coroutines.experimental.async
-import kotlinx.coroutines.experimental.launch
+import android.widget.TextView
+import androidx.annotation.DrawableRes
+import androidx.core.content.edit
+import androidx.core.view.get
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.Observer
+import com.google.android.material.navigation.NavigationView
+import kotlinx.android.synthetic.main.navigation_action_view_checkbox.view.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.koin.core.KoinComponent
+import org.koin.core.inject
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.Favorite
-import org.peercast.pecaplay.app.YpIndex
+import org.peercast.pecaplay.app.YellowPage
+import org.peercast.pecaplay.app.YpLiveChannel
 import org.peercast.pecaplay.prefs.AppPreferences
-import org.peercast.pecaplay.yp4g.Yp4gChannel
+import org.peercast.pecaplay.util.LiveDataUtils
+import org.peercast.pecaplay.yp4g.YpChannel
+import org.peercast.pecaplay.yp4g.YpChannelSelector
 import timber.log.Timber
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
-import kotlin.collections.HashMap
+import kotlin.collections.ArrayList
+import kotlin.properties.Delegates
 
 
-/**ホーム*/
-const val CATEGORY_HOME = "home"
+//
+// ナビゲーションメニューの拡張
+//
 
-/**履歴*/
-const val CATEGORY_HISTORY = "history"
+val NavigationView.extension: PecaNavigationViewExtension
+    get() = tag as PecaNavigationViewExtension
 
-const val CATEGORY_FAVORITE_STARRED = "starred"
+class NavigationItem(
+    val title: CharSequence,
+    /**MenuItemのgroupId*/
+    val groupId: Int,
 
-const val CATEGORY_NEWLY = "newly"
+    /**グループ内での表示順*/
+    val order: Int,
 
-const val CATEGORY_NOTIFICATED = "notificated"
+    @DrawableRes val icon: Int,
+
+    val selector: YpChannelSelector,
+
+    tag_: String? = null
+) {
+    /**非表示プリファレンスのキー*/
+    val tag = tag_ ?: "$title groupId=$groupId"
+
+    /**バッジ用のテキスト*/
+    var badge: String = ""
+
+    var isVisible = true
+
+    override fun toString(): String = tag
+}
+
+interface INavigationModel {
+    val items: List<NavigationItem>
+    fun setOnChangedObserver(observer: ()->Unit)
+    fun setLifecycleOwner(owner: LifecycleOwner)
+}
 
 
-/**
- * ナビゲーションメニューの作成/イベント処理
- * */
-class NavigationPresenter(
-        instanceState: Bundle?,
-        private val vNavigation: NavigationView,
-        /**(title, category, filter)*/
-        private val onNavigate: (String, String, (Yp4gChannel) -> Boolean) -> Unit) {
+class PecaNavigationViewExtension(
+    private val view: NavigationView,
+    savedInstanceState: Bundle?,
+    owner: LifecycleOwner,
+    private val onItemClick: (NavigationItem) -> Unit
+) : KoinComponent {
 
-    private val context = vNavigation.context
+    private val inflater = LayoutInflater.from(view.context)
+    private val model : INavigationModel = NavigationModelImpl()
 
-    //アイテムの表示/非表示。 key=category, boolean=visible
-    private val naviPrefs = context.getSharedPreferences("navigation_v5", Context.MODE_PRIVATE)
+    private val invisiblePrefs = view.context.getSharedPreferences(
+        "navigation_v5", Context.MODE_PRIVATE
+    )
 
-    private var checkedTag = instanceState?.getString(KEY_CHECKED_TAG) ?: ""
+    //Activityが再生成された場合
+    private var restoredCheckedItemId = savedInstanceState
+        ?.getInt(STATE_CHECKED_ITEM_ID, NOT_CHECKED) ?: NOT_CHECKED
 
-    private var channels = emptyList<YpIndex>()
-    private val filters = HashMap<String, (Yp4gChannel) -> Boolean>()
-    private val inflater = LayoutInflater.from(context)
-    private val iconTint = context.getColorStateList(R.color.navigation_item)
-    private var isEditMode = false
-        set(value) {
-            field = value
-            recreateMenu()
-        }
-
-    private var genres = emptyList<String>()
-    private var yellowPages = emptyList<String>()
-
-    private var favoNotify = emptyList<Favorite>()
-    private var favoStarred = emptyList<Favorite>()
-    private var favoTaggable = emptyList<Favorite>()
-    private var filterNotNG: (Yp4gChannel)->Boolean = { true }
-
-    private val itemBinders = ConcurrentHashMap<@IdRes Int, MenuItemBinder>()
-    private val visibleItemTags
-        get() = ViewUtils.menuItems(vNavigation.menu)
-                .dropLast(1) // footer-item
-                .filter { it.isVisible }
-                .map { itemBinders.getValue(it.itemId).category }
-
-    private var idGenerator = MenuIdGenerator()
-
-    private val onItemSelected = NavigationView.OnNavigationItemSelectedListener { item ->
-        if (isEditMode)
-            return@OnNavigationItemSelectedListener false
-
-        vNavigation.setCheckedItem(item.itemId)
-        checkedTag = itemBinders.getValue(item.itemId).category
-        naviPrefs.edit().putString(KEY_CHECKED_TAG, checkedTag).apply()
-
-        val tag = itemBinders.getValue(item.itemId).category
-        onNavigate(
-                item.title.toString(), tag, filters.getValue(tag)
-        )
-        true
+    var isEditMode by Delegates.observable(
+        savedInstanceState?.getBoolean(STATE_IS_EDIT_MODE) ?: false
+    ) { _, _, _ ->
+        rebuildMenu()
     }
 
-    fun register(db: AppRoomDatabase, lo: LifecycleOwner) {
-        db.getYellowPageDao().getEnabled().observe(lo, Observer {
-            yellowPages = it?.map { it.name } ?: emptyList()
-            recreateMenu()
-        })
-
-        db.getFavoriteDao().get().observe(lo, Observer {
-            val (favoNG, favoGood) =
-                    it?.partition { it.flags.isNG } ?: Pair(emptyList(), emptyList())
-            favoGood.partition {
-                it.isStarred
-            }.let {
-                favoStarred = it.first
-                favoTaggable = it.second
-            }
-            favoNotify = favoGood.filter { it.flags.isNotification }
-
-            filterNotNG = { ch->
-                !favoNG.any { it.matches(ch) }
-            }
-
-            recreateMenu()
-        })
-
-        db.getYpIndexDao().getGenre().observe(lo, Observer {
-            val rS = Regex("[\\s\\-：:]+")
-            val tm = TreeMap<String, Int>(String.CASE_INSENSITIVE_ORDER)
-            it?.let {
-                it.flatMap {
-                    it.split(rS)
-                }
-                        .filter(String::isNotEmpty)
-                        .forEach {
-                            tm[it] = tm.getOrElse(it, { 0 }) + 1
-                        }
-            }
-            //Log.d(TAG, "--> $tm")
-            genres = tm.entries.sortedWith(kotlin.Comparator { a, b ->
-                b.value - a.value
-            }).filter { it.value > 1 }.map { it.key }
-            Timber.d("--> $genres")
-            recreateMenu()
-        })
-
-        db.getYpIndexDao().get().observe(lo, Observer { it ->
-            channels = it ?: emptyList()
-            bindActionViews()
-        })
-
-        vNavigation.setNavigationItemSelectedListener(onItemSelected)
+    init {
+        view.tag = this
+        model.setOnChangedObserver(::rebuildMenu)
+        model.setLifecycleOwner(owner)
     }
 
-
-    private fun bindActionViews(onFinished: () -> Unit = {}) {
-        launch(UI) {
-            itemBinders.entries.forEach {
-                it.value.bindActionView(
-                        this@NavigationPresenter,
-                        vNavigation.menu.findItem(it.key))
-            }
-            onFinished()
-        }
-    }
-
-    /**メニューの再生成*/
-    private fun recreateMenu() {
-        vNavigation.menu.clear()
-
-        filters.clear()
-        itemBinders.clear()
-        idGenerator.reset()
-
-        var topOrder = 0
-
-        addItem(context.getString(R.string.navigate_all),
-                R.drawable.ic_home_36dp, GID_TOP, topOrder++, tag = CATEGORY_HOME)
-
-        addItem(context.getString(R.string.navigate_newer),
-                R.drawable.ic_new_releases_36dp, GID_TOP, topOrder++, { ch ->
-            !ch.isEmptyId && ch is YpIndex && (ch.ageAsMinutes < 15 || ch.numLoaded <= 2)
-        }, CATEGORY_NEWLY)
-
-        addItem(context.getString(R.string.navigate_favorite),
-                R.drawable.ic_star_36dp, GID_FAVORITE, topOrder++, { ch ->
-            favoStarred.any { it.matches(ch) }
-        }, CATEGORY_FAVORITE_STARRED)
-
-        if (AppPreferences(context).isNotificationEnabled) {
-            addItem(context.getString(R.string.notificated),
-                    R.drawable.ic_notifications_36dp, GID_FAVORITE, topOrder++, { ch ->
-                favoNotify.any {
-                    //ch is YpIndex && ch.numLoaded < 3 &&
-                    it.matches(ch)
-                }
-            }, CATEGORY_NOTIFICATED)
+    private fun rebuildMenu() {
+        val items = model.items
+        if (items.isEmpty()) {
+            view.menu.clear()
+            return
         }
 
-        //if (naviPrefs.getBoolean("favorite_all", true)) {
-        favoTaggable.forEachIndexed { i, favo ->
-            addItem(favo.name,
-                    R.drawable.ic_bookmark_36dp, GID_FAVORITE, i + 10, { ch ->
-                favo.matches(ch)
-            })
-        }
-        //}
+        //チェックされたアイテムの保存
+        val checkedItemId = view.checkedItem?.itemId ?: restoredCheckedItemId
 
-        addItem(context.getString(R.string.navigate_history),
-                R.drawable.ic_history_36dp, GID_HISTORY, topOrder++,
-                THROUGH, CATEGORY_HISTORY)
-
-        //if (naviPrefs.getBoolean("yp_all", true)) {
-        yellowPages.forEachIndexed { i, yp ->
-            addItem(yp, R.drawable.ic_peercast, GID_YP, i + 1, {
-                it.yp4g.ypName == yp
-            })
-        }
-        //}
-
-        if (naviPrefs.getBoolean("genre_all", true)) {
-            genres.asSequence().mapIndexed { i, t ->
-                addItem(t, R.drawable.ic_bookmark_border_36dp, GID_GENRE, i + 1, {
-                    it.yp4g.genre.contains(t, true)
-                })
-            }.filter { it.isVisible }.take(5).toList()
-        }
-
-        if (isEditMode) {
-            //addItem("*Favorite", R.drawable.ic_mode_edit_36dp, GID_FAVORITE, 0, category = "favorite_all")
-            //addItem("*YP", R.drawable.ic_mode_edit_36dp, GID_YP, 0, category = "yp_all")
-            addItem("*GENRE", R.drawable.ic_mode_edit_36dp, GID_GENRE, 0, tag = "genre_all")
-        }
+        view.menu.clear()
+        items.forEach(::addMenu)
 
         addFooterMenuItem()
 
-        bindActionViews(::restoreCheckItem)
+        if (isEditMode) {
+            //addMenu(NavigationItem("**genre", GID_GENRE, 0, R.drawable.ic_bookmark_border_36dp, YpIndexQuery.UNDEFINED, "genre_all"))
+        }
+
+        if (checkedItemId == NOT_CHECKED) {
+            //起動時: HOMEを選択しイベントを飛ばす
+            view.setCheckedItem(view.menu[0].itemId)
+            onItemClick(items[0])
+        } else {
+            view.setCheckedItem(checkedItemId)
+        }
     }
 
-    //選択状態の復元
-    private fun restoreCheckItem() {
-        Timber.d("restoreCheckItem($checkedTag) ")
-        if (checkedTag == "") {
-            //起動時はホームを選択する
-            navigate(CATEGORY_HOME)
+    /**Home以外を選択している場合はHomeに戻ってtrueを返す。*/
+    fun backToHome(): Boolean {
+        if (view.menu.size() > 0 && model.items.isNotEmpty()
+            && view.checkedItem != view.menu[0]
+        ) {
+            view.setCheckedItem(view.menu[0])
+            onItemClick(model.items[0])
+            return true
+        }
+        return false
+    }
+
+    private fun addMenu(item: NavigationItem) {
+        val mi = view.menu.add(
+            item.groupId, item.tag.hashCode(),
+            item.groupId * 0xff + item.order, item.title
+        )
+        mi.setIcon(item.icon)
+        mi.isVisible = isEditMode || (item.isVisible && item.tag !in invisiblePrefs)
+
+        if (isEditMode) {
+            mi.isEnabled = false
+            inflateEditAction(mi, item)
         } else {
-            itemBinders.entries.firstOrNull {
-                it.value.category == checkedTag
-            }?.let {
-                navigate(it.value.category)
+            mi.isCheckable = true
+            mi.setOnMenuItemClickListener {
+                view.setCheckedItem(it)
+                onItemClick(item)
+                false
+            }
+            inflateNormalAction(mi, item)
+        }
+    }
+
+    private fun inflateNormalAction(mi: MenuItem, it: NavigationItem) {
+        val v = inflater.inflate(
+            R.layout.navigation_action_view_badge,
+            view, false
+        ) as TextView
+        mi.actionView = v
+        v.text = it.badge
+    }
+
+    private fun inflateEditAction(mi: MenuItem, it: NavigationItem) {
+        if (it.tag == TAG_HOME)
+            return
+
+        mi.actionView = inflater.inflate(R.layout.navigation_action_view_checkbox, view, false)
+        mi.setOnMenuItemClickListener {
+            false
+        }
+
+        mi.actionView.vCheckbox.let { cb ->
+            cb.isChecked = it.tag !in invisiblePrefs
+            cb.setOnCheckedChangeListener { _, isChecked ->
+                if (isChecked) {
+                    invisiblePrefs.edit { remove(it.tag) }
+                } else {
+                    //NG
+                    invisiblePrefs.edit { putBoolean(it.tag, true) }
+                }
             }
         }
     }
 
     //設定ボタン用
     private fun addFooterMenuItem() {
-        vNavigation.menu.add(GID_TOP, idGenerator.next(), 0xfff0, "").let {
-            val v = inflater.inflate(R.layout.navigation_setting_button, vNavigation, false)
-            it.actionView = v
+        val mi = view.menu.add(0, 0, 0xfff0, "")
+        mi.isEnabled = false
+        val v = LayoutInflater.from(view.context)
+            .inflate(R.layout.navigation_setting_button, view, false)
+        mi.actionView = v
 
-            //編集モードに
-            v.setOnClickListener {
-                isEditMode = !isEditMode
-            }
-
-            //非表示をリセット
-            v.setOnLongClickListener {
-                PopupMenu(context, v).apply {
-                    menu.add(R.string.reset).setOnMenuItemClickListener {
-                        naviPrefs.edit().clear().apply()
-                        recreateMenu()
-                        true
-                    }
-                }.show()
-                true
-            }
-            it.setOnMenuItemClickListener { true }
-        }
-    }
-
-    @IdRes
-    private fun getCheckedItemId(): Int? {
-        return ViewUtils.menuItems(vNavigation.menu).firstOrNull {
-            it.isChecked
-        }?.itemId
-    }
-
-    fun navigate(category: String): Boolean {
-        //Timber.d("navigate($category, ${itemBinders.values.map { it.category }}")
-        return itemBinders.entries.firstOrNull {
-            it.value.category == category
-        }?.let {
-            onItemSelected.onNavigationItemSelected(vNavigation.menu.findItem(it.key))
-        } ?: false
-    }
-
-    fun navigateNext() {
-        val i = visibleItemTags.indexOf(checkedTag)
-        val t = visibleItemTags.getOrElse(i + 1) {
-            visibleItemTags.first()
+        //編集モードに
+        v.setOnClickListener {
+            isEditMode = !isEditMode
         }
 
-        navigate(t)
-    }
-
-    fun navigatePrev() {
-        val i = visibleItemTags.indexOf(checkedTag)
-        val t = visibleItemTags.getOrElse(i - 1) {
-            visibleItemTags.last()
+        //非表示をリセット
+        v.setOnLongClickListener {
+            android.widget.PopupMenu(view.context, v).apply {
+                menu.add(R.string.reset).setOnMenuItemClickListener {
+                    invisiblePrefs.edit { clear() }
+                    rebuildMenu()
+                    true
+                }
+            }.show()
+            true
         }
-        navigate(t)
-    }
-
-    fun onBackPressed(): Boolean {
-        if (isEditMode) {
-            isEditMode = false
-            return true
-        }
-        if (getCheckedItemId() != ID_HOME) {
-            navigate(CATEGORY_HOME)
-            return true
-        }
-        return false
+        mi.setOnMenuItemClickListener { true }
     }
 
     fun onSaveInstanceState(state: Bundle) {
-        state.putString(KEY_CHECKED_TAG, checkedTag)
-    }
-
-    private fun addItem(title: String, @DrawableRes icon: Int,
-                        grId: Int, order: Int,
-                        filter: (Yp4gChannel) -> Boolean = THROUGH,
-                        tag: String = "$title (group=$grId)"): MenuItem {
-        val visible = naviPrefs.getBoolean(tag, true)
-        val item = vNavigation.menu.add(grId, idGenerator.next(), grId * 100 + order, title)
-
-        val binder = when (isEditMode) {
-            true -> EditMenuItemBinder(tag)
-            false -> NormalItemBinder(tag)
-        }
-        itemBinders[item.itemId] = binder
-        return item.also {
-            item.isCheckable = true
-            item.isChecked = false
-            item.setIcon(icon)
-            MenuItemCompat.setIconTintList(it, iconTint)
-            item.actionView = inflater.inflate(binder.actionViewRes, vNavigation, false)
-            item.isVisible = visible
-            filters[tag] = { ch ->
-                filter(ch) && filterNotNG(ch)
-            }
-        }
-    }
-
-    private abstract class MenuItemBinder(val category: String, @LayoutRes val actionViewRes: Int) {
-        abstract suspend fun bindActionView(np: NavigationPresenter, item: MenuItem)
-    }
-
-    //通常時。バッジを表示する
-    private inner class NormalItemBinder(category: String)
-        : MenuItemBinder(category, R.layout.navigation_action_view_normal) {
-
-        override suspend fun bindActionView(np: NavigationPresenter, item: MenuItem) {
-            if (!item.isVisible || category == CATEGORY_HISTORY)
-                return
-            val filter = filters[category] ?: return
-            val n = async {
-                np.channels.count {ch->
-                    filter(ch) && filterNotNG(ch)
-                }
-            }.await()
-            if (item.groupId == GID_TOP || n > 0) {
-                item.isVisible = true
-                with(item.actionView.vBadge) {
-                    text = if (n > 99) "+99" else "$n"
-                }
-            } else {
-                item.isVisible = false
-            }
-        }
-    }
-
-    //編集モード時
-    private class EditMenuItemBinder(category: String)
-        : MenuItemBinder(category, R.layout.navigation_action_view_edit) {
-        override suspend fun bindActionView(np: NavigationPresenter, item: MenuItem) {
-            item.actionView.vCheckbox.let {
-                it.isEnabled = item.itemId !in arrayOf(ID_HOME, ID_FAVORITE)
-                it.isChecked = np.naviPrefs.getBoolean(category, true)
-                it.setOnCheckedChangeListener { _, isChecked ->
-                    np.naviPrefs.edit().run {
-                        when (isChecked) {
-                            true -> remove(category)
-                            false -> putBoolean(category, false)
-                        }
-                    }.apply()
-                }
-            }
-        }
+        state.putBoolean(STATE_IS_EDIT_MODE, isEditMode)
+        state.putInt(STATE_CHECKED_ITEM_ID, view.checkedItem?.itemId ?: NOT_CHECKED)
     }
 
     companion object {
-        private const val TAG = "NavigationPresenter"
-
-        private const val ID_HOME = Menu.FIRST
-        private const val ID_FAVORITE = ID_HOME + 1
-
-        private const val GID_TOP = Menu.FIRST + 0
-        private const val GID_FAVORITE = Menu.FIRST + 1
-        private const val GID_HISTORY = Menu.FIRST + 2
-        private const val GID_YP = Menu.FIRST + 3
-        private const val GID_GENRE = Menu.FIRST + 4
-
-
-        private val THROUGH: (Yp4gChannel) -> Boolean = { true }
-
-        private const val KEY_CHECKED_TAG = "$TAG#checked-category"
-
+        private const val TAG = "PecaNavigationViewExtension"
+        private const val STATE_IS_EDIT_MODE = "$TAG#isEditMode"
+        private const val STATE_CHECKED_ITEM_ID = "$TAG#checkedItemId"
+        private const val NOT_CHECKED = 0
     }
 }
 
 
-private class MenuIdGenerator {
-    private var id = Menu.FIRST
+private const val GID_TOP = Menu.FIRST + 0
+private const val GID_FAVORITE = Menu.FIRST + 1
+private const val GID_HISTORY = Menu.FIRST + 2
+private const val GID_YP = Menu.FIRST + 3
+private const val GID_GENRE = Menu.FIRST + 4
 
-    @IdRes
-    fun next() = id++
+private const val TAG_HOME = "home"
+private const val TAG_NEWLY = "newly"
+private const val TAG_HISTORY = "history"
 
-    fun reset() {
-        id = Menu.FIRST
+
+private class NavigationModelImpl : INavigationModel, KoinComponent {
+    private val c by inject<Context>()
+    private val database by inject<AppRoomDatabase>()
+    private val appPrefs by inject<AppPreferences>()
+
+    override var items = emptyList<NavigationItem>()
+
+
+    private fun parseGenre(channels: List<YpChannel>): List<String> {
+        val rS = Regex("[\\s\\-：:]+")
+        val tm = TreeMap<String, Int>(String.CASE_INSENSITIVE_ORDER)
+        channels.flatMap { it.yp4g.genre.split(rS) }
+            .filter { it.isNotBlank() }
+            .forEach {
+                tm[it] = tm.getOrElse(it) { 0 } + 1
+            }
+        val g = tm.entries.sortedWith(kotlin.Comparator { a, b ->
+            b.value - a.value
+        }).filter { it.value > 1 }.map { it.key }
+        //Timber.d("--> $g")
+        return g
     }
+
+    private var onChangedObserver: () -> Unit = {}
+
+    override fun setOnChangedObserver(observer: () -> Unit) {
+        onChangedObserver = observer
+    }
+
+    override fun setLifecycleOwner(owner: LifecycleOwner) {
+        LiveDataUtils.combineLatest(
+            database.yellowPageDao.query(),
+            database.favoriteDao.query(),
+            database.ypChannelDao.query(),
+            ::toNavigationItem
+        ).observe(owner, Observer {
+            items = it
+            onChangedObserver()
+        })
+    }
+
+    private suspend fun toNavigationItem(
+        yellowPages: List<YellowPage>,
+        favorites: List<Favorite>,
+        channels: List<YpChannel>
+    ): List<NavigationItem> {
+        Timber.d("onUpdate()")
+        val items = ArrayList<NavigationItem>(30)
+
+        var topOrder = 0
+
+        items += NavigationItem(
+            c.getString(R.string.navigate_all),
+            GID_TOP, topOrder++,
+            R.drawable.ic_home_36dp,
+            { true }, TAG_HOME
+        )
+
+        items += NavigationItem(
+            c.getString(R.string.navigate_newer),
+            GID_TOP, topOrder++,
+            R.drawable.ic_new_releases_36dp,
+            { ch ->
+                !ch.isEmptyId && ch is YpLiveChannel && (ch.numLoaded <= 2)
+            }//ch.ageAsMinutes < 15 ||
+        )
+
+        val stars = favorites.filter { it.isStar && !it.flags.isNG }
+        items += NavigationItem(
+            c.getString(R.string.navigate_favorite),
+            GID_FAVORITE, topOrder++,
+            R.drawable.ic_star_36dp,
+            { ch ->
+                stars.any { it.matches(ch) }
+            })
+
+        val favoNotify = favorites.filter { it.flags.isNotification && !it.flags.isNG }
+        if (appPrefs.isNotificationEnabled) {
+            items += NavigationItem(
+                c.getString(R.string.notificated),
+                GID_FAVORITE, topOrder++,
+                R.drawable.ic_notifications_36dp,
+                { ch ->
+                    favoNotify.any {
+                        //ch is YpIndex && ch.numLoaded < 3 &&
+                        it.matches(ch)
+                    }
+                }
+            )
+        }
+
+        val favoTaggable = favorites.filter { !it.isStar && !it.flags.isNG }
+        favoTaggable.forEachIndexed { i, favo ->
+            items += NavigationItem(
+                favo.name,
+                GID_FAVORITE, i + 10,
+                R.drawable.ic_bookmark_36dp,
+                { ch ->
+                    favo.matches(ch)
+                })
+        }
+
+
+        items += NavigationItem(
+            c.getString(R.string.navigate_history),
+            GID_HISTORY, topOrder++,
+            R.drawable.ic_history_36dp,
+            { true },
+            TAG_HISTORY
+        )
+
+        yellowPages.forEachIndexed { i, yp ->
+            items += NavigationItem(
+                yp.name,
+                GID_YP, i + 1,
+                R.drawable.ic_peercast,
+                {
+                    it.yp4g.ypName == yp.name
+                })
+        }
+
+        parseGenre(channels).take(6).mapIndexed { i, t ->
+            items += NavigationItem(
+                t, GID_GENRE, i + 1,
+                R.drawable.ic_bookmark_border_36dp,
+                {
+                    it.yp4g.genre.contains(t, true)
+                })
+        }
+
+        val badgeInvisibleItems = listOf(TAG_HOME, TAG_HISTORY)
+
+        withContext(Dispatchers.Default) {
+            items.filter { it.tag !in badgeInvisibleItems }.forEach {
+                val n = channels.count(it.selector)
+                it.badge = when {
+                    n > 99 -> "99+"
+                    n > 0 -> "$n"
+                    else -> {
+                        it.isVisible = false
+                        ""
+                    }
+                }
+            }
+        }
+
+        return items
+    }
+
 }
+

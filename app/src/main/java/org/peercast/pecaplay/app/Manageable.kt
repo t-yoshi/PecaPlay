@@ -1,13 +1,12 @@
 package org.peercast.pecaplay.app
 
-import android.arch.persistence.room.*
-import android.net.Uri
 import android.os.Parcelable
+import androidx.room.*
 import com.squareup.moshi.JsonClass
 import kotlinx.android.parcel.Parcelize
-import org.peercast.pecaplay.SquareUtils
-import org.peercast.pecaplay.yp4g.Yp4gChannel
+import org.peercast.pecaplay.util.SquareUtils
 import org.peercast.pecaplay.yp4g.Yp4gColumn
+import org.peercast.pecaplay.yp4g.YpChannel
 import timber.log.Timber
 import java.io.IOException
 import java.util.*
@@ -18,14 +17,6 @@ import java.util.regex.Pattern
 abstract class ManageableEntity : Parcelable {
     abstract val name: String
     abstract val isEnabled: Boolean
-
-    final override fun hashCode() = javaClass.hashCode() * 31 + name.hashCode()
-
-    final override fun equals(other: Any?): Boolean {
-        return other is ManageableEntity &&
-                javaClass == other.javaClass &&
-                name == other.name
-    }
 }
 
 
@@ -43,9 +34,7 @@ data class YellowPage(
 
     companion object {
         fun isValidUrl(u: String) : Boolean {
-            return Uri.parse(u).run {
-                scheme == "http" && !host.isNullOrEmpty() && path.endsWith("/")
-            }
+            return u.matches("""^https?://\S+/$""".toRegex())
         }
     }
 }
@@ -99,7 +88,7 @@ data class Favorite(
             val isCaseSensitive: Boolean = false
     ) : Parcelable
 
-    fun matches(ch: Yp4gChannel): Boolean {
+    fun matches(ch: YpChannel): Boolean {
         return true in if (flags.isRegex) {
             val reFlags = when (flags.isCaseSensitive) {
                 true -> 0
@@ -140,14 +129,14 @@ data class Favorite(
         }
     }
 
-    val isStarred get() = name.startsWith("[star]") && !flags.isNG
+    val isStar get() = name.startsWith("[star]") && !flags.isNG
 
     fun copyFlags(flags: (Flags) -> Flags): Favorite {
         return Favorite(name, pattern, flags(this.flags), isEnabled)
     }
 
     companion object {
-        fun createStarred(ch: Yp4gChannel): Favorite {
+        fun Star(ch: YpChannel): Favorite {
             return Favorite("[star]${ch.yp4g.name}", ch.yp4g.name, Flags(
                     isName = true, isExactMatch = true
             ))
@@ -178,14 +167,13 @@ data class Favorite(
 
 
 /**
- * YP4G/index.txtのChannel情報です。
- * @version 50000
+ * 現在配信中のChannel情報です。
+ * @version 50100
  */
-@Entity(tableName = "YpIndex",
+@Entity(tableName = "YpLiveChannel",
         primaryKeys = ["name", "id"],
         indices = [Index("isLatest")])
-class YpIndex : Yp4gChannel() {
-
+class YpLiveChannel : YpChannel() {
     /**直近の読み込みか*/
     var isLatest: Boolean = false
 
@@ -203,25 +191,25 @@ class YpIndex : Yp4gChannel() {
 
 
 /**
- * 再生の履歴
- * @version 50000
+ * 再生した履歴
+ * @version 50100
  * */
-@Entity(tableName = "YpHistory",
+@Entity(tableName = "YpHistoryChannel",
         primaryKeys = ["name", "id"])
-class YpHistory : Yp4gChannel() {
+class YpHistoryChannel() : YpChannel() {
     /**最終再生日*/
-    var lastPlay = Date()
-
-    override val isEnabled get() = super.isEnabled && isPlayAvailable
+    lateinit var lastPlay : Date
 
     /**現在もYPに掲載されていて再生可能か*/
     @Ignore
-    var isPlayAvailable = false
-
-    companion object {
-        fun from(copy: Yp4gChannel) = YpHistory().apply {
-            yp4g = copy.yp4g
+    override var isEnabled = false
+        set(value) {
+            field = value && super.isEnabled
         }
+
+    constructor(copy: YpChannel, lastPlay : Date = Date()) : this() {
+        yp4g = copy.yp4g
+        this.lastPlay = lastPlay
     }
 }
 

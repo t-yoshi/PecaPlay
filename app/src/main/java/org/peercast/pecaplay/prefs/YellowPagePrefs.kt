@@ -1,77 +1,66 @@
 package org.peercast.pecaplay.prefs
 
-import android.arch.lifecycle.Observer
 import android.content.Context
-import android.content.DialogInterface
-import android.databinding.BaseObservable
-import android.databinding.Bindable
-import android.databinding.Observable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
-import kotlinx.coroutines.experimental.android.UI
-import kotlinx.coroutines.experimental.async
-import kotlinx.coroutines.experimental.launch
-import org.peercast.pecaplay.BR
+import androidx.appcompat.app.AlertDialog
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.Observer
+import kotlinx.coroutines.launch
+import org.peercast.pecaplay.util.LiveDataUtils
 import org.peercast.pecaplay.R
 import org.peercast.pecaplay.app.AppTheme
 import org.peercast.pecaplay.app.YellowPage
-import org.peercast.pecaplay.app.YellowPageDao
 import org.peercast.pecaplay.databinding.PrefYellowpageEditorBinding
 
 
+class YellowPagePrefsFragment : EntityPreferenceFragmentBase<YellowPage>() {
 
-private val DEFAULT_YELLOW_PAGES = linkedMapOf(
-        "SP" to "http://bayonet.ddo.jp/sp/",
-        "TP" to "http://temp.orz.hm/yp/"
-)
+    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
+        super.onCreatePreferences(savedInstanceState, rootKey)
 
-private fun YellowPageDao.asyncDao(block: YellowPageDao.() -> Unit) {
-    launch(UI) {
-        async { block() }.await()
-    }
-}
+        val iconColor = AppTheme.getIconColor(context!!)
 
-class YellowPagePrefsFragment : ManageablePreferenceFragment<YellowPage>() {
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-
-        addPreferencesFromResource(R.xml.pref_yp)
-
-        val icon = AppTheme(context).getIcon(R.drawable.ic_peercast)
-
-        database.getYellowPageDao().get().observe(this, Observer {
+        database.yellowPageDao.query(false).observe(this, Observer {
             preferenceScreen.removeAll()
             it?.forEach { yp ->
-                addPreferenceFrom(yp).run {
-                    setIcon(icon)
-                    summary = yp.url
+                createCheckBoxPreference(yp).let { p ->
+                    p.setIcon(R.drawable.ic_peercast)
+                    p.icon.setTint(iconColor)
+                    p.summary = yp.url
+                    preferenceScreen.addPreference(p)
                 }
             }
         })
     }
 
-    override fun onRemoveItem(item: YellowPage) {
-        database.getYellowPageDao().asyncDao { remove(item) }
-    }
+    override val presenter = object : IPresenter<YellowPage> {
+        override fun removeItem(item: YellowPage) {
+            launch {
+                database.yellowPageDao.remove(item)
+            }
+        }
 
-    override fun onReplaceItem(oldItem: YellowPage?, newItem: YellowPage) {
-        database.getYellowPageDao().asyncDao {
-            oldItem?.let { remove(it) }
-            add(newItem)
+        override fun replaceItem(oldItem: YellowPage?, newItem: YellowPage) {
+            launch {
+                database.yellowPageDao.run {
+                    oldItem?.let { remove(it) }
+                    add(newItem)
+                }
+            }
+        }
+
+        override fun updateItem(item: YellowPage, enabled: Boolean) {
+            launch {
+                database.yellowPageDao.update(item.copy(isEnabled = enabled))
+            }
         }
     }
 
-    override fun onUpdateItem(item: YellowPage, enabled: Boolean) {
-        database.getYellowPageDao().asyncDao {
-            update(item.copy(isEnabled = enabled))
-        }
-    }
-
-    override fun createEditorFragment(): ManageableEditorFragment<YellowPage, *> {
-        return YellowPageEditorDialog()
+    override fun createEditDialogFragment(): EntityEditDialogFragmentBase<YellowPage> {
+        return YellowPageEditorDialogFragment()
     }
 
     companion object {
@@ -80,107 +69,89 @@ class YellowPagePrefsFragment : ManageablePreferenceFragment<YellowPage>() {
 }
 
 
-class YellowPageEditorDialog : ManageableEditorFragment<YellowPage, PrefYellowpageEditorBinding>() {
+class YellowPageEditorDialogFragment : EntityEditDialogFragmentBase<YellowPage>() {
 
-    private val viewModel = ViewModel()
+    class ViewModel : DialogViewModelBase() {
+        val name = MutableLiveData("NewYP")
+        val url = MutableLiveData("http://")
 
-    private var existsNames = emptyList<String>()
-    private var existsUrls = emptyList<String>()
+        fun toYellowPage() = YellowPage(name.value!!, url.value!!, true)
+    }
+
+    override val viewModel = ViewModel()
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        database.getYellowPageDao().get().observe(this, Observer {
-            existsNames = it?.map { it.name } ?: emptyList()
-            existsUrls = it?.map { it.url } ?: emptyList()
+        //編集途中 or 編集
+        (savedInstanceState?.getParcelable(STATE_EDITING_ITEM) ?: editSource)?.let {
+            viewModel.name.value = it.name
+            viewModel.url.value = it.url
+        }
+
+        val ypLd = database.yellowPageDao.query(false)
+
+        //検証: nameとurlが正しいか。新規作成なら既に存在していないか。
+        LiveDataUtils.combineLatest(ypLd, viewModel.name, viewModel.url) { yellowPages, name, url ->
+            val existsNames = yellowPages.map { it.name }
+            val existsUrls = yellowPages.map { it.url }
+
+            name.isNotBlank() && YellowPage.isValidUrl(url) &&
+                    (isEditMode || (name !in existsNames && url !in existsUrls))
+        }.observe(this, Observer<Boolean> {
+            viewModel.isOkButtonEnabled.value = it
         })
-
-        editSource?.let {
-            viewModel.name = it.name
-            viewModel.url = it.url
-        }
     }
 
-    class ViewModel : BaseObservable() {
-        @Bindable
-        var name = "NewYP"
-            set(value) {
-                field = value
-                notifyPropertyChanged(BR.name)
-            }
-
-        @Bindable
-        var url = "http://"
-            set(value) {
-                field = value
-                notifyPropertyChanged(BR.url)
-            }
-
-        val isValid: Boolean
-            get() = name.isNotEmpty() &&
-                    YellowPage.isValidUrl(url)
-
-        fun toYellowPage() = YellowPage(name, url, true)
-    }
-
-
-    //TP,SP
-    private class AutoCompleteAdapter(c: Context) : ArrayAdapter<String>(
-            c, android.R.layout.simple_dropdown_item_1line) {
-        init {
-            addAll(DEFAULT_YELLOW_PAGES.keys)
-        }
-
-        fun getUrl(name: String) = DEFAULT_YELLOW_PAGES[name]
-    }
-
-    override fun onCreateViewBinding(inflater: LayoutInflater): PrefYellowpageEditorBinding {
-        return PrefYellowpageEditorBinding.inflate(inflater).also {
-            it.viewModel = viewModel
-
-            it.vName.run {
-                val adapter = AutoCompleteAdapter(context)
-                setAdapter(adapter)
-                onItemClickListener = AdapterView.OnItemClickListener { _, _, _, _ ->
-                    adapter.getUrl(viewModel.name)?.let {
-                        viewModel.url = it
-                    }
+    override fun onBuildDialog(builder: AlertDialog.Builder) {
+        //Timber.d("onBuildDialog $builder")
+        val inflater = LayoutInflater.from(builder.context)
+        val binding = PrefYellowpageEditorBinding.inflate(inflater)
+        binding.vName.run {
+            val adapter = AutoCompleteAdapter(context)
+            setAdapter(adapter)
+            onItemClickListener = AdapterView.OnItemClickListener { _, _, _, _ ->
+                adapter.getUrl(viewModel.name.value!!)?.let {
+                    viewModel.url.value = it
                 }
             }
         }
+        binding.viewModel = viewModel
+        binding.lifecycleOwner = this
+        builder.setView(binding.root)
     }
 
-    override fun onShow(d: DialogInterface) {
-        super.onShow(d)
+    //TP,SP
+    private class AutoCompleteAdapter(c: Context) : ArrayAdapter<String>(
+        c, android.R.layout.simple_dropdown_item_1line
+    ) {
+        private val yp = c.resources.getStringArray(R.array.default_yp_names).zip(
+            c.resources.getStringArray(R.array.default_yp_urls)
+        ).toMap()
 
-        viewModel.addOnPropertyChangedCallback(object : Observable.OnPropertyChangedCallback() {
-            override fun onPropertyChanged(p0: Observable?, p1: Int) {
-                updateEnableOkButton()
-            }
-        })
-        updateEnableOkButton()
-    }
-
-    override fun onOkClick() {
-        val newYp = viewModel.toYellowPage()
-        database.getYellowPageDao().asyncDao {
-            editSource?.let { remove(it) }
-            add(newYp)
+        init {
+            addAll(yp.keys)
         }
+
+        fun getUrl(name: String): String? = yp[name]
     }
 
-    private fun updateEnableOkButton() {
-        val b = viewModel.isValid &&
-                (isEditMode ||
-                        (viewModel.name !in existsNames && viewModel.url !in existsUrls))
+    override fun onOkButtonClicked() {
+        presenter.replaceItem(editSource, viewModel.toYellowPage())
+    }
 
-        setOkButtonEnabled(b)
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        //編集途中を保存
+        outState.putParcelable(STATE_EDITING_ITEM, viewModel.toYellowPage())
     }
 
     companion object {
-        private const val TAG = "YellowPageEditorDialog"
+        private const val TAG = "YellowPageEditorDialogFragment"
+        private const val STATE_EDITING_ITEM = "$TAG#editing-item"
     }
-
 }
+
 
 

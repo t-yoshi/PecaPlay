@@ -5,14 +5,14 @@
     <data>
 
         <variable
-            name="viewModel"
-            type="org.peercast.pecaplay.YpIndexFragment.ItemViewModel" />
-
+                name="viewModel"
+                type="org.peercast.pecaplay.list.BaseListItemViewModel"/>
         <variable
-            name="favoPresenter"
-            type="org.peercast.pecaplay.YpIndexFragment.FavoritePresenter" />
+                name="itemEventListener"
+                type="org.peercast.pecaplay.list.IListItemEventListener"/>
 
         <import type="android.view.View" />
+        <import type="android.widget.CheckBox"/>
     </data>
 
     <RelativeLayout
@@ -32,14 +32,13 @@
             android:layout_height="match_parent"
             android:layout_alignParentLeft="true"
             android:layout_centerVertical="true"
-            android:checked="@{favoPresenter.isStarred}"
             android:enabled="@{viewModel.starEnabled}"
-            android:focusable="false"
+            android:checked="@{viewModel.isStarChecked}"
+            android:onClickListener="@{()->itemEventListener.onStarClicked(viewModel.model, !viewModel.isStarChecked)}"
+                       android:focusable="false"
             android:gravity="center"
-            android:onCheckedChanged="@{(cb, isChecked)->favoPresenter.starred(isChecked)}"
             android:padding="5dp" />
         <!-- NOTE: リストアイテムのCheckBoxはfocusable="false"にしないと 他のアイテムへイベントが渡らない -->
-
 
         <TextView
             android:id="@+id/vName"
@@ -81,6 +80,7 @@
                 android:text="@{viewModel.age}"
                 android:textIsSelectable="false"
                 android:typeface="monospace"
+                android:textColor="?android:attr/textColorSecondary"
                 android:visibility="@{viewModel.ageVisible ? View.VISIBLE : View.INVISIBLE}" />
 
             <ImageView
@@ -90,9 +90,12 @@
                 android:alpha="0.7"
                 android:padding="0dp"
                 android:scaleType="fitCenter"
-                android:src="@drawable/ic_notifications_active_16dp"
+                app:srcCompat="@drawable/ic_notifications_active_16dp"
                 android:tint="?android:attr/textColorSecondary"
-                android:visibility="@{favoPresenter.isNotificated ? View.VISIBLE : View.GONE}" />
+                android:visibility="@{viewModel.isNotificatedVisible ? View.VISIBLE : View.GONE}"
+                    />
+            <!--android:visibility="@{favoPresenter.isNotificated ? View.VISIBLE : View.GONE}" -->
+
 
         </LinearLayout>
 
@@ -103,6 +106,7 @@
             android:layout_below="@id/vName"
             android:layout_toRightOf="@id/vStarred"
             android:text="@{viewModel.description}"
+            android:textColor="?android:attr/textColorSecondary"
             android:textIsSelectable="false"
             android:textStyle="bold" />
         <!-- chDescription.scrollHorizontally := (chComment.length > 0) -->
@@ -115,6 +119,7 @@
             android:layout_alignParentRight="true"
             android:paddingBottom="2dp"
             android:paddingTop="4dp"
+            android:textColor="?android:attr/textColorSecondary"
             android:text="@{viewModel.comment}"
             android:textIsSelectable="false" />
 
@@ -124,6 +129,7 @@
             android:layout_alignParentBottom="true"
             android:layout_alignParentRight="true"
             android:paddingLeft="2dp"
+            android:textColor="?android:attr/textColorSecondary"
             android:text="@{viewModel.listener}"
             android:textAppearance="?android:attr/textAppearanceSmall"
             android:textIsSelectable="false"

@@ -6,11 +6,7 @@
 
         <variable
             name="viewModel"
-            type="org.peercast.pecaplay.prefs.FavoriteEditorViewModel" />
-
-        <variable
-            name="isAdvancedMode"
-            type="boolean" />
+            type="org.peercast.pecaplay.prefs.FavoriteEditorDialogFragment.ViewModel" />
 
         <import type="android.view.View" />
     </data>
@@ -19,7 +15,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:visibility="@{isAdvancedMode ? View.INVISIBLE : View.VISIBLE}">
+        android:visibility="@{safeUnbox(viewModel.isAdvancedMode) ? View.INVISIBLE : View.VISIBLE}">
 
         <TextView
             android:layout_width="wrap_content"

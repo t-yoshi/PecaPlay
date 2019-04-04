@@ -9,11 +9,13 @@
     <string name="yp_loading">Loading...</string>
     <string name="yp_cache">(Cache)</string>
     <string name="yp_connect_failed">%s connect failed:</string>
-    <string name="yp_reload">Reload YellowPages..  </string>
+    <string name="yp_reload">Reload YellowPages..</string>
 
     <string name="starred">Starred</string>
     <string name="new_item">New</string>
-    <string name="newly"><b>!</b></string>
+    <string name="newly">
+        <b>!</b>
+    </string>
     <string name="delete">Delete</string>
     <string name="edit">Edit</string>
     <string name="start">Start</string>
@@ -67,11 +69,6 @@
         <item>mmsh</item>
         <item>mms</item>
         <item>http</item>
-    </string-array>
-    <string-array name="pref_night_mode_entries" translatable="false">
-        <item>Daylight</item>
-        <item>Night</item>
-        <item>Auto</item>
     </string-array>
 
 

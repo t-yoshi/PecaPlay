@@ -1,0 +1,399 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 50100,
+    "identityHash": "233175ee563f2ea017168f13c33ae39c",
+    "entities": [
+      {
+        "tableName": "YellowPage",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`name` TEXT NOT NULL, `url` TEXT NOT NULL, `enabled` INTEGER NOT NULL, PRIMARY KEY(`name`))",
+        "fields": [
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "url",
+            "columnName": "url",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isEnabled",
+            "columnName": "enabled",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "name"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "Favorite",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`name` TEXT NOT NULL, `pattern` TEXT NOT NULL, `flags` TEXT NOT NULL, `enabled` INTEGER NOT NULL, PRIMARY KEY(`name`))",
+        "fields": [
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pattern",
+            "columnName": "pattern",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "flags",
+            "columnName": "flags",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isEnabled",
+            "columnName": "enabled",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "name"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "YpLiveChannel",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`isLatest` INTEGER NOT NULL, `lastLoadedTime` TEXT NOT NULL, `numLoaded` INTEGER NOT NULL, `name` TEXT NOT NULL, `id` TEXT NOT NULL, `ip` TEXT NOT NULL, `url` TEXT NOT NULL, `genre` TEXT NOT NULL, `description` TEXT NOT NULL, `listeners` INTEGER NOT NULL, `relays` INTEGER NOT NULL, `bitrate` INTEGER NOT NULL, `type` TEXT NOT NULL, `trackArtist` TEXT NOT NULL, `trackAlbum` TEXT NOT NULL, `trackTitle` TEXT NOT NULL, `trackContact` TEXT NOT NULL, `nameUrl` TEXT NOT NULL, `age` TEXT NOT NULL, `status` TEXT NOT NULL, `comment` TEXT NOT NULL, `direct` TEXT NOT NULL, `ypName` TEXT NOT NULL, `ypUrl` TEXT NOT NULL, PRIMARY KEY(`name`, `id`))",
+        "fields": [
+          {
+            "fieldPath": "isLatest",
+            "columnName": "isLatest",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastLoadedTime",
+            "columnName": "lastLoadedTime",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "numLoaded",
+            "columnName": "numLoaded",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.ip",
+            "columnName": "ip",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.url",
+            "columnName": "url",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.genre",
+            "columnName": "genre",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.listeners",
+            "columnName": "listeners",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.relays",
+            "columnName": "relays",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.bitrate",
+            "columnName": "bitrate",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.trackArtist",
+            "columnName": "trackArtist",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.trackAlbum",
+            "columnName": "trackAlbum",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.trackTitle",
+            "columnName": "trackTitle",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.trackContact",
+            "columnName": "trackContact",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.nameUrl",
+            "columnName": "nameUrl",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.age",
+            "columnName": "age",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.comment",
+            "columnName": "comment",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.direct",
+            "columnName": "direct",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.ypName",
+            "columnName": "ypName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.ypUrl",
+            "columnName": "ypUrl",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "name",
+            "id"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [
+          {
+            "name": "index_YpLiveChannel_isLatest",
+            "unique": false,
+            "columnNames": [
+              "isLatest"
+            ],
+            "createSql": "CREATE  INDEX `index_YpLiveChannel_isLatest` ON `${TABLE_NAME}` (`isLatest`)"
+          }
+        ],
+        "foreignKeys": []
+      },
+      {
+        "tableName": "YpHistoryChannel",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`lastPlay` TEXT NOT NULL, `name` TEXT NOT NULL, `id` TEXT NOT NULL, `ip` TEXT NOT NULL, `url` TEXT NOT NULL, `genre` TEXT NOT NULL, `description` TEXT NOT NULL, `listeners` INTEGER NOT NULL, `relays` INTEGER NOT NULL, `bitrate` INTEGER NOT NULL, `type` TEXT NOT NULL, `trackArtist` TEXT NOT NULL, `trackAlbum` TEXT NOT NULL, `trackTitle` TEXT NOT NULL, `trackContact` TEXT NOT NULL, `nameUrl` TEXT NOT NULL, `age` TEXT NOT NULL, `status` TEXT NOT NULL, `comment` TEXT NOT NULL, `direct` TEXT NOT NULL, `ypName` TEXT NOT NULL, `ypUrl` TEXT NOT NULL, PRIMARY KEY(`name`, `id`))",
+        "fields": [
+          {
+            "fieldPath": "lastPlay",
+            "columnName": "lastPlay",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.ip",
+            "columnName": "ip",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.url",
+            "columnName": "url",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.genre",
+            "columnName": "genre",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.description",
+            "columnName": "description",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.listeners",
+            "columnName": "listeners",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.relays",
+            "columnName": "relays",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.bitrate",
+            "columnName": "bitrate",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.trackArtist",
+            "columnName": "trackArtist",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.trackAlbum",
+            "columnName": "trackAlbum",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.trackTitle",
+            "columnName": "trackTitle",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.trackContact",
+            "columnName": "trackContact",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.nameUrl",
+            "columnName": "nameUrl",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.age",
+            "columnName": "age",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.comment",
+            "columnName": "comment",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.direct",
+            "columnName": "direct",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.ypName",
+            "columnName": "ypName",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "yp4g.ypUrl",
+            "columnName": "ypUrl",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "columnNames": [
+            "name",
+            "id"
+          ],
+          "autoGenerate": false
+        },
+        "indices": [],
+        "foreignKeys": []
+      }
+    ],
+    "views": [],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, \"233175ee563f2ea017168f13c33ae39c\")"
+    ]
+  }
+}

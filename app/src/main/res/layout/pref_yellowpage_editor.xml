@@ -5,7 +5,7 @@
     <data>
         <variable
             name="viewModel"
-            type="org.peercast.pecaplay.prefs.YellowPageEditorDialog.ViewModel" />
+            type="org.peercast.pecaplay.prefs.YellowPageEditorDialogFragment.ViewModel" />
     </data>
 
     <LinearLayout
@@ -17,7 +17,7 @@
         android:paddingRight="16dp"
         android:paddingTop="25dp">
 
-        <android.support.design.widget.TextInputLayout
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             app:hintTextAppearance="@style/TextAppearance.AppCompat">
@@ -32,9 +32,9 @@
                 android:inputType="textCapCharacters"
                 android:maxLines="1" />
 
-        </android.support.design.widget.TextInputLayout>
+        </com.google.android.material.textfield.TextInputLayout>
 
-        <android.support.design.widget.TextInputLayout
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="30dp"
@@ -48,7 +48,7 @@
                 android:inputType="textUri"
                 android:text="@={viewModel.url}"
                 android:maxLines="1" />
-        </android.support.design.widget.TextInputLayout>
+        </com.google.android.material.textfield.TextInputLayout>
 
 
     </LinearLayout>

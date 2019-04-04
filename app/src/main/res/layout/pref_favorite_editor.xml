@@ -6,11 +6,7 @@
 
         <variable
             name="viewModel"
-            type="org.peercast.pecaplay.prefs.FavoriteEditorViewModel" />
-
-        <variable
-            name="isAdvancedMode"
-            type="boolean" />
+            type="org.peercast.pecaplay.prefs.FavoriteEditorDialogFragment.ViewModel" />
 
     </data>
 
@@ -21,15 +17,13 @@
 
         <FrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="wrap_content">
 
             <include layout="@layout/pref_favorite_editor_pane_basic"
                 bind:viewModel="@{viewModel}"
-                bind:isAdvancedMode="@{isAdvancedMode}"
                 />
             <include layout="@layout/pref_favorite_editor_pane_advanced"
                 bind:viewModel="@{viewModel}"
-                bind:isAdvancedMode="@{isAdvancedMode}"
                 />
 
         </FrameLayout>

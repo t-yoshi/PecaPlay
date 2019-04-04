@@ -1,55 +1,60 @@
 package org.peercast.pecaplay.prefs
 
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
-import android.preference.Preference
-import android.preference.PreferenceFragment
-import org.peercast.pecaplay.PlayerLauncherSettings
+import androidx.preference.PreferenceFragmentCompat
 import org.peercast.pecaplay.R
 import org.peercast.pecaplay.app.AppTheme
 
 /**
 
  */
-class ViewerPrefsFragment : PreferenceFragment (), Preference.OnPreferenceChangeListener {
+class ViewerPrefsFragment : PreferenceFragmentCompat() {
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
 
+    private fun getInstalledViewerVersion(): String? {
+        return try {
+            val info = context!!.packageManager.getPackageInfo("org.peercast.pecaviewer", 0)
+            info.versionName
+        } catch (e: PackageManager.NameNotFoundException) {
+            null
+        }
+    }
+
+    //val SUPPORT_VIDEO_TYPE = listOf("WMV", "FLV")
+
+    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         addPreferencesFromResource(R.xml.pref_viewer)
 
-        val version = PlayerLauncherSettings(activity).installedPlayerVersion
+        val version = getInstalledViewerVersion()
         val isInstalled = version != null
 
-        with(findPreference("pref_viewer")) {
-            icon = AppTheme(activity).getIcon(R.drawable.ic_ondemand_video_36dp)
-            title = "PacaPlay Viewer"
+        findPreference("pref_viewer").let {
+            it.setIcon(R.drawable.ic_ondemand_video_36dp)
+            it.icon.setTint(AppTheme.getIconColor(it.context))
+            it.title = "PacaPlay Viewer"
+
             if (isInstalled) {
-                summary = "Ver. $version"
+                it.summary = "Ver. $version"
             } else {
-                setSummary(R.string.viewer_not_installed)
-                val i = Intent(Intent.ACTION_VIEW,
-                        Uri.parse("market://details?id=org.peercast.pecaviewer"))
-                intent = i
+                it.setSummary(R.string.viewer_not_installed)
+                val i = Intent(
+                    Intent.ACTION_VIEW,
+                    Uri.parse("market://details?itemId=org.peercast.pecaviewer")
+                )
+                it.intent = i
             }
         }
 
-        with(findPreference("pref_viewer_wmv")) {
-            isEnabled = isInstalled
-            onPreferenceChangeListener = this@ViewerPrefsFragment
+        findPreference("pref_viewer_wmv").let {
+            it.isEnabled = isInstalled
         }
 
-        with(findPreference("pref_viewer_flv")) {
-            isEnabled = isInstalled
-            onPreferenceChangeListener = this@ViewerPrefsFragment
+        findPreference("pref_viewer_flv").let {
+            it.isEnabled = isInstalled
         }
-
     }
 
-    override fun onPreferenceChange(preference: Preference, newValue: Any): Boolean {
-        val type = preference.key.substringAfterLast("_")
-        PlayerLauncherSettings(activity).setEnabledType(type, newValue as Boolean)
-        return true
-    }
 }

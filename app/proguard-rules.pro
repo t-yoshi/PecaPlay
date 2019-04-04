@@ -34,13 +34,6 @@
     public <methods>;
 }
 
-#eventbus
--keepattributes *Annotation*
--keepclassmembers class * {
-    @org.greenrobot.eventbus.Subscribe <methods>;
-}
--keep enum org.greenrobot.eventbus.ThreadMode { *; }
-
 # Simple-Xml
 -dontwarn com.bea.xml.stream.**
 -dontwarn org.simpleframework.xml.stream.**

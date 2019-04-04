@@ -2,129 +2,110 @@ package org.peercast.pecaplay.prefs
 
 
 import android.content.Context
-import android.content.SharedPreferences
 import android.net.Uri
 import android.preference.PreferenceManager
-import org.peercast.pecaplay.yp4g.YpOrder
+import androidx.core.content.edit
+import org.peercast.pecaplay.yp4g.YpDisplayOrder
 
-class AppPreferences(c: Context) {
+abstract class AppPreferences {
+    /**夜間モードか */
+    abstract val isNightMode: Boolean
+
+    /**動作しているPeerCast。localhostまたは192.168.x.x*/
+    abstract var peerCastUrl: Uri
+
+    /**表示順*/
+    abstract var displayOrder: YpDisplayOrder
+
+    /**NGは非表示か、NGと表示するか*/
+    abstract val isNgHidden: Boolean
+
+    /**WMV,FLVなどのタイプでPecaPlayViewerが有効か*/
+    abstract fun isViewerEnabled(type: String): Boolean
+
+    /**通知するか*/
+    abstract var isNotificationEnabled: Boolean
+
+    /**通知音*/
+    abstract var notificationSoundUrl: Uri?
+
+    /**通知済み新着のChannel-Id*/
+    abstract var notificationNewlyChannelsId: List<String>
+
+    companion object {
+        const val KEY_IS_NIGHT_MODE = "pref_is_night_mode"
+        const val KEY_PEERCAST_SERVER_URL = "pref_peercast_server_url"
+        const val KEY_NG_HIDDEN = "pref_ng_hidden"
+    }
+
+}
+
+class DefaultAppPreferences(c: Context) : AppPreferences() {
     private val prefs = PreferenceManager.getDefaultSharedPreferences(c)
 
-    val nightMode: String
-        get() = prefs.getString(KEY_NIGHT_MODE, "?")
+    override val isNightMode: Boolean
+        get() = prefs.getBoolean(KEY_IS_NIGHT_MODE, false)
 
-    var peerCastUrl: Uri
+    override var peerCastUrl: Uri
         set(value) {
-            prefs.edit().putString(KEY_PEERCAST_URL, value.toString()).apply()
+            prefs.edit { putString(KEY_PEERCAST_SERVER_URL, value.toString()) }
         }
         get() {
-            val s = prefs.getString(KEY_PEERCAST_URL, "")
+            val s = prefs.getString(KEY_PEERCAST_SERVER_URL, "")
             if (s != "")
                 return Uri.parse(s)
             return Uri.parse("http://localhost:7144/").also {
-                peerCastUrl = it
+                prefs.edit { putString(KEY_PEERCAST_SERVER_URL, it.toString()) }
             }
         }
 
-    /**
-     * この「お気に入り」が有効かどうか。
-     */
-    @Deprecated("PecaPlay < v5")
-    fun isYellowPageEnabled(ypName: String): Boolean {
-        return prefs.getBoolean(getYellowPageKey(ypName), false)
-    }
+    override var displayOrder: YpDisplayOrder
+        set(value) = prefs.edit { putString(KEY_DISPLAY_ORDER, value.name) }
+        get() = YpDisplayOrder.fromName(prefs.getString(KEY_DISPLAY_ORDER, null))
 
-    @Deprecated("PecaPlay < v5")
-    fun isFavoriteEnabled(name: String): Boolean {
-        val k = KEY_FAVORITE_ENABLED_PREFIX + name
-        return prefs.getBoolean(k, false)
-    }
-
-    var displayOrder: YpOrder
-        set(value) = prefs.edit().putString(KEY_DISPLAY_ORDER, value.name).apply()
-        get() = YpOrder.fromName(prefs.getString(KEY_DISPLAY_ORDER, ""))
-
-    val isNgHidden: Boolean
+    override val isNgHidden: Boolean
         get() = prefs.getBoolean(KEY_NG_HIDDEN, false)
 
 
-    fun isViewerEnabled(type: String): Boolean {
+    override fun isViewerEnabled(type: String): Boolean {
         val type = type.toLowerCase()
-        val default = type in arrayOf("wmv", "flv")
+        val default = type in listOf("wmv", "flv")//default true
         return prefs.getBoolean(KEY_PLAYER_ENABLED_PREFIX + type, default)
     }
 
-    val isAppDebugMode: Boolean
-        get() = prefs.getBoolean(KEY_APP_DEBUG_MODE, false)
-
-    var isNotificationEnabled: Boolean
+    override var isNotificationEnabled: Boolean
         get() = prefs.getBoolean(KEY_NOTIFICATION_ENABLED, false)
         set(value) {
-            prefs.edit().putBoolean(KEY_NOTIFICATION_ENABLED, value).apply()
+            prefs.edit { putBoolean(KEY_NOTIFICATION_ENABLED, value) }
         }
 
-//    val isAppNotificationEnabled: Boolean
-//        get() = prefs.getBoolean(KEY_APP_NOTIFICATION_ENABLED, false)
-//
-//    fun putAppNotificationEnabled(b: Boolean) {
-//        prefs.edit().putBoolean(KEY_APP_NOTIFICATION_ENABLED, b).apply()
-//    }
-
-//    val notificationTypes: Set<NotificationType>
-//        get() {
-//            val types = NotificationType.values()
-//            return prefs.getStringSet(KEY_NOTIFICATION_TYPES, emptySet())
-//                    .mapNotNull { n ->
-//                        types.firstOrNull { it.name == n }
-//                    }
-//                    .toSet()
-//        }
-
-
-    var notificationSoundUrl: Uri?
+    override var notificationSoundUrl: Uri?
         set(value) {
-            prefs.edit().putString(KEY_NOTIFICATION_SOUND_URL, value?.toString()).apply()
-        }
-        get() {
-            return prefs.getString(KEY_NOTIFICATION_SOUND_URL, null)?.let {
-                Uri.parse(it)
+            when (value) {
+                null, Uri.EMPTY ->
+                    prefs.edit { remove(KEY_NOTIFICATION_SOUND_URL) }
+                else ->
+                    prefs.edit { putString(KEY_NOTIFICATION_SOUND_URL, value.toString()) }
             }
         }
+        get() = prefs.getString(KEY_NOTIFICATION_SOUND_URL, null)?.let(Uri::parse) ?: Uri.EMPTY
 
-    fun registerOnSharedPreferenceChangeListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {
-        prefs.registerOnSharedPreferenceChangeListener(listener)
-    }
+    override var notificationNewlyChannelsId: List<String>
+        get() = prefs.getStringSet(KEY_NOTIFICATION_NEWLY_CHANNELS_ID, null)?.toList() ?: emptyList()
+        set(value) {
+            prefs.edit { putStringSet(KEY_NOTIFICATION_NEWLY_CHANNELS_ID, value.toSet()) }
+        }
 
-    fun unregisterOnSharedPreferenceChangeListener(listener: SharedPreferences.OnSharedPreferenceChangeListener) {
-        prefs.unregisterOnSharedPreferenceChangeListener(listener)
-    }
 
     companion object {
-        private const val TAG = "AppPreferences"
-        const val KEY_NIGHT_MODE = "pref_night_mode"
-
-        private const val KEY_PEERCAST_URL = "pref_peercast_server_url"
         private const val KEY_DISPLAY_ORDER = "pref_display_order"
 
-        @Deprecated("PecaPlay < v5")
-        private const val KEY_YP_ENABLED_PREFIX = "pref_yellowpage_enabled_"
-        @Deprecated("PecaPlay < v5")
-        private const val KEY_FAVORITE_ENABLED_PREFIX = "pref_favorite_enabled_"
-
-        private const val KEY_NG_HIDDEN = "pref_ng_hidden"
-
         private const val KEY_PLAYER_ENABLED_PREFIX = "pref_viewer_" //(wmv|flv|mkf|...)
-        private const val KEY_APP_DEBUG_MODE = "pref_app_debug_mode"
 
         private const val KEY_NOTIFICATION_ENABLED = "pref_notification_enabled"
         private const val KEY_NOTIFICATION_SOUND_URL = "pref_notification_sound_url"
+        private const val KEY_NOTIFICATION_NEWLY_CHANNELS_ID = "pref_notification_newly_channels_id"
 
-        @Deprecated("PecaPlay < v5")
-        fun getYellowPageKey(ypName: String): String {
-            if (ypName.isEmpty()) throw IllegalArgumentException("ypName is empty")
-            return KEY_YP_ENABLED_PREFIX + ypName
-        }
     }
-
-
 }
+

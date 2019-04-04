@@ -1,118 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <Preference
+            android:title="@string/pref_header_yellow_page"
+            android:fragment="org.peercast.pecaplay.prefs.YellowPagePrefsFragment"/>
+
     <EditTextPreference
-        android:defaultValue="http://localhost:7144/"
-        android:inputType="textUri"
-        android:key="pref_peercast_server_url"
-        android:maxLines="1"
-        android:selectAllOnFocus="true"
-        android:singleLine="true"
-        android:dialogMessage="http://(host):(port)/"
-        android:title="@string/pref_peercast_url" />
-
-    <SwitchPreference
-        android:defaultValue="false"
-        android:key="pref_ng_hidden"
-        android:title="@string/ng_hidden" />
-
-    <ListPreference
-        android:entries="@array/pref_night_mode_entries"
-        android:entryValues="@array/pref_night_mode_entries"
-        android:key="pref_night_mode"
-        android:title="@string/pref_night_mode" />
+            android:defaultValue="http://localhost:7144/"
+            android:inputType="textUri"
+            android:key="pref_peercast_server_url"
+            android:maxLines="1"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:dialogMessage="http://(host):(port)/"
+            android:title="@string/pref_peercast_url"/>
 
     <Preference
-        android:key="pref_notification_sound"
-        android:title="@string/notification_sound" />
-
-    <Preference android:selectable="false" />
-
-    <PreferenceCategory
-        android:key="pref_category_about"
-        android:title="@string/pref_header_about">
-        <Preference
-            android:key="pref_about"
-            android:selectable="false"
-            android:title="@string/app_name" />
-
-        <Preference
-            android:key="pref_oss_license"
-            android:persistent="false"
-            android:title="@string/oss_license" />
-        <!-- 動的生成
-                <SwitchPreference
-                    android:defaultValue="false"
-                    android:key="pref_app_debug_mode"
-                    andrnameabel="@string/t_debug_mode" />
-        -->
-    </PreferenceCategory>
-
-
-<!--
-    <EditTextPreference
-        android:defaultValue="http://localhost:7144/"
-        android:inputType="textUri"
-        android:key="pref_peercast_server_url"
-        android:maxLines="1"
-        android:selectAllOnFocus="true"
-        android:singleLine="true"
-        android:title="@string/pref_peercast_url" />
-
+            android:title="@string/pref_header_viewer"
+            android:fragment="org.peercast.pecaplay.prefs.ViewerPrefsFragment"/>
 
     <SwitchPreference
-        android:defaultValue="false"
-        android:key="pref_ng_hidden"
-        android:title="@string/ng_hidden" />
-
+            android:defaultValue="false"
+            android:key="pref_ng_hidden"
+            android:title="@string/ng_hidden"/>
 
     <SwitchPreference
-        android:defaultValue="true"
-        android:key="pref_save_search_history"
-        android:title="@string/save_search_history" />
+            android:key="pref_is_night_mode"
+            android:title="@string/pref_night_mode"/>
 
-    <ListPreference
-        android:key="pref_theme"
-        android:title="@string/peca_service_running" />
+    <Preference
+            android:key="pref_notification_sound"
+            android:title="@string/notification_sound"/>
 
-
-    <PreferenceCategory
-        android:key="pref_category_notification"
-        android:title="@strflagNotificationtion">
-
-        &lt;!&ndash;
-        <MultiSelectListPreference
-            android:key="pref_notification"
-            android:title="@string/t_notification_types" />
-
-        <RingtonePreference
-            android:key="pref_notification_sound_url"
-            android:ringtoneTyflagNotificationtion"
-            android:showSilent="false"
-            android:title="@string/t_notification_sound" />
-        &ndash;&gt;
-    </PreferenceCategory>
-
+    <Preference android:selectable="false"/>
 
     <PreferenceCategory
-        android:key="pref_category_about"
-        android:title="@string/pref_header_about">
+            android:key="pref_category_about"
+            android:title="@string/pref_header_about">
         <Preference
-            android:key="pref_about"
-            android:persistent="false" />
+                android:key="pref_about"
+                android:selectable="false"
+                android:title="@string/app_name"/>
 
         <Preference
-            android:key="pref_opensource_license"
-            android:persistent="false"
-            android:title="@string/oss_license" />
-        &lt;!&ndash; 動的生成
-                <SwitchPreference
-                    android:defaultValue="false"
-                    android:key="pref_app_debug_mode"
-                    andrnameabel="@string/t_debug_mode" />
-        &ndash;&gt;
+                android:key="pref_oss_license"
+                android:persistent="false"
+                android:title="@string/oss_license"/>
     </PreferenceCategory>
--->
-
 
 </PreferenceScreen>

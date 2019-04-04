@@ -1,10 +1,10 @@
 package org.peercast.pecaplay.view
 
 import android.content.Context
-import android.support.v7.widget.RecyclerView
 import android.util.AttributeSet
 import android.view.ContextMenu
 import android.view.View
+import androidx.recyclerview.widget.RecyclerView
 
 /**
  * コンテキストメニューの実装
@@ -14,10 +14,10 @@ import android.view.View
  * (注) ロングクリックイベントをRecyclerViewまで透過させること。
  * holder.itemView.setOnLongClickListener { false }
  * **/
-class CustomRecyclerView : RecyclerView {
-    constructor(context: Context?) : super(context)
-    constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs)
-    constructor(context: Context?, attrs: AttributeSet?, defStyle: Int) : super(context, attrs, defStyle)
+class MenuableRecyclerView : RecyclerView {
+    constructor(context: Context) : super(context)
+    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
+    constructor(context: Context, attrs: AttributeSet?, defStyle: Int) : super(context, attrs, defStyle)
 
     data class ContextMenuInfo(
             val position: Int,
@@ -34,7 +34,7 @@ class CustomRecyclerView : RecyclerView {
 
         val pos = getChildAdapterPosition(originalView)
         if (pos >= 0) {
-            val id = adapter.getItemId(pos)
+            val id = adapter?.getItemId(pos) ?: return false
             menuInfo = ContextMenuInfo(pos, id)
             return super.showContextMenuForChild(originalView)
         }
@@ -42,7 +42,7 @@ class CustomRecyclerView : RecyclerView {
     }
 
     companion object {
-        private const val TAG = "CustomRecyclerView"
+        private const val TAG = "MenuableRecyclerView"
     }
 
 }

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="default_yp_names">
+        <item>SP</item>
+        <item>TP</item>
+    </string-array>
+    <string-array name="default_yp_urls">
+        <item>http://bayonet.ddo.jp/sp/</item>
+        <item>http://temp.orz.hm/yp/</item>
+    </string-array>
+</resources>

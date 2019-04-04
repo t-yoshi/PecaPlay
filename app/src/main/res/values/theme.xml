@@ -1,9 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Android 6.0からNightモードの動的切り替えが可能 -->
-    <style name="AppTheme" parent="Theme.AppCompat.DayNight">
-        <item name="android:textColor">@color/text_color_light</item>
+    <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:textColorSecondary">@color/text_color_light</item>
     </style>
+
+    <style name="AppSettingTheme" parent="Theme.AppCompat.DayNight">
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
+    </style>
+
+
+
     <color name="colorIconAlarm">@color/yellow_800</color>
     <bool name="landscape_mode">false</bool>
+
 </resources>

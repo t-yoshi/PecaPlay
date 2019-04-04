@@ -2,124 +2,218 @@ package org.peercast.pecaplay
 
 import android.app.NotificationManager
 import android.app.SearchManager
-import android.app.job.JobInfo
-import android.app.job.JobScheduler
-import android.arch.lifecycle.Observer
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.database.Cursor
+import android.os.Build
 import android.os.Bundle
-import android.support.v4.view.ActionProvider
-import android.support.v4.view.MenuItemCompat
-import android.support.v7.app.ActionBarDrawerToggle
-import android.support.v7.app.AppCompatActivity
-import android.support.v7.widget.SearchView
-import android.view.Menu
-import android.view.MenuItem
-import android.view.SubMenu
-import android.view.View
+import android.os.SystemClock
+import android.view.*
+import android.widget.Toast
+import androidx.appcompat.app.ActionBarDrawerToggle
+import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
+import androidx.appcompat.widget.SearchView
+import androidx.core.text.HtmlCompat
+import androidx.core.view.ActionProvider
+import androidx.core.view.MenuItemCompat
+import androidx.drawerlayout.widget.DrawerLayout
+import androidx.lifecycle.Observer
+import com.google.android.material.appbar.AppBarLayout
 import kotlinx.android.synthetic.main.pacaplay_activity.*
-import org.peercast.pecaplay.app.AppTheme
-import org.peercast.pecaplay.app.Favorite
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import org.koin.android.ext.android.get
+import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.viewModel
+import org.peercast.pecaplay.prefs.AppPreferences
 import org.peercast.pecaplay.prefs.SettingsActivity
-import org.peercast.pecaplay.yp4g.YpOrder
+import org.peercast.pecaplay.util.localizedSystemMessage
+import org.peercast.pecaplay.yp4g.SpeedTestFragment
+import org.peercast.pecaplay.yp4g.YpDisplayOrder
+import retrofit2.HttpException
 import timber.log.Timber
-import java.lang.ref.WeakReference
+import kotlin.coroutines.CoroutineContext
 
 /*
  *vDrawerLayout(縦長時のみ)
  * |                   |                      |
- * |   vNavigation     |   YpIndexFragment    |
+ * |   vNavigation     |   YpChannelFragment    |
  * |     (260dp)       |                      |
  * |                   |                      |
  * */
-class PecaPlayActivity : AppCompatActivity() {
+class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
 
+    private val job = Job()
+    override val coroutineContext: CoroutineContext
+        get() = job + Dispatchers.Main
+    private val appPrefs: AppPreferences by inject()
+    private val viewModel: PecaPlayViewModel by viewModel()
+    private val presenter = PecaPlayPresenter(this)
     private var drawerToggle: ActionBarDrawerToggle? = null //縦長時のみ
-    private lateinit var searchViewPresenter: SearchViewPresenter
-    private lateinit var viewModel: PecaViewModel
-    private lateinit var navigationPresenter: NavigationPresenter
-    private lateinit var loaderScheduler: LoaderScheduler
-
+    private var lastLoadedERTime = 0L
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            delegate.setLocalNightMode(AppCompatDelegate.getDefaultNightMode())
+        }
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.pacaplay_activity)
 
-        vDrawerLayout?.let {
+        setSupportActionBar(vToolbar)
+        invalidateOptionsMenu()
+
+        vDrawerLayout?.let { drawer ->
             drawerToggle = ActionBarDrawerToggle(
-                    this, it,
-                    R.string.drawer_open,
-                    R.string.drawer_close).apply {
-                it.addDrawerListener(this)
-            }
+                this, drawer,
+                R.string.drawer_open,
+                R.string.drawer_close
+            ).also(drawer::addDrawerListener)
+
             supportActionBar?.setDisplayHomeAsUpEnabled(true)
+
+            // AppBarLayoutのオフセット変化からドロワーの表示位置を調節する
+            val defaultTopMargin = (vNavigation.layoutParams as DrawerLayout.LayoutParams).topMargin
+            vAppBarLayout.addOnOffsetChangedListener(AppBarLayout.OnOffsetChangedListener { _, verticalOffset ->
+                val p = vNavigation.layoutParams as DrawerLayout.LayoutParams
+                p.setMargins(p.leftMargin, defaultTopMargin + verticalOffset, p.rightMargin, p.bottomMargin)
+                vNavigation.layoutParams = p
+            })
         }
 
-        viewModel = PecaViewModel.get(this)
-
-        searchViewPresenter = SearchViewPresenter(this) {
-            viewModel.searchText = it
-        }
-
-        navigationPresenter = NavigationPresenter(savedInstanceState, vNavigation) { title, tag, filter ->
-            viewModel.navigate(tag, filter)
-
-            vDrawerLayout?.closeDrawers()
-            if (vDrawerLayout != null) {
-                supportActionBar?.title = when {
-                    title.isEmpty() -> getString(R.string.app_name)
-                    else -> title
+        PecaNavigationViewExtension(vNavigation, savedInstanceState, this) { item ->
+            Timber.d("onItemClick()")
+            viewModel.run {
+                order = when (item.tag) {
+                    "history" -> YpDisplayOrder.NONE
+                    "newly" -> {
+                        removeNotification()
+                        YpDisplayOrder.AGE_ASC
+                    }
+                    else -> appPrefs.displayOrder
                 }
-            } else {
+                selector = item.selector
+                source = when (item.tag) {
+                    "history" -> YpChannelSource.HISTORY
+                    else -> YpChannelSource.LIVE
+                }
+                notifyChange()
+            }
+
+            vDrawerLayout?.let {
+                it.closeDrawers()
+                supportActionBar?.title = when {
+                    item.title.isEmpty() -> getString(R.string.app_name)
+                    else -> item.title
+                }
+            } ?: kotlin.run {
                 supportActionBar?.setTitle(R.string.app_name)
             }
         }
-        navigationPresenter.register(viewModel.database, this)
 
-        loaderScheduler = LoaderScheduler(this)
+        get<PeerCastServiceEventLiveData>().observe(this, Observer { ev ->
+            when {
+                ev is PeerCastServiceBindEvent.OnBind && ev.localServicePort > 0 -> {
+                    if (savedInstanceState == null) {
+                        //回転後の再生成時には表示しない
+                        val msg = "PeerCast running. port=${ev.localServicePort}"
+                        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+                    }
+                }
+                ev is PeerCastServiceBindEvent.OnUnbind -> finish()
+            }
+        })
+
+        get<LoadingWorkerLiveData>().observe(this, Observer { ev ->
+            when (ev) {
+                is LoadingWorker.Event.OnException -> {
+                    val s = when (ev.ex) {
+                        is HttpException -> ev.ex.response().message()
+                        else -> ev.ex.localizedSystemMessage()
+                    }
+                    val msg = HtmlCompat.fromHtml("<font color=red>${ev.yp.name}: $s", 0)
+                    Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
+                }
+                is LoadingWorker.Event.OnFinished -> {
+                    lastLoadedERTime = SystemClock.elapsedRealtime()
+                }
+            }
+        })
+
+        viewModel.isNotificationIconEnabled.observe(this, Observer {
+            if (!it) {
+                presenter.setScheduledLoading(false)
+            }
+            invalidateOptionsMenu()
+        })
+
+        onCreateOrNewIntent()
     }
 
-    override fun onPostCreate(savedInstanceState: Bundle?) {
-        super.onPostCreate(savedInstanceState)
-        PecaPlayApplication.of(this).bindPeerCastService()
-        drawerToggle?.syncState()
+    private fun removeNotification(){
+        appPrefs.notificationNewlyChannelsId = emptyList()
+        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.cancelAll()
     }
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
+        setIntent(intent)
+        onCreateOrNewIntent()
+    }
 
-        intent?.extras?.getString(EXTRA_NAVIGATION_CATEGORY)?.let {
-            navigationPresenter.navigate(it)
-            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            manager.cancelAll()
+    private fun onCreateOrNewIntent(){
+        if (intent.hasExtra(PecaPlayIntent.EXTRA_IS_NEWLY)) {
+            removeNotification()
         }
+        if (appPrefs.isNotificationEnabled)
+            presenter.setScheduledLoading(true)
+        else
+            presenter.startLoading()
+    }
+
+
+    override fun onPostCreate(savedInstanceState: Bundle?) {
+        super.onPostCreate(savedInstanceState)
+
+        drawerToggle?.syncState()
     }
 
     override fun onPause() {
         super.onPause()
-        viewModel.cancelLoading()
+        presenter.stopLoading()
     }
 
+    override fun onResume() {
+        super.onResume()
+        Timber.d("lastLoadedERTime=$lastLoadedERTime - ${SystemClock.elapsedRealtime()}")
+        if (lastLoadedERTime != 0L && lastLoadedERTime < SystemClock.elapsedRealtime() - 10 * 60 * 1000) {
+            presenter.startLoading()
+        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        vNavigation.extension.onSaveInstanceState(outState)
+    }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.main_menu, menu)
 
-        val iconTint = AppTheme(this).actionBarIconTint
-        ViewUtils.menuItems(menu).forEach {
-            MenuItemCompat.setIconTintList(it, iconTint)
-        }
-
         menu.findItem(R.id.menu_notification).let {
-            it.isEnabled = loaderScheduler.isSchedulable
-            val b = viewModel.appPrefs.isNotificationEnabled
-            it.setIcon(when (b) {
-                true -> R.drawable.ic_notifications_active_24dp
-                false -> R.drawable.ic_notifications_off_24dp
-            })
+            it.isEnabled =
+                viewModel.isNotificationIconEnabled.value == true  // #schedulePresenter.isNotificationIconEnabled
+            val b = appPrefs.isNotificationEnabled
+            it.setIcon(
+                when (b) {
+                    true -> R.drawable.ic_notifications_active_24dp
+                    false -> R.drawable.ic_notifications_off_24dp
+                }
+            )
             it.isChecked = b
         }
 
@@ -127,8 +221,14 @@ class PecaPlayActivity : AppCompatActivity() {
             MenuItemCompat.setActionProvider(it, DisplayOrderMenuProvider())
         }
 
-        menu.findItem(R.id.menu_search).let {
-            searchViewPresenter.register(it)
+        menu.findItem(R.id.menu_search).let { mi ->
+            (mi.actionView as SearchView?)?.let { v ->
+                SearchViewEventHandler(v, componentName) { text ->
+                    Timber.d("onTextChange(%s)", text)
+                    viewModel.searchString = text
+                    viewModel.notifyChange()
+                }
+            }
         }
 
         return true
@@ -137,13 +237,16 @@ class PecaPlayActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.menu_reload -> {
-                viewModel.startLoading()
+                presenter.startLoading()
             }
 
             R.id.menu_notification -> {
-                item.isChecked = !item.isChecked
-                viewModel.appPrefs.isNotificationEnabled = item.isChecked
-                loaderScheduler.setScheduler()
+                //item.isChecked = !item.isChecked
+                val enabled = !item.isChecked
+                //viewModel.isNotificationIconEnabled.value = enabled
+                appPrefs.isNotificationEnabled = enabled
+                presenter.setScheduledLoading(enabled)
+                //schedulePresenter.resetScheduler()
                 invalidateOptionsMenu()
             }
 
@@ -151,8 +254,11 @@ class PecaPlayActivity : AppCompatActivity() {
             R.id.menu_sort_age_asc,
             R.id.menu_sort_listener_desc,
             R.id.menu_sort_listener_asc -> {
-                val order = YpOrder.fromOrdinal(item.order)
-                viewModel.displayOrder = order
+                val order = YpDisplayOrder.fromOrdinal(item.order)
+                viewModel.order = order
+                viewModel.notifyChange()
+
+                appPrefs.displayOrder = order
                 item.isChecked = true
             }
 
@@ -160,8 +266,12 @@ class PecaPlayActivity : AppCompatActivity() {
                 SpeedTestFragment().show(supportFragmentManager, "SpeedTestFragment")
             }
 
+            R.id.menu_favorite -> {
+                SettingsActivity.startFavoritePrefs(this)
+            }
+
             R.id.menu_settings -> {
-                startActivity(Intent(this, SettingsActivity::class.java))
+                SettingsActivity.startGeneralPrefs(this)
             }
 
             else -> {
@@ -169,6 +279,7 @@ class PecaPlayActivity : AppCompatActivity() {
                         super.onOptionsItemSelected(item)
             }
         }
+
         return true
     }
 
@@ -179,16 +290,23 @@ class PecaPlayActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        if (searchViewPresenter.onBackPressed() ||
-                navigationPresenter.onBackPressed())
-            return
+        vNavigation.extension.let {
+            if (it.isEditMode) {
+                it.isEditMode = false
+                return
+            }
+            if (it.backToHome())
+                return
+        }
+
+        vDrawerLayout?.let { v ->
+            if (v.isDrawerOpen(Gravity.LEFT)) {
+                v.closeDrawers()
+                return
+            }
+        }
 
         super.onBackPressed()
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        navigationPresenter.onSaveInstanceState(outState)
     }
 
     //ソート順のサブメニュー
@@ -197,7 +315,7 @@ class PecaPlayActivity : AppCompatActivity() {
         override fun onCreateActionView(): View? = null
 
         override fun onPrepareSubMenu(menu: SubMenu) {
-            val ordinal = viewModel.appPrefs.displayOrder.ordinal
+            val ordinal = appPrefs.displayOrder.ordinal
             (0 until menu.size()).map {
                 menu.getItem(it).apply {
                     isCheckable = false
@@ -208,106 +326,41 @@ class PecaPlayActivity : AppCompatActivity() {
             }
         }
     }
-
-
 }
 
 /**
- * 通知用にYP読み込みJobをスケジュールする。
- * */
-private class LoaderScheduler(private val activity: AppCompatActivity) {
-    private val viewModel = PecaViewModel.get(activity)
-    private var existsFavoNotify = false
-    private val jobScheduler = activity.getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
-
-    init {
-        val favDao = viewModel.database.getFavoriteDao().getEnabled()
-        favDao.observe(activity, Observer<List<Favorite>> {
-            val newExists = it?.firstOrNull {
-                it.flags.isNotification
-            } != null
-
-            if (existsFavoNotify != newExists) {
-                existsFavoNotify = newExists
-                activity.invalidateOptionsMenu()
-                setScheduler()
-            }
-        })
-    }
-
-    fun setScheduler() {
-        if (viewModel.appPrefs.isNotificationEnabled && existsFavoNotify) {
-            val name = ComponentName(activity, PecaPlayService::class.java)
-            val ji = JobInfo.Builder(JOB_ID, name)
-                    .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED)
-                    //.setPersisted(true)
-                    .setPeriodic(15 * 60 * 1000L) // 15分間隔以上
-                    .build()
-            val scheduled = jobScheduler.allPendingJobs.any { it.id == JOB_ID }
-            if (!scheduled) {
-                val r = jobScheduler.schedule(ji)
-                Timber.d("schedule($r")
-            }
-        } else {
-            jobScheduler.cancel(JOB_ID)
-        }
-    }
-
-    /***/
-    val isSchedulable get() = existsFavoNotify
-
-    companion object {
-        private const val JOB_ID = 0x01
-    }
-}
-
-/**
- * 検索窓の作成とイベント処理。
+ * 検索窓のイベント処理。
  */
-private class SearchViewPresenter(private val activity: PecaPlayActivity,
-                                  private val onTextChange: (String) -> Unit) :
-        SearchView.OnQueryTextListener,
-        SearchView.OnSuggestionListener {
-
-    private val searchView = SearchView(activity)
+private class SearchViewEventHandler(
+    private val searchView: SearchView,
+    private val componentName: ComponentName,
+    private val onTextChange: (String) -> Unit
+) :
+    SearchView.OnQueryTextListener,
+    SearchView.OnSuggestionListener {
 
     init {
-        val manager = activity.getSystemService(Context.SEARCH_SERVICE) as SearchManager
+        val manager = searchView.context.getSystemService(Context.SEARCH_SERVICE) as SearchManager
 
         searchView.let {
-            it.setSearchableInfo(manager.getSearchableInfo(activity.componentName))
+            it.setSearchableInfo(manager.getSearchableInfo(componentName))
             it.setOnSuggestionListener(this)
             it.setOnQueryTextListener(this)
         }
     }
 
-    /**
-     * 検索窓を閉じる。
-     * @return 閉じた場合true
-     */
-    var onBackPressed: () -> Boolean = { false }
-        private set
-
-    fun register(item: MenuItem) {
-        item.actionView = searchView
-        val weakItem = WeakReference(item)
-        onBackPressed = {
-            weakItem.get().let {
-                it != null && it.isActionViewExpanded && it.collapseActionView()
-            }
-        }
-    }
-
+    private var oldText = ""
     /** */
     override fun onQueryTextChange(newText: String): Boolean {
-        onTextChange(newText)
+        if (newText != oldText)
+            onTextChange(newText)
+        oldText = newText
         return true
     }
 
     override fun onQueryTextSubmit(query: String): Boolean {
         return false
     }
-
 
     override fun onSuggestionSelect(position: Int): Boolean {
         return false

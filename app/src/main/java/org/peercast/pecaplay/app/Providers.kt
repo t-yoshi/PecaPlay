@@ -1,10 +1,10 @@
-package org.peercast.pecaplay
+package org.peercast.pecaplay.app
 
 import android.content.Context
 import android.content.SearchRecentSuggestionsProvider
 import android.provider.SearchRecentSuggestions
 
-private const val AUTHORITY = "org.peercast.pecaplay.SuggestionProvider"
+private const val AUTHORITY = "org.peercast.pecaplay.app.SuggestionProvider"
 
 class SuggestionProvider : SearchRecentSuggestionsProvider() {
     init {
@@ -12,6 +12,7 @@ class SuggestionProvider : SearchRecentSuggestionsProvider() {
     }
 }
 
+/**検索履歴の保存*/
 fun saveRecentQuery(c: Context, query: String) {
     if (query.isEmpty())
         return

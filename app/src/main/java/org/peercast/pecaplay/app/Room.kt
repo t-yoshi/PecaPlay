@@ -1,13 +1,14 @@
 package org.peercast.pecaplay.app
 
 import android.app.Application
-import android.arch.lifecycle.LiveData
-import android.arch.persistence.db.SupportSQLiteDatabase
-import android.arch.persistence.room.*
-import android.arch.persistence.room.migration.Migration
 import android.net.Uri
-import kotlinx.coroutines.experimental.launch
-import org.peercast.pecaplay.AppSQLiteUpdater_v4
+import androidx.lifecycle.LiveData
+import androidx.room.*
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.text.SimpleDateFormat
 import java.util.*
@@ -16,76 +17,79 @@ import java.util.*
 @Dao
 interface YellowPageDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun add(item: YellowPage)
+    suspend fun add(item: YellowPage)
 
     @Update
-    fun update(item: YellowPage)
+    suspend fun update(item: YellowPage)
 
     @Delete
-    fun remove(item: YellowPage)
+    suspend fun remove(item: YellowPage)
 
-    @Query("SELECT * FROM YellowPage ORDER BY Name")
-    fun get(): LiveData<List<YellowPage>>
+    @Query("SELECT * FROM YellowPage WHERE NOT :isSelectEnabled OR enabled ORDER BY Name")
+    suspend fun queryAwait(isSelectEnabled: Boolean = true): List<YellowPage>
 
-    @Query("SELECT * FROM YellowPage WHERE enabled ORDER BY Name")
-    fun getEnabled(): LiveData<List<YellowPage>>
+    @Query("SELECT * FROM YellowPage WHERE NOT :isSelectEnabled OR enabled ORDER BY Name")
+    fun query(isSelectEnabled: Boolean = true): LiveData<List<YellowPage>>
+
 }
 
 @Dao
 interface FavoriteDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun add(item: Favorite)
+    suspend fun add(item: Favorite)
 
     @Update
-    fun update(item: Favorite)
+    suspend fun update(item: Favorite)
 
     @Delete
-    fun remove(item: Favorite)
+    suspend fun remove(item: Favorite)
 
-    @Query("SELECT * FROM Favorite")
-    fun get(): LiveData<List<Favorite>>
+    @Query("SELECT * FROM Favorite WHERE NOT :isSelectEnabled OR enabled")
+    suspend fun queryAwait(isSelectEnabled: Boolean = true): List<Favorite>
 
-    @Query("SELECT * FROM Favorite WHERE enabled")
-    fun getEnabled(): LiveData<List<Favorite>>
+    @Query("SELECT * FROM Favorite WHERE NOT :isSelectEnabled OR enabled")
+    fun query(isSelectEnabled: Boolean = true): LiveData<List<Favorite>>
+
 }
 
-@Dao
-interface YpIndexDao {
-    @Query("SELECT * FROM YpIndex WHERE isLatest")
-    fun get(): LiveData<List<YpIndex>>
 
-    @Query("SELECT genre FROM YpIndex UNION ALL SELECT genre FROM YpHistory")
-    fun getGenre(): LiveData<List<String>>
+@Dao
+interface YpLiveChannelDao {
+    @Query("SELECT * FROM YpLiveChannel WHERE isLatest")
+    fun query(): LiveData<List<YpLiveChannel>>
+
+    @Query("SELECT * FROM YpLiveChannel WHERE isLatest")
+    suspend fun queryAwait(): List<YpLiveChannel>
 
     /**最後の読み込みからの経過(秒)*/
-    @Query("SELECT STRFTIME('%s')-IFNULL(STRFTIME('%s',MAX(lastLoadedTime)),0) FROM YpIndex")
+    @Query("SELECT STRFTIME('%s')-IFNULL(STRFTIME('%s',MAX(lastLoadedTime)),0) FROM YpLiveChannel")
     fun getLastLoadedSince(): Int
 
-    @Query("SELECT MAX(lastLoadedTime) FROM YpIndex")
+    @Query("SELECT MAX(lastLoadedTime) FROM YpLiveChannel")
     fun getLastLoaded(): Date?
-
 }
-
 
 @Dao
-interface HistoryDao {
+interface YpHistoryChannelDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun add(ch: YpHistory)
+    suspend fun addHistory(ch: YpHistoryChannel)
 
-    @Query("SELECT * FROM YpHistory ORDER BY lastPlay DESC")
-    fun get(): LiveData<List<YpHistory>>
+    @Query("SELECT * FROM YpHistoryChannel ORDER BY lastPlay DESC")
+    suspend fun queryAwait(): List<YpHistoryChannel>
+
+    @Query("SELECT * FROM YpHistoryChannel ORDER BY lastPlay DESC")
+    fun query(): LiveData<List<YpHistoryChannel>>
 }
-
 
 private class Converters {
     @TypeConverter
-    fun dateFromString(s: String?) : Date = newDateFormat().parse(s)
+    fun dateFromString(s: String?): Date = newDateFormat().parse(s)
 
     @TypeConverter
-    fun dateToString(d: Date) : String = newDateFormat().format(d)
+    fun dateToString(d: Date): String = newDateFormat().format(d)
 
     @TypeConverter
-    fun stringToUri(s: String) : Uri = Uri.parse(s)
+    fun stringToUri(s: String): Uri = Uri.parse(s)
 
     @TypeConverter
     fun uriToString(u: Uri) = u.toString()
@@ -95,39 +99,45 @@ private class Converters {
         private const val DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss"
 
         private fun newDateFormat() =
-                SimpleDateFormat(DATETIME_FORMAT, Locale.US).apply {
-                    timeZone = GMT_TIMEZONE
-                }
+            SimpleDateFormat(DATETIME_FORMAT, Locale.US).apply {
+                timeZone = GMT_TIMEZONE
+            }
 
     }
 }
 
 @Database(
-        entities = [
-            YellowPage::class, Favorite::class,
-            YpIndex::class, YpHistory::class
-        ],
-        version = 50000)
+    entities = [
+        YellowPage::class, Favorite::class,
+        YpLiveChannel::class, YpHistoryChannel::class
+    ],
+    version = 50100
+)
 @TypeConverters(Converters::class)
 abstract class AppRoomDatabase : RoomDatabase() {
-    abstract fun getYellowPageDao(): YellowPageDao
-    abstract fun getFavoriteDao(): FavoriteDao
-    abstract fun getYpIndexDao(): YpIndexDao
-    abstract fun getHistoryDao(): HistoryDao
+    abstract val yellowPageDao: YellowPageDao
+    abstract val favoriteDao: FavoriteDao
+    abstract val ypChannelDao: YpLiveChannelDao
+    abstract val ypHistoryDao: YpHistoryChannelDao
+
 
     private fun truncate() {
         runInTransaction {
-            var r = compileStatement("""
-DELETE FROM YpHistory WHERE rowid NOT IN (
-  SELECT rowid FROM YpHistory ORDER BY LastPlay DESC LIMIT 100
-)""".trimIndent()).use {
+            var r = compileStatement(
+                """
+DELETE FROM YpHistoryChannel WHERE rowid NOT IN (
+  SELECT rowid FROM YpHistoryChannel ORDER BY LastPlay DESC LIMIT 100
+)""".trimIndent()
+            ).use {
                 it.executeUpdateDelete()
             }
 
-            r += compileStatement("""
-DELETE FROM YpIndex
+            r += compileStatement(
+                """
+DELETE FROM YpLiveChannel
   WHERE lastLoadedTime < DATETIME('now', '-12 hours', PRINTF('-%d hours', age))
-                """.trimIndent()).use {
+                """.trimIndent()
+            ).use {
                 it.executeUpdateDelete()
             }
             Timber.d("OK: truncate() $r")
@@ -135,29 +145,35 @@ DELETE FROM YpIndex
     }
 
     companion object {
-        fun create(a: Application): AppRoomDatabase {
-            return Room.databaseBuilder(a,
-                    AppRoomDatabase::class.java,
-                    "pecaplay-5")
-                    //.fallbackToDestructiveMigration()
-                    .addCallback(AppSQLiteUpdater_v4(a))
-                    .addMigrations(*MIGRATIONS)
-                    //.allowMainThreadQueries()
-                    .build().also {
-                        //if (it.isOpen)
-                        launch { it.truncate() }
+        fun createInstance(a: Application, dbName: String): AppRoomDatabase {
+            return Room.databaseBuilder(
+                a,
+                AppRoomDatabase::class.java,
+                dbName
+            )
+                .addMigrations(*MIGRATIONS)
+                .build().also {
+                    GlobalScope.launch(Dispatchers.IO) {
+                        it.truncate()
                     }
+                }
         }
     }
 
 
 }
 
-private val MIGRATIONS = arrayOf<Migration>(
-        object : Migration(50000, -50001) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-            }
+private val MIGRATIONS = arrayOf(
+    object : Migration(50000, -50001) {
+        override fun migrate(database: SupportSQLiteDatabase) {
         }
+    },
+    object : Migration(50000, 50100) {
+        override fun migrate(database: SupportSQLiteDatabase) {
+            database.execSQL("ALTER TABLE YpIndex RENAME TO YpLiveChannel")
+            database.execSQL("ALTER TABLE YpHistory RENAME TO YpHistoryChannel")
+        }
+    }
 )
 
 private const val TAG = "AppRoom"

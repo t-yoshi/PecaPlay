@@ -1,7 +1,6 @@
 package com.googlecode.kanaxs;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public final class KanaUtil
 {
@@ -243,7 +242,7 @@ public final class KanaUtil
         {
             char c = str.charAt(i);
 
-            //　【！】〜【〜】の範囲
+            //　【！】～【～】の範囲
             if(0xFF01 <= c && c <= 0xFF5E)
             {
                 buffer.setCharAt(i, (char)(c - 0xFEE0));
@@ -272,7 +271,7 @@ public final class KanaUtil
         {
             char c = str.charAt(i);
 
-            //　【！】〜【〜】の範囲
+            //　【！】～【～】の範囲
             if(c <= 0x007E && 0x0021 <= c)
             {
                 buffer.setCharAt(i, (char)(c + 0xFEE0));
@@ -308,12 +307,12 @@ public final class KanaUtil
             };
 
             if
-                    (
+            (
                     (0x304B <= c && c <= 0x3062 && (c % 2 == 1)) ||
                             (0x30AB <= c && c <= 0x30C2 && (c % 2 == 1)) ||
                             (0x3064 <= c && c <= 0x3069 && (c % 2 == 0)) ||
                             (0x30C4 <= c && c <= 0x30C9 && (c % 2 == 0))
-                    )
+            )
             {
                 char d = buffer.charAt(i+1);
                 buffer.setCharAt(i, (char)(c + ((d == '\u309B') ? 1 : 0 )));
@@ -326,10 +325,10 @@ public final class KanaUtil
             };
 
             if
-                    (
+            (
                     (0x306F <= c && c <= 0x307D && (c % 3 == 0)) ||
                             (0x30CF <= c && c <= 0x30DD && (c % 3 == 0))
-                    )
+            )
             {
                 char d = buffer.charAt(i+1);
                 buffer.setCharAt(i, (char)(c + ((d == '\u309B') ? 1 : ((d == '\u309C') ? 2 : 0 ))));
