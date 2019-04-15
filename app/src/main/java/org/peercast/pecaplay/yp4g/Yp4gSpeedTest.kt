@@ -26,7 +26,7 @@ class Yp4gSpeedTester(val yp: YellowPage) {
             .create(Yp4gService::class.java)
 
         return try {
-            config = service.getConfig().exAwait().body()!!
+            config = service.getConfig().exAwait().body() ?: throw IOException("config is none")
             Timber.i("loadConfig OK: $config")
             true
         } catch (e: IOException) {
