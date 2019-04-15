@@ -9,6 +9,7 @@ import androidx.work.*
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.viewModel
+import org.peercast.core.lib.LibPeerCast
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.YpHistoryChannel
 import org.peercast.pecaplay.app.saveRecentQuery
@@ -47,10 +48,10 @@ class PecaPlayPresenter(private val a: FragmentActivity) {
 
         return Intent(Intent.ACTION_VIEW, u).also {
             it.putExtra(PecaPlayIntent.EXTRA_IS_LAUNCH_FROM_PECAPLAY, true)
-            it.putExtra(PecaPlayIntent.EXTRA_CONTACT_URL, ch.yp4g.url.toString())
-            it.putExtra(PecaPlayIntent.EXTRA_NAME, ch.yp4g.name)
-            it.putExtra(PecaPlayIntent.EXTRA_DESCRIPTION, ch.yp4g.description)
-            it.putExtra(PecaPlayIntent.EXTRA_COMMENT, ch.yp4g.comment)
+            it.putExtra(LibPeerCast.EXTRA_CONTACT_URL, ch.yp4g.url.toString())
+            it.putExtra(LibPeerCast.EXTRA_NAME, ch.yp4g.name)
+            it.putExtra(LibPeerCast.EXTRA_DESCRIPTION, ch.yp4g.description)
+            it.putExtra(LibPeerCast.EXTRA_COMMENT, ch.yp4g.comment)
             it.putExtra(PecaPlayIntent.EXTRA_NIGHT_MODE, appPrefs.isNightMode)
 
             Timber.i("extras=${it.extras}")

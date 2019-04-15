@@ -28,7 +28,8 @@ enum class YpChannelSource {
 class PecaPlayViewModel(
     a: Application,
     private val appPrefs: AppPreferences,
-    private val database: AppRoomDatabase
+    private val database: AppRoomDatabase,
+    private val peerCastServiceEventLiveData: PeerCastServiceEventLiveData
 ) : AndroidViewModel(a) {
 
 
@@ -108,6 +109,14 @@ class PecaPlayViewModel(
         database.favoriteDao.query()
     ) { favorites ->
         favorites.firstOrNull { it.flags.run { !isNG && isNotification } } != null
+    }
+
+    init {
+        peerCastServiceEventLiveData.bind()
+    }
+
+    override fun onCleared() {
+        peerCastServiceEventLiveData.unbind()
     }
 
     companion object {

@@ -58,7 +58,7 @@ class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            delegate.setLocalNightMode(AppCompatDelegate.getDefaultNightMode())
+            delegate.localNightMode = AppCompatDelegate.getDefaultNightMode()
         }
         super.onCreate(savedInstanceState)
 
@@ -110,10 +110,11 @@ class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
                     item.title.isEmpty() -> getString(R.string.app_name)
                     else -> item.title
                 }
-            } ?: kotlin.run {
+            } ?: run {
                 supportActionBar?.setTitle(R.string.app_name)
             }
         }
+
 
         get<PeerCastServiceEventLiveData>().observe(this, Observer { ev ->
             when {

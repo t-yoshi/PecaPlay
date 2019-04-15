@@ -52,6 +52,7 @@ class LoadingWorker(c: Context, workerParams: WorkerParameters) :
                 return false
             }
 
+            peerCastServiceEventLiveData.bind()
             //PeerCastServiceの開始を待つ。
             peerCastServiceEventLiveData.exAwait().let {
                 Timber.d("PeerCastService bound: %s", it)
