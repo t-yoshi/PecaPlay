@@ -5,22 +5,14 @@ buildscript {
     repositories {
         google()
         jcenter()
-        
+
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.3.2'
+        classpath 'com.android.tools.build:gradle:3.4.0'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
         classpath 'com.google.gms:oss-licenses:0.9.2'
-    }
-
-    //Build exception when using new Proguard rules #738
-    //https://github.com/square/moshi/issues/738
-    configurations .all {
-        resolutionStrategy {
-            force 'net.sf.proguard:proguard-gradle:6.1.0beta2'
-        }
     }
 }
 
@@ -28,7 +20,7 @@ allprojects {
     repositories {
         google()
         jcenter()
-        
+
     }
 }
 
