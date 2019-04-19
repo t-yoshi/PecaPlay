@@ -107,7 +107,7 @@ dependencies {
     implementation 'org.unbescape:unbescape:1.1.6.RELEASE'
     implementation 'com.google.android.gms:play-services-oss-licenses:16.0.2'
 
-    implementation project(":libpeercast")
+    implementation 'com.github.t-yoshi.peca-android:libpeercast:3.0.0-alpha00'
 
     testImplementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
     testImplementation 'junit:junit:4.12'
