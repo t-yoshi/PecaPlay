@@ -61,6 +61,7 @@ class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
             delegate.localNightMode = AppCompatDelegate.getDefaultNightMode()
         }
         super.onCreate(savedInstanceState)
+        lastLoadedERTime = savedInstanceState?.getLong(STATE_LAST_LOADED_ER_TIME) ?: 0L
 
         setContentView(R.layout.pacaplay_activity)
 
@@ -125,7 +126,6 @@ class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
                         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
                     }
                 }
-                ev is PeerCastServiceBindEvent.OnUnbind -> finish()
             }
         })
 
@@ -171,10 +171,10 @@ class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
         if (intent.hasExtra(PecaPlayIntent.EXTRA_IS_NEWLY)) {
             removeNotification()
         }
-        if (appPrefs.isNotificationEnabled)
+        if (appPrefs.isNotificationEnabled) {
+            lastLoadedERTime = SystemClock.elapsedRealtime()
             presenter.setScheduledLoading(true)
-        else
-            presenter.startLoading()
+        }
     }
 
 
@@ -191,15 +191,15 @@ class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
 
     override fun onResume() {
         super.onResume()
-        Timber.d("lastLoadedERTime=$lastLoadedERTime - ${SystemClock.elapsedRealtime()}")
-        if (lastLoadedERTime != 0L && lastLoadedERTime < SystemClock.elapsedRealtime() - 10 * 60 * 1000) {
+        //前回の読み込みからN分以上経過している場合は読み込む
+        if (lastLoadedERTime < SystemClock.elapsedRealtime() - 10 * 60_000)
             presenter.startLoading()
-        }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         vNavigation.extension.onSaveInstanceState(outState)
+        outState.putLong(STATE_LAST_LOADED_ER_TIME, lastLoadedERTime)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -326,6 +326,10 @@ class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
                 isChecked = true
             }
         }
+    }
+
+    companion object {
+        private const val STATE_LAST_LOADED_ER_TIME = "lastLoadedERTime"
     }
 }
 
