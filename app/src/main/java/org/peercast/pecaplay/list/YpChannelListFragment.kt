@@ -22,16 +22,11 @@ import kotlinx.coroutines.launch
 import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.sharedViewModel
-import org.peercast.pecaplay.PecaPlayActivity
-import org.peercast.pecaplay.PecaPlayPresenter
-import org.peercast.pecaplay.PecaPlayViewModel
-import org.peercast.pecaplay.R
+import org.peercast.pecaplay.*
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.Favorite
 import org.peercast.pecaplay.util.LiveDataUtils
 import org.peercast.pecaplay.view.MenuableRecyclerView
-import org.peercast.pecaplay.LoadingWorker
-import org.peercast.pecaplay.LoadingWorkerLiveData
 import timber.log.Timber
 import kotlin.coroutines.CoroutineContext
 
@@ -145,11 +140,11 @@ class YpChannelFragment : Fragment(), CoroutineScope {
 
     //スクロール位置の再現
     private fun restoreScrollPosition() {
-        if (adapter.itemCount == 0)
+        if (adapter.itemCount == 0 || vRecycler == null)
             return
         scrollPositions.getParcelable<Parcelable>(queryTag)?.let {
             vRecycler.layoutManager?.onRestoreInstanceState(it)
-        } ?: kotlin.run {
+        } ?: run {
             vRecycler.layoutManager?.scrollToPosition(0)
         }
     }
