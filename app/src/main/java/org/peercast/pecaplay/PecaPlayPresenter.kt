@@ -41,12 +41,15 @@ class PecaPlayPresenter(private val a: FragmentActivity) {
     private fun createViewerIntent(ch: YpChannel): Intent {
         val streamUrl = ch.stream(appPrefs.peerCastUrl)
 
+        //一般的なプレーヤー
         if (!appPrefs.isViewerEnabled(ch.yp4g.type))
             return Intent(Intent.ACTION_VIEW, streamUrl)
 
+        //PecaViewer
         val u = streamUrl.buildUpon().scheme("pecaplay").build()
 
         return Intent(Intent.ACTION_VIEW, u).also {
+            it.setPackage("org.peercast.pecaviewer")
             it.putExtra(PecaPlayIntent.EXTRA_IS_LAUNCH_FROM_PECAPLAY, true)
             it.putExtra(LibPeerCast.EXTRA_CONTACT_URL, ch.yp4g.url.toString())
             it.putExtra(LibPeerCast.EXTRA_NAME, ch.yp4g.name)
