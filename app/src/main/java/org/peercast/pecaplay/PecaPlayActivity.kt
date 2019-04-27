@@ -26,6 +26,7 @@ import kotlinx.android.synthetic.main.pacaplay_activity.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.viewModel
@@ -87,10 +88,11 @@ class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
         }
 
         PecaNavigationViewExtension(vNavigation, savedInstanceState, this) { item ->
-            Timber.d("onItemClick()")
+            Timber.d("onItemClick(${item.tag})")
             viewModel.run {
                 order = when (item.tag) {
                     "history" -> YpDisplayOrder.NONE
+                    "notificated",
                     "newly" -> {
                         removeNotification()
                         YpDisplayOrder.AGE_ASC
@@ -152,6 +154,11 @@ class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
             invalidateOptionsMenu()
         })
 
+        if (appPrefs.isNotificationEnabled) {
+            lastLoadedERTime = SystemClock.elapsedRealtime()
+            presenter.setScheduledLoading(true)
+        }
+
         onCreateOrNewIntent()
     }
 
@@ -168,12 +175,11 @@ class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
     }
 
     private fun onCreateOrNewIntent(){
-        if (intent.hasExtra(PecaPlayIntent.EXTRA_IS_NEWLY)) {
+        if (intent.hasExtra(PecaPlayIntent.EXTRA_IS_NOTIFICATED)) {
             removeNotification()
-        }
-        if (appPrefs.isNotificationEnabled) {
-            lastLoadedERTime = SystemClock.elapsedRealtime()
-            presenter.setScheduledLoading(true)
+            launch {
+                vNavigation.extension?.navigate("notificated")
+            }
         }
     }
 
@@ -198,7 +204,7 @@ class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        vNavigation.extension.onSaveInstanceState(outState)
+        vNavigation.extension?.onSaveInstanceState(outState)
         outState.putLong(STATE_LAST_LOADED_ER_TIME, lastLoadedERTime)
     }
 
@@ -291,7 +297,7 @@ class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
     }
 
     override fun onBackPressed() {
-        vNavigation.extension.let {
+        vNavigation.extension?.let {
             if (it.isEditMode) {
                 it.isEditMode = false
                 return

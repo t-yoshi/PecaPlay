@@ -35,8 +35,8 @@ import kotlin.properties.Delegates
 // ナビゲーションメニューの拡張
 //
 
-val NavigationView.extension: PecaNavigationViewExtension
-    get() = tag as PecaNavigationViewExtension
+val NavigationView.extension: PecaNavigationViewExtension?
+    get() = tag as PecaNavigationViewExtension?
 
 class NavigationItem(
     val title: CharSequence,
@@ -65,7 +65,7 @@ class NavigationItem(
 
 interface INavigationModel {
     val items: List<NavigationItem>
-    fun setOnChangedObserver(observer: ()->Unit)
+    fun setOnChangedObserver(observer: () -> Unit)
     fun setLifecycleOwner(owner: LifecycleOwner)
 }
 
@@ -78,7 +78,7 @@ class PecaNavigationViewExtension(
 ) : KoinComponent {
 
     private val inflater = LayoutInflater.from(view.context)
-    private val model : INavigationModel = NavigationModelImpl()
+    private val model: INavigationModel = NavigationModelImpl()
 
     private val invisiblePrefs = view.context.getSharedPreferences(
         "navigation_v5", Context.MODE_PRIVATE
@@ -138,6 +138,14 @@ class PecaNavigationViewExtension(
             return true
         }
         return false
+    }
+
+    fun navigate(tag: String) {
+        val i = model.items.indexOfFirst { it.tag == tag }
+        if (i != -1) {
+            view.setCheckedItem(view.menu[i])
+            onItemClick(model.items[i])
+        }
     }
 
     private fun addMenu(item: NavigationItem) {
@@ -242,6 +250,7 @@ private const val GID_GENRE = Menu.FIRST + 4
 
 private const val TAG_HOME = "home"
 private const val TAG_NEWLY = "newly"
+private const val TAG_NOTIFICATED = "notificated"
 private const val TAG_HISTORY = "history"
 
 
@@ -332,7 +341,8 @@ private class NavigationModelImpl : INavigationModel, KoinComponent {
                         //ch is YpIndex && ch.numLoaded < 3 &&
                         it.matches(ch)
                     }
-                }
+                },
+                TAG_NOTIFICATED
             )
         }
 

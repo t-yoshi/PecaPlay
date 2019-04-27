@@ -57,7 +57,7 @@ class PecaPlayPresenter(private val a: FragmentActivity) {
             it.putExtra(LibPeerCast.EXTRA_COMMENT, ch.yp4g.comment)
             it.putExtra(PecaPlayIntent.EXTRA_NIGHT_MODE, appPrefs.isNightMode)
 
-            Timber.i("extras=${it.extras}")
+            Timber.d("extras=${it.extras}")
         }
     }
 

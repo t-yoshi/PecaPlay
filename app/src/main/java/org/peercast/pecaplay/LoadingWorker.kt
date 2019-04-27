@@ -145,7 +145,7 @@ class LoadingWorker(c: Context, workerParams: WorkerParameters) :
         private fun createActivityIntent(): PendingIntent {
             val i = Intent(Intent.ACTION_VIEW).also {
                 it.setClass(applicationContext, PecaPlayActivity::class.java)
-                it.putExtra(PecaPlayIntent.EXTRA_IS_NEWLY, true)
+                it.putExtra(PecaPlayIntent.EXTRA_IS_NOTIFICATED, true)
             }
             return PendingIntent.getActivity(
                 applicationContext, 0, i,
@@ -171,19 +171,22 @@ class LoadingWorker(c: Context, workerParams: WorkerParameters) :
             if (newChannels.isNotEmpty()) {
                 appPrefs.notificationNewlyChannelsId += newChannels.map { it.yp4g.id }
                 val ids = appPrefs.notificationNewlyChannelsId
-                val numNewChannels = channels.count { it.yp4g.id in ids }
-                onNewChannels(newChannels, numNewChannels)
+                onNewChannels(
+                    channels.filter {
+                        it.yp4g.id in ids
+                    }.sortedWith(YpDisplayOrder.AGE_ASC.comparator)
+                )
             }
 
             return true
         }
 
-        private fun onNewChannels(channels: List<YpLiveChannel>, numNewChannels: Int) {
+        private fun onNewChannels(channels: List<YpLiveChannel>) {
             Timber.d("onNewChannels(%s)", channels)
 
             val title = applicationContext.getString(
                 R.string.notification_new_channels,
-                numNewChannels
+                channels.size
             )
             var content = ""
             val inbox = NotificationCompat.InboxStyle()

@@ -7,8 +7,8 @@ package org.peercast.pecaplay
  */
 object PecaPlayIntent {
 
-    /**(PecaPlay内) 新着を表示する*/
-    internal const val EXTRA_IS_NEWLY = "newly"
+    /**(PecaPlay内) 通知済みの新着を表示する*/
+    internal const val EXTRA_IS_NOTIFICATED = "notificated"
 
 
     /**PecaPlayが発行したインテントであるか (Boolean)*/
