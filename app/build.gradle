@@ -10,8 +10,8 @@ android {
         applicationId "org.peercast.pecaplay"
         minSdkVersion 21
         targetSdkVersion 28
-        versionCode 60100
-        versionName '6.1.0'
+        versionCode 6010001
+        versionName '6.1.0-01'
         buildConfigField "long", "TIMESTAMP", System.currentTimeMillis() + "L"
 
         javaCompileOptions {
@@ -107,7 +107,7 @@ dependencies {
     implementation 'org.unbescape:unbescape:1.1.6.RELEASE'
     implementation 'com.google.android.gms:play-services-oss-licenses:16.0.2'
 
-    implementation 'com.github.t-yoshi:peca-android:3.0.0-beta00'
+    implementation 'com.github.t-yoshi:peca-android:3.0.0-rc01'
 
     testImplementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
     testImplementation 'junit:junit:4.12'
