@@ -134,7 +134,7 @@ class YpChannelFragment : Fragment(), CoroutineScope {
     private fun storeScrollPosition() {
         scrollPositions.putParcelable(
             queryTag,
-            vRecycler.layoutManager?.onSaveInstanceState()
+            vRecycler?.layoutManager?.onSaveInstanceState()
         )
     }
 
