@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "765416820994",
+    "firebase_url": "https://pecaplay-6d0be.firebaseio.com",
+    "project_id": "pecaplay-6d0be",
+    "storage_bucket": "pecaplay-6d0be.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:765416820994:android:193c76f5229e65b7",
+        "android_client_info": {
+          "package_name": "org.peercast.pecaplay"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "765416820994-ksj3mdhmar7pe7al83jraj0o256l3kli.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBvPbI1aZpzOBzbmJtxlCyn6AaSvFq0NRM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "765416820994-ksj3mdhmar7pe7al83jraj0o256l3kli.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
