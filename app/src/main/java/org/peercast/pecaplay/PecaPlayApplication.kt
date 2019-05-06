@@ -4,6 +4,7 @@ import android.app.Application
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
+import com.crashlytics.android.Crashlytics
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
@@ -43,8 +44,8 @@ sealed class PeerCastServiceBindEvent {
  * PeerCastServiceへのbind/unbindイベント。
  * YPへの読み込みはPeerCastアプリが起動してから行う。
  * */
-class PeerCastServiceEventLiveData(a: Application, private val appPrefs: AppPreferences)
-    : MutableLiveData<PeerCastServiceBindEvent>(), PeerCastController.EventListener {
+class PeerCastServiceEventLiveData(a: Application, private val appPrefs: AppPreferences) :
+    MutableLiveData<PeerCastServiceBindEvent>(), PeerCastController.EventListener {
 
     private val controller = PeerCastController.from(a)
 
@@ -52,9 +53,10 @@ class PeerCastServiceEventLiveData(a: Application, private val appPrefs: AppPref
         controller.addEventListener(this)
     }
 
-    fun bind(){
+    fun bind() {
         if (!controller.isInstalled ||
-                appPrefs.peerCastUrl.host !in listOf<String?>("localhost", "127.0.0.1")){
+            appPrefs.peerCastUrl.host !in listOf<String?>("localhost", "127.0.0.1")
+        ) {
             //非インストール or 外部(=Lan?)動作のPeerCast
             value = PeerCastServiceBindEvent.OnBind(0)
             return
@@ -64,7 +66,7 @@ class PeerCastServiceEventLiveData(a: Application, private val appPrefs: AppPref
         controller.bindService()
     }
 
-    fun unbind(){
+    fun unbind() {
         controller.unbindService()
         value = PeerCastServiceBindEvent.OnUnbind
     }
@@ -77,7 +79,7 @@ class PeerCastServiceEventLiveData(a: Application, private val appPrefs: AppPref
                 val port = client.getStatus().globalRelayEndPoint?.port ?: 7144
                 appPrefs.peerCastUrl = Uri.parse("http://localhost:$port/")
                 PeerCastServiceBindEvent.OnBind(port)
-            } catch (e: JsonRpcException){
+            } catch (e: JsonRpcException) {
                 Timber.e(e)
                 PeerCastServiceBindEvent.OnBind(appPrefs.peerCastUrl.port)
             }
@@ -113,5 +115,11 @@ class PecaPlayApplication : Application() {
 private class ReleaseTree : Timber.DebugTree() {
     override fun isLoggable(tag: String?, priority: Int): Boolean {
         return priority >= Log.INFO || BuildConfig.DEBUG
+    }
+
+    override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
+        super.log(priority, tag, message, t)
+        if (t != null)
+            Crashlytics.logException(t)
     }
 }
