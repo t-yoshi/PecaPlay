@@ -29,7 +29,8 @@ class Yp4gSpeedTester(val yp: YellowPage) {
             config = service.getConfig().exAwait().body() ?: throw IOException("config is none")
             Timber.i("loadConfig OK: $config")
             true
-        } catch (e: IOException) {
+        } catch (e: Exception) {
+            //RuntimeException(cause=XmlPullParserException) または IOException
             config = Yp4gConfig.NONE
             error = "$e ${e.message}"
             Timber.e(e, "loadConfig Failed: ")
