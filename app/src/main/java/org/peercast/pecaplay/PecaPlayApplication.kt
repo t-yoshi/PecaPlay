@@ -58,7 +58,7 @@ class PeerCastServiceEventLiveData(a: Application, private val appPrefs: AppPref
             appPrefs.peerCastUrl.host !in listOf<String?>("localhost", "127.0.0.1")
         ) {
             //非インストール or 外部(=Lan?)動作のPeerCast
-            value = PeerCastServiceBindEvent.OnBind(0)
+            postValue(PeerCastServiceBindEvent.OnBind(0))
             return
         }
         if (controller.isConnected && value is PeerCastServiceBindEvent.OnBind)
