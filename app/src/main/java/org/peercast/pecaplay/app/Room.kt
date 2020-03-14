@@ -25,8 +25,8 @@ interface YellowPageDao {
     @Delete
     suspend fun remove(item: YellowPage)
 
-    @Query("SELECT * FROM YellowPage WHERE NOT :isSelectEnabled OR enabled ORDER BY Name")
-    suspend fun queryAwait(isSelectEnabled: Boolean = true): List<YellowPage>
+    @Query("SELECT * FROM YellowPage WHERE NOT :isEnabled OR enabled ORDER BY Name")
+    suspend fun queryAwait(isEnabled: Boolean = true): List<YellowPage>
 
     @Query("SELECT * FROM YellowPage WHERE NOT :isSelectEnabled OR enabled ORDER BY Name")
     fun query(isSelectEnabled: Boolean = true): LiveData<List<YellowPage>>

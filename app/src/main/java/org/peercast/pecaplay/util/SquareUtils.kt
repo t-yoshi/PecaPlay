@@ -2,6 +2,7 @@ package org.peercast.pecaplay.util
 
 import android.content.res.Resources
 import com.squareup.moshi.Moshi
+import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.OkHttpClient
 import retrofit2.Call
@@ -61,11 +62,12 @@ object SquareUtils {
 
     fun retrofitBuilder(): Retrofit.Builder = Retrofit.Builder().client(httpClient)
 
-    val MOSHI: Moshi = Moshi.Builder().build()
+    val MOSHI: Moshi = Moshi.Builder()
+        .add(KotlinJsonAdapterFactory()).build()
 
 }
 
-
+@Deprecated("")
 suspend fun <T> Call<T>.exAwait(): Response<T> = suspendCancellableCoroutine { cont ->
     enqueue(object : Callback<T> {
         override fun onFailure(call: Call<T>, t: Throwable) {

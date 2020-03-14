@@ -66,11 +66,9 @@ class LoadingWorker(c: Context, workerParams: WorkerParameters) :
             val port = appPrefs.peerCastUrl.port
             val lines = ArrayList<Yp4gRawField>(256)
 
-            yellowPages.map { yp ->
-                yp to createYp4gService(yp).getIndex("localhost:$port")
-            }.forEach { (yp, call) ->
+            yellowPages.forEach { yp ->
                 try {
-                    val res = call.exAwait()
+                    val res = createYp4gService(yp).getIndex("localhost:$port")
                     val url = res.raw().request().url().toString()
                     res.body()?.mapNotNull {
                         try {
@@ -85,18 +83,16 @@ class LoadingWorker(c: Context, workerParams: WorkerParameters) :
                 }
             }
 
-            var ret = false
             database.runInTransaction {
                 database.compileStatement("UPDATE YpLiveChannel SET isLatest=0").use {
                     it.executeUpdateDelete()
                 }
                 if (lines.isNotEmpty()) {
                     storeToYpLiveChannelTable(lines)
-                    ret = true
                 }
             }
 
-            return ret
+            return lines.isNotEmpty()
         }
 
         private fun storeToYpLiveChannelTable(lines: List<Yp4gRawField>) {
@@ -213,9 +209,9 @@ class LoadingWorker(c: Context, workerParams: WorkerParameters) :
             //                R.drawable.ic_peercast);
 
             val builder = NotificationCompat.Builder(
-                applicationContext,
-                NOTIFICATION_CHANNEL_ID
-            )
+                    applicationContext,
+                    NOTIFICATION_CHANNEL_ID
+                )
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                 .setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -253,7 +249,7 @@ class LoadingWorker(c: Context, workerParams: WorkerParameters) :
                 if (!t())
                     return Result.failure()
             }
-        } catch (e: Throwable){
+        } catch (e: Throwable) {
             //NOTE: 例外が起きても[androidx.work.impl.WorkerWrapper]内で
             //キャッチされるだけ。補足しにくいので注意。
             Crashlytics.logException(e)

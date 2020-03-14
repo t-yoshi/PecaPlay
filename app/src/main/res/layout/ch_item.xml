@@ -1,139 +1,140 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+        xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <data>
 
         <variable
                 name="viewModel"
-                type="org.peercast.pecaplay.list.BaseListItemViewModel"/>
+                type="org.peercast.pecaplay.list.BaseListItemViewModel" />
+
         <variable
                 name="itemEventListener"
-                type="org.peercast.pecaplay.list.IListItemEventListener"/>
+                type="org.peercast.pecaplay.list.IListItemEventListener" />
 
         <import type="android.view.View" />
-        <import type="android.widget.CheckBox"/>
+
+        <import type="android.widget.CheckBox" />
     </data>
 
     <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:paddingBottom="6sp"
-        android:paddingLeft="3sp"
-        android:paddingRight="3sp"
-        android:paddingTop="6sp"
-        android:background="?attr/selectableItemBackground"
-        >
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="?attr/selectableItemBackground"
+            android:paddingLeft="3sp"
+            android:paddingTop="6sp"
+            android:paddingRight="3sp"
+            android:paddingBottom="6sp">
 
         <CheckBox
-            android:id="@+id/vStarred"
-            style="@android:style/Widget.Material.CompoundButton.Star"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:layout_alignParentLeft="true"
-            android:layout_centerVertical="true"
-            android:enabled="@{viewModel.starEnabled}"
-            android:checked="@{viewModel.isStarChecked}"
-            android:onClickListener="@{()->itemEventListener.onStarClicked(viewModel.model, !viewModel.isStarChecked)}"
-                       android:focusable="false"
-            android:gravity="center"
-            android:padding="5dp" />
+                android:id="@+id/vStarred"
+                style="@android:style/Widget.Material.CompoundButton.Star"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_alignParentLeft="true"
+                android:layout_centerVertical="true"
+                android:checked="@{viewModel.isStarChecked}"
+                android:enabled="@{viewModel.starEnabled}"
+                android:focusable="false"
+                android:gravity="center"
+                android:onClickListener="@{()->itemEventListener.onStarClicked(viewModel.model, !viewModel.isStarChecked)}"
+                android:layout_marginLeft="8dp"
+                android:padding="5dp" />
         <!-- NOTE: リストアイテムのCheckBoxはfocusable="false"にしないと 他のアイテムへイベントが渡らない -->
 
         <TextView
-            android:id="@+id/vName"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
-            android:layout_toRightOf="@id/vStarred"
-            android:gravity="center_vertical"
-            android:minHeight="40sp"
-            android:scrollHorizontally="true"
-            android:text="@{viewModel.name}"
-            android:textColor="@color/ch_name"
-            android:textIsSelectable="false"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+                android:id="@+id/vName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_toRightOf="@id/vStarred"
+                android:gravity="center_vertical"
+                android:minHeight="40sp"
+                android:scrollHorizontally="true"
+                android:text="@{viewModel.name}"
+                android:textColor="@color/ch_name"
+                android:textIsSelectable="false"
+                android:textSize="20sp"
+                android:textStyle="bold" />
 
         <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentRight="true"
-            android:layout_alignParentTop="true">
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentRight="true">
 
             <CheckedTextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginRight="2sp"
-                android:background="@android:color/transparent"
-                android:checked="@{viewModel.newlyChecked}"
-                android:text="@string/newly"
-                android:textColor="@color/ch_newly"
-                android:textIsSelectable="false"
-                android:typeface="monospace"
-                android:visibility="@{viewModel.newlyVisible ? View.VISIBLE : View.GONE}" />
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginRight="2sp"
+                    android:background="@android:color/transparent"
+                    android:checked="@{viewModel.newlyChecked}"
+                    android:text="@string/newly"
+                    android:textColor="@color/ch_newly"
+                    android:textIsSelectable="false"
+                    android:typeface="monospace"
+                    android:visibility="@{viewModel.newlyVisible ? View.VISIBLE : View.GONE}" />
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:paddingLeft="8sp"
-                android:text="@{viewModel.age}"
-                android:textIsSelectable="false"
-                android:typeface="monospace"
-                android:textColor="?android:attr/textColorSecondary"
-                android:visibility="@{viewModel.ageVisible ? View.VISIBLE : View.INVISIBLE}" />
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:paddingLeft="8sp"
+                    android:text="@{viewModel.age}"
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:textIsSelectable="false"
+                    android:typeface="monospace"
+                    android:visibility="@{viewModel.ageVisible ? View.VISIBLE : View.INVISIBLE}" />
 
             <ImageView
-                android:layout_width="12sp"
-                android:layout_height="12sp"
-                android:layout_gravity="center"
-                android:alpha="0.7"
-                android:padding="0dp"
-                android:scaleType="fitCenter"
-                app:srcCompat="@drawable/ic_notifications_active_16dp"
-                android:tint="?android:attr/textColorSecondary"
-                android:visibility="@{viewModel.isNotificatedVisible ? View.VISIBLE : View.GONE}"
-                    />
+                    android:layout_width="12sp"
+                    android:layout_height="12sp"
+                    android:layout_gravity="center"
+                    android:alpha="0.7"
+                    android:padding="0dp"
+                    android:scaleType="fitCenter"
+                    android:tint="?android:attr/textColorSecondary"
+                    android:visibility="@{viewModel.isNotificatedVisible ? View.VISIBLE : View.GONE}"
+                    app:srcCompat="@drawable/ic_notifications_active_16dp" />
             <!--android:visibility="@{favoPresenter.isNotificated ? View.VISIBLE : View.GONE}" -->
 
 
         </LinearLayout>
 
         <TextView
-            android:id="@+id/vDescription"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/vName"
-            android:layout_toRightOf="@id/vStarred"
-            android:text="@{viewModel.description}"
-            android:textColor="?android:attr/textColorSecondary"
-            android:textIsSelectable="false"
-            android:textStyle="bold" />
+                android:id="@+id/vDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/vName"
+                android:layout_toRightOf="@id/vStarred"
+                android:text="@{viewModel.description}"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textIsSelectable="false"
+                android:textStyle="bold" />
         <!-- chDescription.scrollHorizontally := (chComment.length > 0) -->
 
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/vDescription"
-            android:layout_toRightOf="@id/vStarred"
-            android:layout_alignParentRight="true"
-            android:paddingBottom="2dp"
-            android:paddingTop="4dp"
-            android:textColor="?android:attr/textColorSecondary"
-            android:text="@{viewModel.comment}"
-            android:textIsSelectable="false" />
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/vDescription"
+                android:layout_alignParentRight="true"
+                android:layout_toRightOf="@id/vStarred"
+                android:paddingTop="4dp"
+                android:paddingBottom="2dp"
+                android:text="@{viewModel.comment}"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textIsSelectable="false" />
 
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentRight="true"
-            android:paddingLeft="2dp"
-            android:textColor="?android:attr/textColorSecondary"
-            android:text="@{viewModel.listener}"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:textIsSelectable="false"
-            android:typeface="monospace" />
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentBottom="true"
+                android:paddingLeft="2dp"
+                android:text="@{viewModel.listener}"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textIsSelectable="false"
+                android:typeface="monospace" />
     </RelativeLayout>
 
 

@@ -3,6 +3,7 @@
 
     <Preference
             android:title="@string/pref_header_yellow_page"
+            android:key="pref_header_yellow_page"
             android:fragment="org.peercast.pecaplay.prefs.YellowPagePrefsFragment"/>
 
     <EditTextPreference
@@ -16,6 +17,7 @@
             android:title="@string/pref_peercast_url"/>
 
     <Preference
+            android:key="pref_header_viewer"
             android:title="@string/pref_header_viewer"
             android:fragment="org.peercast.pecaplay.prefs.ViewerPrefsFragment"/>
 
@@ -39,7 +41,7 @@
             android:title="@string/pref_header_about">
         <Preference
                 android:key="pref_about"
-                android:selectable="false"
+                android:persistent="false"
                 android:title="@string/app_name"/>
 
         <Preference

@@ -26,7 +26,7 @@ class Yp4gSpeedTester(val yp: YellowPage) {
             .create(Yp4gService::class.java)
 
         return try {
-            config = service.getConfig().exAwait().body() ?: throw IOException("config is none")
+            config = service.getConfig().body() ?: throw IOException("config is none")
             Timber.i("loadConfig OK: $config")
             true
         } catch (e: Exception) {
@@ -58,8 +58,8 @@ class Yp4gSpeedTester(val yp: YellowPage) {
         val obj = config.uptest_srv.`object`
 
         return try {
-            val response = service.speedTest(obj, reqBody).exAwait()
-            Timber.i("SpeedTest OK: %s", response.body()?.string())
+            val response = service.speedTest(obj, reqBody)
+            Timber.i("SpeedTest OK: %s", response.string())
             //Configの再読込
             loadConfig(false)
         } catch (e: IOException) {

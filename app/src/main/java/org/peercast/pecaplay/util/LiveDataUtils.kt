@@ -93,7 +93,7 @@ suspend fun <T> LiveData<T>.exAwait(): T = suspendCancellableCoroutine { cont ->
     val observer = object : Observer<T> {
         override fun onChanged(value: T) {
             removeObserver(this)
-            value?.let(cont::resume) ?: cont.resumeWithException(NullPointerException("value is null"))
+            value?.let { cont.resume(it)} ?: cont.resumeWithException(NullPointerException("value is null"))
         }
     }
 

@@ -1,9 +1,9 @@
 package org.peercast.pecaplay.prefs
 
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
+import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import org.peercast.pecaplay.R
 import org.peercast.pecaplay.app.AppTheme
@@ -13,30 +13,17 @@ import org.peercast.pecaplay.app.AppTheme
  */
 class ViewerPrefsFragment : PreferenceFragmentCompat() {
 
-
-    private fun getInstalledViewerVersion(): String? {
-        return try {
-            val info = context!!.packageManager.getPackageInfo("org.peercast.pecaviewer", 0)
-            info.versionName
-        } catch (e: PackageManager.NameNotFoundException) {
-            null
-        }
-    }
-
-    //val SUPPORT_VIDEO_TYPE = listOf("WMV", "FLV")
-
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         addPreferencesFromResource(R.xml.pref_viewer)
 
-        val version = getInstalledViewerVersion()
-        val isInstalled = version != null
+        val version = PecaPlayViewerSetting.installedVersion
 
-        findPreference("pref_viewer").let {
+        findPreference<Preference>("pref_viewer")!!.let {
             it.setIcon(R.drawable.ic_ondemand_video_36dp)
             it.icon.setTint(AppTheme.getIconColor(it.context))
             it.title = "PacaPlay Viewer"
 
-            if (isInstalled) {
+            if (version != null) {
                 it.summary = "Ver. $version"
             } else {
                 it.setSummary(R.string.viewer_not_installed)
@@ -48,12 +35,28 @@ class ViewerPrefsFragment : PreferenceFragmentCompat() {
             }
         }
 
-        findPreference("pref_viewer_wmv").let {
-            it.isEnabled = isInstalled
+        findPreference<Preference>("pref_viewer_wmv")!!.let {
+            it.isEnabled = version != null
+            it.setOnPreferenceChangeListener { _, newValue ->
+                PecaPlayViewerSetting.setEnabled("WMV", newValue as Boolean)
+                true
+            }
         }
 
-        findPreference("pref_viewer_flv").let {
-            it.isEnabled = isInstalled
+        findPreference<Preference>("pref_viewer_flv")!!.let {
+            it.isEnabled = version != null
+            it.setOnPreferenceChangeListener { _, newValue ->
+                PecaPlayViewerSetting.setEnabled("FLV", newValue as Boolean)
+                true
+            }
+        }
+
+        findPreference<Preference>("pref_viewer_mkv")!!.let {
+            it.isEnabled = version != null
+            it.setOnPreferenceChangeListener { _, newValue ->
+                PecaPlayViewerSetting.setEnabled("MKV", newValue as Boolean)
+                true
+            }
         }
     }
 

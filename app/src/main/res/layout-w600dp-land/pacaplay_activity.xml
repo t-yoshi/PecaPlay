@@ -18,9 +18,9 @@
                 app:layout_scrollFlags="scroll|enterAlways|snap"/>
     </com.google.android.material.appbar.AppBarLayout>
 
-    <fragment
+    <androidx.fragment.app.FragmentContainerView
             android:name="org.peercast.pecaplay.list.YpChannelFragment"
-            android:tag="YpChannelFragment"
+            android:id="@+id/vYpChannelFragmentContainer"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_marginLeft="@dimen/navigation_width"

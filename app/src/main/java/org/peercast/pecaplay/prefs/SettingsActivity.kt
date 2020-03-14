@@ -10,11 +10,12 @@ import androidx.fragment.app.Fragment
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 
-class SettingsActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPreferenceStartFragmentCallback {
+class SettingsActivity : AppCompatActivity(),
+    PreferenceFragmentCompat.OnPreferenceStartFragmentCallback {
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M){
-            delegate.setLocalNightMode(AppCompatDelegate.getDefaultNightMode())
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+            delegate.localNightMode = AppCompatDelegate.getDefaultNightMode()
         }
         super.onCreate(savedInstanceState)
 
@@ -22,7 +23,7 @@ class SettingsActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPrefere
             it.setDisplayHomeAsUpEnabled(true)
         }
 
-        when(intent.action){
+        when (intent.action) {
             ACTION_FAVORITE_PREFS -> replaceFragment(FavoritePrefsFragment())
             else -> replaceFragment(GeneralPrefsFragment())
         }
@@ -34,10 +35,11 @@ class SettingsActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPrefere
             .commit()
     }
 
-
-
-    override fun onPreferenceStartFragment(caller: PreferenceFragmentCompat, pref: Preference): Boolean {
-        val f = supportFragmentManager.fragmentFactory.instantiate(classLoader, pref.fragment, null)
+    override fun onPreferenceStartFragment(
+        caller: PreferenceFragmentCompat,
+        pref: Preference
+    ): Boolean {
+        val f = supportFragmentManager.fragmentFactory.instantiate(classLoader, pref.fragment)
         supportFragmentManager.beginTransaction()
             .addToBackStack(null)
             //.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
@@ -61,25 +63,11 @@ class SettingsActivity : AppCompatActivity(), PreferenceFragmentCompat.OnPrefere
     }
 
     companion object {
-        private const val ACTION_FAVORITE_PREFS = "org.peercast.pecaplay.prefs.ACTION_FAVORITE_PREFS"
+        const val ACTION_FAVORITE_PREFS =
+            "org.peercast.pecaplay.prefs.ACTION_FAVORITE_PREFS"
 
-        fun startFavoritePrefs(a: AppCompatActivity) {
-            a.startActivity(Intent(ACTION_FAVORITE_PREFS, null, a, SettingsActivity::class.java))
-        }
-
-        fun startGeneralPrefs(a: AppCompatActivity) {
-            a.startActivity(Intent(a, SettingsActivity::class.java))
-        }
+        /**夜間モードが変更された(lollipop only)*/
+        const val RESULT_NIGHT_MODE_CHANGED = RESULT_FIRST_USER
     }
-
 }
 
-/*
-*  fun startViewerPendingIntent(c: Context, ch: YpChannel): PendingIntent {
-        //通知バーから視聴を再開した場合に戻るボタンでPecaPlayに帰って来れるようにする
-        val taskStack = TaskStackBuilder.create(c)
-            .addNextIntent(createPecaPlayIntent(c))
-            .addNextIntent(createViewerIntent(ch))
-        return taskStack.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT)!!
-    }
-* */

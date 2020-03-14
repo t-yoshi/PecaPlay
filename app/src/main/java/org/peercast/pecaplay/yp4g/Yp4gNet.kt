@@ -9,6 +9,7 @@ import org.peercast.pecaplay.util.SquareUtils
 import org.peercast.pecaplay.app.YellowPage
 import retrofit2.Call
 import retrofit2.Converter
+import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.http.*
 import java.lang.reflect.ParameterizedType
@@ -74,16 +75,16 @@ private object Yp4gRawFieldFactoryConverter : Converter<ResponseBody, List<Yp4gR
 
 interface Yp4gService {
     @GET("index.txt")
-    fun getIndex(@Query("host") host: String): Call<List<Yp4gRawFieldFactory>>
+    suspend fun getIndex(@Query("host") host: String): Response<List<Yp4gRawFieldFactory>>
 
     @GET("yp4g.xml")
-    fun getConfig(): Call<Yp4gConfig>
+    suspend fun getConfig(): Response<Yp4gConfig>
 
     @POST("{object}")
-    fun speedTest(
+    suspend fun speedTest(
         @Path("object", encoded = true) obj: String,
         @Body data: RandomDataBody
-    ): Call<ResponseBody>
+    ): ResponseBody
 
 }
 

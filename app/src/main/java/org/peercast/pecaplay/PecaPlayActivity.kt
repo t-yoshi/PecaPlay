@@ -22,6 +22,7 @@ import androidx.core.view.MenuItemCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.Observer
 import com.google.android.material.appbar.AppBarLayout
+import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.pacaplay_activity.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,7 +30,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
-import org.koin.androidx.viewmodel.ext.viewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.peercast.pecaplay.prefs.AppPreferences
 import org.peercast.pecaplay.prefs.SettingsActivity
 import org.peercast.pecaplay.util.localizedSystemMessage
@@ -42,7 +43,7 @@ import kotlin.coroutines.CoroutineContext
 /*
  *vDrawerLayout(縦長時のみ)
  * |                   |                      |
- * |   vNavigation     |   YpChannelFragment    |
+ * |   vNavigation     |  YpChannelFragment   |
  * |     (260dp)       |                      |
  * |                   |                      |
  * */
@@ -53,7 +54,6 @@ class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
         get() = job + Dispatchers.Main
     private val appPrefs: AppPreferences by inject()
     private val viewModel: PecaPlayViewModel by viewModel()
-    private val presenter = PecaPlayPresenter(this)
     private var drawerToggle: ActionBarDrawerToggle? = null //縦長時のみ
     private var lastLoadedERTime = 0L
 
@@ -65,6 +65,7 @@ class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
         lastLoadedERTime = savedInstanceState?.getLong(STATE_LAST_LOADED_ER_TIME) ?: 0L
 
         setContentView(R.layout.pacaplay_activity)
+        setTitle(R.string.app_name)
 
         setSupportActionBar(vToolbar)
         invalidateOptionsMenu()
@@ -82,7 +83,12 @@ class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
             val defaultTopMargin = (vNavigation.layoutParams as DrawerLayout.LayoutParams).topMargin
             vAppBarLayout.addOnOffsetChangedListener(AppBarLayout.OnOffsetChangedListener { _, verticalOffset ->
                 val p = vNavigation.layoutParams as DrawerLayout.LayoutParams
-                p.setMargins(p.leftMargin, defaultTopMargin + verticalOffset, p.rightMargin, p.bottomMargin)
+                p.setMargins(
+                    p.leftMargin,
+                    defaultTopMargin + verticalOffset,
+                    p.rightMargin,
+                    p.bottomMargin
+                )
                 vNavigation.layoutParams = p
             })
         }
@@ -118,71 +124,72 @@ class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
             }
         }
 
-
-        get<PeerCastServiceEventLiveData>().observe(this, Observer { ev ->
-            when {
-                ev is PeerCastServiceBindEvent.OnBind && ev.localServicePort > 0 -> {
-                    if (savedInstanceState == null) {
-                        //回転後の再生成時には表示しない
-                        val msg = "PeerCast running. port=${ev.localServicePort}"
-                        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show()
+        //回転後の再生成時には表示しない
+        if (savedInstanceState == null) {
+            get<PeerCastServiceEventLiveData>().observe(
+                this,
+                SnackbarObserver(vYpChannelFragmentContainer) { ev ->
+                    if (ev is PeerCastServiceBindEvent.OnBind && ev.localServicePort > 0) {
+                        return@SnackbarObserver "PeerCast is now running at port ${ev.localServicePort}."
                     }
-                }
-            }
-        })
+                    null
+                })
+        }
 
-        get<LoadingWorkerLiveData>().observe(this, Observer { ev ->
+        get<LoadingWorkerLiveData>().observe(this, SnackbarObserver(vYpChannelFragmentContainer) { ev ->
             when (ev) {
                 is LoadingWorker.Event.OnException -> {
                     val s = when (ev.ex) {
-                        is HttpException -> ev.ex.response().message()
+                        is HttpException -> ev.ex.response()?.message()
+                            ?: ev.ex.localizedSystemMessage()
                         else -> ev.ex.localizedSystemMessage()
                     }
-                    val msg = HtmlCompat.fromHtml("<font color=red>${ev.yp.name}: $s", 0)
-                    Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
+                    return@SnackbarObserver HtmlCompat.fromHtml("<font color=red>${ev.yp.name}: $s", 0)
                 }
                 is LoadingWorker.Event.OnFinished -> {
                     lastLoadedERTime = SystemClock.elapsedRealtime()
                 }
             }
+            null
         })
 
         viewModel.isNotificationIconEnabled.observe(this, Observer {
             if (!it) {
-                presenter.setScheduledLoading(false)
+                viewModel.presenter.setScheduledLoading(false)
             }
             invalidateOptionsMenu()
         })
 
         if (appPrefs.isNotificationEnabled) {
             lastLoadedERTime = SystemClock.elapsedRealtime()
-            presenter.setScheduledLoading(true)
+            viewModel.presenter.setScheduledLoading(true)
         }
 
-        onCreateOrNewIntent()
-    }
-
-    private fun removeNotification(){
-        appPrefs.notificationNewlyChannelsId = emptyList()
-        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.cancelAll()
-    }
-
-    override fun onNewIntent(intent: Intent?) {
-        super.onNewIntent(intent)
-        setIntent(intent)
-        onCreateOrNewIntent()
-    }
-
-    private fun onCreateOrNewIntent(){
         if (intent.hasExtra(PecaPlayIntent.EXTRA_IS_NOTIFICATED)) {
             removeNotification()
             launch {
                 vNavigation.extension?.navigate("notificated")
             }
         }
+
+        //各activity-aliasからのPecaPlayViewer起動用インテントを処理する
+        if (intent.action == ViewerLaunchActivity.ACTION_LAUNCH_PECA_VIEWER &&
+            intent.getLongExtra(
+                ViewerLaunchActivity.EX_LAUNCH_EXPIRE,
+                0
+            ) > System.currentTimeMillis()
+        ) {
+            viewModel.presenter.startPlayerActivity(intent.data!!, true, intent.extras) {
+                startActivity(it)
+            }
+        }
     }
 
+    private fun removeNotification() {
+        appPrefs.notificationNewlyChannelsId = emptyList()
+        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.cancelAll()
+    }
 
     override fun onPostCreate(savedInstanceState: Bundle?) {
         super.onPostCreate(savedInstanceState)
@@ -192,14 +199,14 @@ class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
 
     override fun onPause() {
         super.onPause()
-        presenter.stopLoading()
+        viewModel.presenter.stopLoading()
     }
 
     override fun onResume() {
         super.onResume()
         //前回の読み込みからN分以上経過している場合は読み込む
         if (lastLoadedERTime < SystemClock.elapsedRealtime() - 10 * 60_000)
-            presenter.startLoading()
+            viewModel.presenter.startLoading()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -244,7 +251,7 @@ class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.menu_reload -> {
-                presenter.startLoading()
+                viewModel.presenter.startLoading()
             }
 
             R.id.menu_notification -> {
@@ -252,7 +259,7 @@ class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
                 val enabled = !item.isChecked
                 //viewModel.isNotificationIconEnabled.value = enabled
                 appPrefs.isNotificationEnabled = enabled
-                presenter.setScheduledLoading(enabled)
+                viewModel.presenter.setScheduledLoading(enabled)
                 //schedulePresenter.resetScheduler()
                 invalidateOptionsMenu()
             }
@@ -274,11 +281,21 @@ class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
             }
 
             R.id.menu_favorite -> {
-                SettingsActivity.startFavoritePrefs(this)
+                startActivity(
+                    Intent(
+                        SettingsActivity.ACTION_FAVORITE_PREFS,
+                        null,
+                        this,
+                        SettingsActivity::class.java
+                    )
+                )
             }
 
             R.id.menu_settings -> {
-                SettingsActivity.startGeneralPrefs(this)
+                startActivityForResult(
+                    Intent(this, SettingsActivity::class.java),
+                    REQ_SETTING_ACTIVITY
+                )
             }
 
             else -> {
@@ -290,6 +307,12 @@ class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
         return true
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        Timber.d("requestCode=$requestCode, resultCode=$resultCode")
+        if (requestCode == REQ_SETTING_ACTIVITY && resultCode == SettingsActivity.RESULT_NIGHT_MODE_CHANGED)
+            recreate()
+    }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
@@ -336,6 +359,7 @@ class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
 
     companion object {
         private const val STATE_LAST_LOADED_ER_TIME = "lastLoadedERTime"
+        private const val REQ_SETTING_ACTIVITY = 0x1234
     }
 }
 
@@ -361,6 +385,7 @@ private class SearchViewEventHandler(
     }
 
     private var oldText = ""
+
     /** */
     override fun onQueryTextChange(newText: String): Boolean {
         if (newText != oldText)
@@ -385,5 +410,14 @@ private class SearchViewEventHandler(
     }
 }
 
+private class SnackbarObserver<T>(
+    private val view: View,
+    private val translate: (T?) -> CharSequence?
+) : Observer<T> {
+    override fun onChanged(t: T?) {
+        val text = translate(t) ?: return
+        Snackbar.make(view, text, Snackbar.LENGTH_LONG).show()
+    }
+}
 
 

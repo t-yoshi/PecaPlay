@@ -3,13 +3,17 @@ package org.peercast.pecaplay.list
 import android.view.View
 import android.view.ViewGroup
 import androidx.databinding.BaseObservable
+import androidx.databinding.DataBindingUtil
+import androidx.databinding.ViewDataBinding
 import androidx.recyclerview.widget.RecyclerView
 import org.peercast.pecaplay.app.Favorite
 import org.peercast.pecaplay.yp4g.YpChannel
+import timber.log.Timber
 
 //View
 abstract class BaseListItemViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
     abstract val viewModel: IListItemViewModel
+    open fun executePendingBindings(){}
     abstract fun setItemEventListener(listener: IListItemEventListener?)
 }
 

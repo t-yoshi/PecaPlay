@@ -38,11 +38,7 @@ private class ListItemViewHolderFactoryImpl(private val appPrefs: AppPreferences
     override fun createViewHolder(
         parent: ViewGroup, viewType: Int
     ): BaseListItemViewHolder {
-        return arrayOf(
-            ListItemViewHolder::Default,
-            ListItemViewHolder::Ng,
-            ListItemViewHolder::NgHidden
-        )[viewType](parent)
+        return HOLDER_FACTORIES[viewType](parent)
     }
 
     override fun getViewType(model: ListItemModel): Int {
@@ -54,6 +50,12 @@ private class ListItemViewHolderFactoryImpl(private val appPrefs: AppPreferences
     }
 
     companion object {
+        private val HOLDER_FACTORIES = listOf<(ViewGroup)->BaseListItemViewHolder>(
+            ListItemViewHolder::Default,
+            ListItemViewHolder::Ng,
+            ListItemViewHolder::NgHidden
+        )
+
         const val TYPE_DEFAULT = 0
         const val TYPE_NG = 1
         const val TYPE_NG_HIDDEN = 2
@@ -107,7 +109,11 @@ private class ListItemViewModelImpl : BaseListItemViewModel(), KoinComponent {
                 )
             }
             description = SpannableStringBuilder().also {
-                it.append("Playing:  ", SPAN_ITALIC, 0)
+                val playing = if (ch is YpHistoryChannel && !ch.isEnabled)
+                    "Played:   "
+                else
+                    "Playing:  "
+                it.append(playing, SPAN_ITALIC, 0)
                 it.append(ch.yp4g.description)
             }
             age = if (ch is YpHistoryChannel) {
@@ -166,7 +172,7 @@ private sealed class ListItemViewHolder(itemView: View) :
         eventListener = listener
     }
 
-    private fun childrenRecursive(vg: ViewGroup ): List<View> = vg.run {
+    private fun childrenRecursive(vg: ViewGroup): List<View> = vg.run {
         (0 until childCount).map {
             getChildAt(it)
         }.flatMap {
@@ -200,6 +206,10 @@ private sealed class ListItemViewHolder(itemView: View) :
         override fun setItemEventListener(listener: IListItemEventListener?) {
             super.setItemEventListener(listener)
             binding.itemEventListener = listener
+        }
+
+        override fun executePendingBindings() {
+            binding.executePendingBindings()
         }
     }
 

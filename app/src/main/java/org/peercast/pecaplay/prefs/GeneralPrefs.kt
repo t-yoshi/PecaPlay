@@ -6,27 +6,48 @@ import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
 import com.google.android.gms.oss.licenses.OssLicensesMenuActivity
+import kotlinx.coroutines.*
 import org.koin.android.ext.android.inject
 import org.peercast.pecaplay.BuildConfig
 import org.peercast.pecaplay.R
+import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.AppTheme
 import java.util.*
+import kotlin.coroutines.CoroutineContext
 
-class GeneralPrefsFragment : PreferenceFragmentCompat() {
-
+class GeneralPrefsFragment : PreferenceFragmentCompat() , CoroutineScope {
+    private lateinit var job: Job
     private val appPrefs: AppPreferences by inject()
-
+    private val appDatabase: AppRoomDatabase by inject()
+    override val coroutineContext: CoroutineContext
+        get() = job + Dispatchers.Main
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         addPreferencesFromResource(R.xml.pref_general)
+    }
 
-        with(findPreference(AppPreferences.KEY_PEERCAST_SERVER_URL) as EditTextPreference) {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        job = Job()
+        return super.onCreateView(inflater, container, savedInstanceState)
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        with(findPreference<EditTextPreference>(AppPreferences.KEY_PEERCAST_SERVER_URL) as EditTextPreference) {
             setOnPreferenceChangeListener { _, newValue ->
                 val ok = newValue == "" || Uri.parse(newValue as String).run {
                     scheme == "http" &&
@@ -40,21 +61,38 @@ class GeneralPrefsFragment : PreferenceFragmentCompat() {
             summary = appPrefs.peerCastUrl.toString()
         }
 
-        with(findPreference(AppPreferences.KEY_IS_NIGHT_MODE) as SwitchPreference) {
+        with(findPreference<Preference>("pref_header_yellow_page")!!){
+            launch {
+                summary = appDatabase.yellowPageDao.queryAwait(true).map { it.name }.toString()
+            }
+        }
+
+        with(findPreference<Preference>("pref_header_viewer")!!){
+            summary = PecaPlayViewerSetting.enabledTypes.toString()
+        }
+
+        with(findPreference<SwitchPreference>(AppPreferences.KEY_IS_NIGHT_MODE) as SwitchPreference) {
             setOnPreferenceChangeListener { _, newValue ->
-                AppTheme.initNightMode(context, newValue as Boolean)
-                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M)
-                    activity?.recreate()
+                launch {
+                    delay(250)
+                    AppTheme.initNightMode(context, newValue as Boolean)
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+                        activity?.let { a->
+                            //a.recreate()
+                            a.setResult(SettingsActivity.RESULT_NIGHT_MODE_CHANGED)
+                        }
+                    }
+                }
                 true
             }
         }
 
-        findPreference("pref_about").let {
-            it.title = "${it.title} v${BuildConfig.VERSION_NAME}"
+        findPreference<Preference>("pref_about")!!.let {
+            it.title = "${getString(R.string.app_name)} v${BuildConfig.VERSION_NAME}"
             it.summary = "Build: ${Date(BuildConfig.TIMESTAMP)}"
         }
 
-        findPreference("pref_notification_sound").let {
+        findPreference<Preference>("pref_notification_sound")!!.let {
             it.onPreferenceClickListener = Preference.OnPreferenceClickListener {
                 startActivityForResult(Intent().apply {
                     action = RingtoneManager.ACTION_RINGTONE_PICKER
@@ -67,7 +105,7 @@ class GeneralPrefsFragment : PreferenceFragmentCompat() {
             it.summary = getNotificationSoundTitle(appPrefs.notificationSoundUrl)
         }
 
-        with(findPreference("pref_oss_license")) {
+        with(findPreference<Preference>("pref_oss_license")!!) {
             setOnPreferenceClickListener {
                 startActivity(Intent(context, OssLicensesMenuActivity::class.java))
                 true
@@ -97,12 +135,16 @@ class GeneralPrefsFragment : PreferenceFragmentCompat() {
             REQ_SOUND_PICKER -> {
                 val u: Uri? = data.extras?.getParcelable(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
                 //Timber.d("${data.extras.keySet().toList()}")
-                findPreference("pref_notification_sound").summary = getNotificationSoundTitle(u)
+                findPreference<Preference>("pref_notification_sound")!!.summary = getNotificationSoundTitle(u)
                 appPrefs.notificationSoundUrl = u
             }
         }
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        job.cancel()
+    }
 
     companion object {
         private const val REQ_SOUND_PICKER = 1

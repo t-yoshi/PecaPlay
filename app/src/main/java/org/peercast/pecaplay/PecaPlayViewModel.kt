@@ -31,7 +31,7 @@ class PecaPlayViewModel(
     private val database: AppRoomDatabase,
     private val peerCastServiceEventLiveData: PeerCastServiceEventLiveData
 ) : AndroidViewModel(a) {
-
+    val presenter = PecaPlayPresenter(this, appPrefs, database)
 
     private val liveChannelLd = database.ypChannelDao.query()
     private val historyChannelLd = LiveDataUtils.combineLatest(

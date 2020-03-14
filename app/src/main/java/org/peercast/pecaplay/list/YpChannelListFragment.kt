@@ -21,7 +21,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
-import org.koin.androidx.viewmodel.ext.sharedViewModel
+import org.koin.androidx.viewmodel.ext.android.getViewModel
+import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import org.peercast.pecaplay.*
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.Favorite
@@ -41,8 +42,6 @@ class YpChannelFragment : Fragment(), CoroutineScope {
         get() = get<AppRoomDatabase>().favoriteDao
     private val viewModel: PecaPlayViewModel by sharedViewModel()
     private val adapter = ListAdapter()
-
-    private lateinit var presenter: PecaPlayPresenter
 
     //スクロール位置を保存する。
     private val scrollPositions = Bundle()
@@ -121,13 +120,8 @@ class YpChannelFragment : Fragment(), CoroutineScope {
         }
 
         vSwipeRefresh.setOnRefreshListener {
-            presenter.startLoading()
+            viewModel.presenter.startLoading()
         }
-    }
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-        presenter = PecaPlayPresenter(activity as PecaPlayActivity)
     }
 
     //スクロール位置の保存
@@ -242,6 +236,7 @@ class YpChannelFragment : Fragment(), CoroutineScope {
                 it.model = items[position]
                 it.notifyChange()
             }
+            holder.executePendingBindings()
         }
 
         override fun getItemCount(): Int {
@@ -267,7 +262,9 @@ class YpChannelFragment : Fragment(), CoroutineScope {
 
         override fun onItemClick(m: ListItemModel, position: Int) {
             if (m.ch.isEnabled && !m.isNg) {
-                presenter.startPlay(m.ch)
+                viewModel.presenter.startPlay(m.ch){
+                    startActivity(it)
+                }
             }
         }
 

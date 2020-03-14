@@ -20,6 +20,7 @@ import org.peercast.pecaplay.app.AppTheme
 import org.peercast.pecaplay.list.listItemModule
 import org.peercast.pecaplay.prefs.AppPreferences
 import org.peercast.pecaplay.prefs.DefaultAppPreferences
+import org.peercast.pecaplay.prefs.PecaPlayViewerSetting
 import timber.log.Timber
 
 
@@ -107,6 +108,7 @@ class PecaPlayApplication : Application() {
             modules(appModule, listItemModule)
         }
 
+        PecaPlayViewerSetting.initComponentSetting()
         AppTheme.initNightMode(this, appPrefs.isNightMode)
     }
 
