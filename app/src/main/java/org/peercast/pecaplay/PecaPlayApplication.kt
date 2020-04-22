@@ -14,7 +14,9 @@ import org.koin.core.context.startKoin
 import org.koin.dsl.module
 import org.peercast.core.lib.PeerCastController
 import org.peercast.core.lib.PeerCastRpcClient
-import org.peercast.core.lib.rpc.JsonRpcException
+import org.peercast.core.lib.notify.NotifyChannelType
+import org.peercast.core.lib.notify.NotifyMessageType
+import org.peercast.core.lib.rpc.ChannelInfo
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.AppTheme
 import org.peercast.pecaplay.list.listItemModule
@@ -22,6 +24,8 @@ import org.peercast.pecaplay.prefs.AppPreferences
 import org.peercast.pecaplay.prefs.DefaultAppPreferences
 import org.peercast.pecaplay.prefs.PecaPlayViewerSetting
 import timber.log.Timber
+import java.io.IOException
+import java.util.*
 
 
 val appModule = module {
@@ -51,7 +55,7 @@ class PeerCastServiceEventLiveData(a: Application, private val appPrefs: AppPref
     private val controller = PeerCastController.from(a)
 
     init {
-        controller.addEventListener(this)
+        controller.eventListener = this
     }
 
     fun bind() {
@@ -80,7 +84,7 @@ class PeerCastServiceEventLiveData(a: Application, private val appPrefs: AppPref
                 val port = client.getStatus().globalRelayEndPoint?.port ?: 7144
                 appPrefs.peerCastUrl = Uri.parse("http://localhost:$port/")
                 PeerCastServiceBindEvent.OnBind(port)
-            } catch (e: JsonRpcException) {
+            } catch (e: IOException) {
                 Timber.e(e)
                 PeerCastServiceBindEvent.OnBind(appPrefs.peerCastUrl.port)
             }
@@ -88,7 +92,17 @@ class PeerCastServiceEventLiveData(a: Application, private val appPrefs: AppPref
         }
     }
 
-    override fun onDisconnectService(controller: PeerCastController) {
+    override fun onNotifyChannel(
+        type: NotifyChannelType,
+        channelId: String,
+        channelInfo: ChannelInfo
+    ) {
+    }
+
+    override fun onNotifyMessage(types: EnumSet<NotifyMessageType>, message: String) {
+    }
+
+    override fun onDisconnectService() {
         value = PeerCastServiceBindEvent.OnUnbind
     }
 }

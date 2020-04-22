@@ -69,7 +69,7 @@ class LoadingWorker(c: Context, workerParams: WorkerParameters) :
             yellowPages.forEach { yp ->
                 try {
                     val res = createYp4gService(yp).getIndex("localhost:$port")
-                    val url = res.raw().request().url().toString()
+                    val url = res.raw().request.url.toString()
                     res.body()?.mapNotNull {
                         try {
                             it.create(yp, url)

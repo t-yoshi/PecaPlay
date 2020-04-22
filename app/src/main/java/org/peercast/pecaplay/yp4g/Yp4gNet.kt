@@ -2,6 +2,7 @@ package org.peercast.pecaplay.yp4g
 
 import androidx.sqlite.db.SupportSQLiteStatement
 import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import okio.BufferedSink
@@ -104,8 +105,7 @@ class RandomDataBody(
         Random().nextBytes(randomData)
     }
 
-    override fun contentType() =
-        MediaType.parse("application/octet-stream")
+    override fun contentType() = "application/octet-stream".toMediaType()
 
     override fun writeTo(sink: BufferedSink) {
         var sent = 2 //送信済みbytes (\r\n)
