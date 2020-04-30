@@ -12,8 +12,10 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.annotation.CallSuper
 import androidx.cardview.widget.CardView
+import androidx.core.view.children
 import androidx.databinding.Bindable
 import androidx.databinding.Observable
+import kotlinx.android.synthetic.main.ch_item.view.*
 import org.koin.core.KoinComponent
 import org.koin.core.inject
 import org.koin.dsl.module
@@ -144,18 +146,7 @@ private sealed class ListItemViewHolder(itemView: View) :
 
     private var eventListener: IListItemEventListener? = null
 
-    override val viewModel = ListItemViewModelImpl().apply {
-        addOnPropertyChangedCallback(object : Observable.OnPropertyChangedCallback() {
-            override fun onPropertyChanged(sender: Observable, propertyId: Int) {
-                when (propertyId) {
-                    //BR._all,
-                    BR.enabled -> {
-                        itemView.post { setChildrenEnabled(isEnabled) }
-                    }
-                }
-            }
-        })
-    }
+    override val viewModel = ListItemViewModelImpl()
 
     init {
         //コンテキストメニューを出すにはfalseを返す。
@@ -171,24 +162,6 @@ private sealed class ListItemViewHolder(itemView: View) :
     override fun setItemEventListener(listener: IListItemEventListener?) {
         eventListener = listener
     }
-
-    private fun childrenRecursive(vg: ViewGroup): List<View> = vg.run {
-        (0 until childCount).map {
-            getChildAt(it)
-        }.flatMap {
-            when {
-                it is ViewGroup -> {
-                    childrenRecursive(it)
-                }
-                else -> listOf(it)
-            }
-        }
-    }
-
-    private fun setChildrenEnabled(enabled: Boolean) {
-        childrenRecursive(itemView as ViewGroup).forEach { it.isEnabled = enabled }
-    }
-
 
     class Default(parent: ViewGroup) : ListItemViewHolder(
         inflateCardView(
