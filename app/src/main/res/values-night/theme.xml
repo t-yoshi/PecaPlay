@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="AppTheme" parent="Theme.MaterialComponents.NoActionBar"/>
+    <style name="AppThemeBase.Override">
+        <item name="actionBarStyle">@style/Widget.MaterialComponents.ActionBar.Solid</item>
+        <item name="colorPrimary">@color/grey_900</item>
+    </style>
+
+    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.MaterialComponents.Dark" />
 
     <color name="colorIconAlarm">@color/yellow_700</color>
 
