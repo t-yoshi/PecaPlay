@@ -5,6 +5,7 @@ import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import com.crashlytics.android.Crashlytics
+import com.google.android.play.core.missingsplits.MissingSplitsManagerFactory
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
@@ -107,11 +108,16 @@ class PeerCastServiceEventLiveData(a: Application, private val appPrefs: AppPref
     }
 }
 
-
+@Suppress("unused")
 class PecaPlayApplication : Application() {
     private val appPrefs: AppPreferences by inject()
 
     override fun onCreate() {
+        //不完全なapkをサイドローディングインストールしたユーザーに警告する
+        if (MissingSplitsManagerFactory.create(this).disableAppIfMissingRequiredSplits()) {
+            return
+        }
+
         super.onCreate()
 
         Timber.plant(ReleaseTree())
