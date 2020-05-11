@@ -73,11 +73,7 @@ private class ListItemViewModelImpl : BaseListItemViewModel(), KoinComponent {
     override var comment: CharSequence = ""
     override var age: CharSequence = ""
 
-    @get:Bindable
-    override var isEnabled by Delegates.observable(true) { _, old, new ->
-        if (old != new)
-            notifyPropertyChanged(BR.enabled)
-    }
+    override var isEnabled = true
     override var isStarChecked = false
 
     override var isStarEnabled = false
@@ -131,6 +127,8 @@ private class ListItemViewModelImpl : BaseListItemViewModel(), KoinComponent {
 
             isStarChecked = value.star != null
             isStarEnabled = !ch.isEmptyId
+
+            notifyPropertyChanged(BR._all)
         }
 
     companion object {
