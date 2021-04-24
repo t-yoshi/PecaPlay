@@ -4,8 +4,8 @@ import android.app.Application
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
-import com.crashlytics.android.Crashlytics
 import com.google.android.play.core.missingsplits.MissingSplitsManagerFactory
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
@@ -142,6 +142,6 @@ private class ReleaseTree : Timber.DebugTree() {
     override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
         super.log(priority, tag, message, t)
         if (t != null)
-            Crashlytics.logException(t)
+            FirebaseCrashlytics.getInstance().recordException(t)
     }
 }

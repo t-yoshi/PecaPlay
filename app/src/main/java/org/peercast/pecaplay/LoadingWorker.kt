@@ -15,7 +15,7 @@ import androidx.core.app.NotificationCompat
 import androidx.lifecycle.MutableLiveData
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.crashlytics.android.Crashlytics
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import org.koin.core.KoinComponent
 import org.koin.core.inject
 import org.peercast.pecaplay.app.AppRoomDatabase
@@ -249,11 +249,11 @@ class LoadingWorker(c: Context, workerParams: WorkerParameters) :
                 if (!t())
                     return Result.failure()
             }
-        } catch (e: Throwable) {
+        } catch (t: Throwable) {
             //NOTE: 例外が起きても[androidx.work.impl.WorkerWrapper]内で
             //キャッチされるだけ。補足しにくいので注意。
-            Crashlytics.logException(e)
-            throw e
+            FirebaseCrashlytics.getInstance().recordException(t)
+            throw t
         } finally {
             eventLiveData.postValue(Event.OnFinished(id))
         }

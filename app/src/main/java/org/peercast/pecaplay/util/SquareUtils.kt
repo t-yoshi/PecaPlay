@@ -42,7 +42,7 @@ fun IOException.localizedSystemMessage(): String {
 object SquareUtils {
     private const val HTTP_USER_AGENT = "PecaPlay (Linux; U; Android)"
     private const val HTTP_CONNECT_TIMEOUT = 10L
-    private const val HTTP_RW_TIMEOUT = 30L
+    private const val HTTP_RW_TIMEOUT = 20L
 
     private val httpClient = OkHttpClient.Builder()
         .connectTimeout(HTTP_CONNECT_TIMEOUT, TimeUnit.SECONDS)
