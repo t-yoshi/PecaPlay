@@ -8,8 +8,10 @@ import android.widget.ArrayAdapter
 import android.widget.Button
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDialogFragment
+import androidx.core.content.res.ResourcesCompat
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -38,7 +40,7 @@ class SpeedTestFragment : AppCompatDialogFragment(), CoroutineScope {
 
         isCancelable = false
 
-        adapter = ArrayAdapter(context!!, android.R.layout.simple_list_item_single_choice)
+        adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_single_choice)
         launch {
             database.yellowPageDao.queryAwait()
                 .map(::Yp4gSpeedTester)
@@ -51,13 +53,13 @@ class SpeedTestFragment : AppCompatDialogFragment(), CoroutineScope {
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val c = context!!
-        val icon = c.resources.getDrawable(R.drawable.ic_file_upload_36dp, c.theme)
-        icon.setTint(AppTheme.getIconColor(c))
+        val c = requireContext()
+        val icon = ResourcesCompat.getDrawable(c.resources, R.drawable.ic_file_upload_36dp, c.theme)
+        icon?.setTint(AppTheme.getIconColor(c))
 
         val binding = SpeedtestDialogFooterBinding.inflate(LayoutInflater.from(c))
 
-        return AlertDialog.Builder(c, theme)
+        return MaterialAlertDialogBuilder(c, theme)
             .setSingleChoiceItems(adapter, -1) { _, which ->
                 presenter.setTester(adapter.getItem(which)!!)
             }

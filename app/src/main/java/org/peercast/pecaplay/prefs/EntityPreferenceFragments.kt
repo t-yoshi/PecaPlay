@@ -9,6 +9,7 @@ import android.widget.CheckBox
 import android.widget.LinearLayout
 import androidx.annotation.CallSuper
 import androidx.appcompat.app.AlertDialog
+import androidx.core.content.ContextCompat
 import androidx.databinding.BaseObservable
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
@@ -17,6 +18,7 @@ import androidx.lifecycle.Observer
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceViewHolder
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -122,14 +124,12 @@ abstract class EntityPreferenceFragmentBase<ME : ManageableEntity>
             it.putParcelable(EntityEditDialogFragmentBase.ARG_EDIT_SOURCE, item)
         }
         f.setTargetFragment(this, 0)
-        fragmentManager?.let {
-            f.show(it, "EditDialog@$item")
-        }
+        f.show(parentFragmentManager, "EditDialog@$item")
     }
 
     //  削除するか確認する
     private fun confirmRemoveItem(item: ME) {
-        AlertDialog.Builder(context!!)
+        MaterialAlertDialogBuilder(requireContext())
             .setTitle(R.string.delete)
             .setIcon(android.R.drawable.ic_menu_delete)
             .setItems(arrayOf(item.name)) { _, _ ->
@@ -235,8 +235,8 @@ abstract class EntityEditDialogFragmentBase<ME : ManageableEntity>
 
 
     final override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val c = context!!
-        return AlertDialog.Builder(c)
+        val c = requireContext()
+        return MaterialAlertDialogBuilder(c)
             .setPositiveButton(android.R.string.ok) { _, _ ->
                 @Suppress("unchecked_cast")
                 onOkButtonClicked()
@@ -251,7 +251,7 @@ abstract class EntityEditDialogFragmentBase<ME : ManageableEntity>
                     setTitle(R.string.new_item)
                     icon = R.drawable.ic_add_circle_36dp
                 }
-                c.getDrawable(icon)?.let { d ->
+                ContextCompat.getDrawable(c, icon)?.let { d ->
                     d.setTint(AppTheme.getIconColor(c))
                     setIcon(d)
                 }

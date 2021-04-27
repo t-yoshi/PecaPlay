@@ -85,7 +85,7 @@ class FavoritePrefsFragment : EntityPreferenceFragmentBase<Favorite>() {
             else -> android.R.color.transparent
         }
 
-        val c = context!!
+        val c = requireContext()
         val res = resources
         val theme = c.theme
 

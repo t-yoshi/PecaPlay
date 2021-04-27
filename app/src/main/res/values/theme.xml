@@ -6,9 +6,13 @@
         <item name="android:textColorSecondary">@color/text_color_light</item>
     </style>
 
+    <style name="AppDialogTheme" parent="Theme.MaterialComponents.DayNight.Dialog.Alert"/>
+
     <!-- Android 6.0からNightモードの動的切り替えが可能 -->
     <style name="AppTheme" parent="AppThemeBase.Override">
         <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
+        <item name="materialAlertDialogTheme">@style/AppDialogTheme</item>
+        <item name="alertDialogTheme">@style/AppDialogTheme</item>
     </style>
 
     <style name="AppTheme.NoActionBar">

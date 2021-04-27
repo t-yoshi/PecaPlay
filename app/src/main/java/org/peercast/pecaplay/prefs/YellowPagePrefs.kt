@@ -21,7 +21,7 @@ class YellowPagePrefsFragment : EntityPreferenceFragmentBase<YellowPage>() {
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         super.onCreatePreferences(savedInstanceState, rootKey)
 
-        val iconColor = AppTheme.getIconColor(context!!)
+        val iconColor = AppTheme.getIconColor(requireContext())
 
         database.yellowPageDao.query(false).observe(this, Observer {
             preferenceScreen.removeAll()
