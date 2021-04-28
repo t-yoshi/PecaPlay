@@ -34,13 +34,13 @@ class Yp4gSpeedTester(val yp: YellowPage) : KoinComponent {
             .create(Yp4gService::class.java)
 
         return try {
-            config = service.getConfig().body() ?: throw IOException("config is none")
+            config = service.getConfig().body() ?: throw IOException("no config exists.")
             Timber.i("loadConfig OK: $config")
             true
         } catch (e: Exception) {
             //RuntimeException(cause=XmlPullParserException) または IOException
             config = Yp4gConfig.NONE
-            error = "$e ${e.message}"
+            error = e.toString()
             Timber.e(e, "loadConfig Failed: ")
             false
         }
@@ -67,12 +67,12 @@ class Yp4gSpeedTester(val yp: YellowPage) : KoinComponent {
 
         return try {
             val response = service.speedTest(obj, reqBody)
-            Timber.i("SpeedTest OK: %s", response.string())
+            Timber.i("SpeedTest OK: %s", response.body())
             //Configの再読込
             loadConfig(false)
         } catch (e: IOException) {
             Timber.e(e, "SpeedTest Failed")
-            error = "$e ${e.message}"
+            error = e.toString()
             false
         }
     }

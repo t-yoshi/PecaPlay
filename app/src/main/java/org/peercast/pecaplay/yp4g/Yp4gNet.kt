@@ -85,7 +85,7 @@ interface Yp4gService {
     suspend fun speedTest(
         @Path("object", encoded = true) obj: String,
         @Body data: RandomDataBody
-    ): ResponseBody
+    ): Response<String>
 
 }
 
