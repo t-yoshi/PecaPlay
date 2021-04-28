@@ -23,7 +23,7 @@
     <string name="contact">コンタクト</string>
     <string name="settings">設定</string>
     <string name="speed_test">帯域テスト</string>
-    <string name="peca_service_running">PeCa動作中 %d</string>
+    <string name="peercast_has_started">PeerCast動作中 (port=%d)</string>
     <string name="settings_activity">設定</string>
     <string name="application_not_installed">%s を開くアプリがインストールされていません。</string>
     <string name="yp_loading">読み込み中</string>
@@ -87,6 +87,9 @@
     <string name="notification_wakeup">スリープ中にも継続</string>
         <string name="notification_types">通知の動作</string>
 -->
+
+    <string name="closed_port">ポートが開いていません</string>
+
     <string name="disabled">無効</string>
     <string name="enabled">有効</string>
 
