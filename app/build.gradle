@@ -12,8 +12,8 @@ android {
         applicationId "org.peercast.pecaplay"
         minSdkVersion 21
         targetSdkVersion 29
-        versionCode 7_02_01_00
-        versionName '7.2.1-00'
+        versionCode 7_03_00_00
+        versionName '7.3.0-00'
         buildConfigField "long", "TIMESTAMP", System.currentTimeMillis() + "L"
 
         javaCompileOptions {
