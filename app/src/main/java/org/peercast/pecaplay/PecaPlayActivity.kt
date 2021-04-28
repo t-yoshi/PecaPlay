@@ -130,7 +130,7 @@ class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
                 this,
                 SnackbarObserver(vYpChannelFragmentContainer) { ev ->
                     if (ev is PeerCastServiceBindEvent.OnBind && ev.localServicePort > 0) {
-                        return@SnackbarObserver "PeerCast is now running at port ${ev.localServicePort}."
+                        return@SnackbarObserver getString(R.string.peercast_has_started, ev.localServicePort)
                     }
                     null
                 })
