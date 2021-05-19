@@ -25,6 +25,7 @@ import org.peercast.pecaplay.app.YpHistoryChannel
 import org.peercast.pecaplay.app.YpLiveChannel
 import org.peercast.pecaplay.databinding.ChItemBinding
 import org.peercast.pecaplay.prefs.AppPreferences
+import org.peercast.pecaplay.yp4g.descriptionOrGenre
 import java.text.DateFormat
 import kotlin.properties.Delegates
 
@@ -112,7 +113,7 @@ private class ListItemViewModelImpl : BaseListItemViewModel(), KoinComponent {
                 else
                     "Playing:  "
                 it.append(playing, SPAN_ITALIC, 0)
-                it.append(ch.yp4g.description)
+                it.append(ch.yp4g.descriptionOrGenre)
             }
             age = if (ch is YpHistoryChannel) {
                 DATE_FORMAT.format(ch.lastPlay)

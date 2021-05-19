@@ -110,7 +110,7 @@ class LoadingWorker(c: Context, workerParams: WorkerParameters) :
 
             database.compileStatement(sql).use { statement ->
                 lines.forEach { line ->
-                    //Timber.d("->%s",line)
+                    Timber.d("->%s",line)
                     line.bindTo(statement, columnNames)
 
                     val r = statement.executeInsert()
@@ -190,7 +190,7 @@ class LoadingWorker(c: Context, workerParams: WorkerParameters) :
 
             channels.take(5).forEach { ch ->
                 val name = ch.yp4g.name
-                val desc = ch.yp4g.description
+                val desc = ch.yp4g.descriptionOrGenre
                 val comment = ch.yp4g.comment
                 val ssb = SpannableStringBuilder().apply {
                     append("$name   $desc $comment")

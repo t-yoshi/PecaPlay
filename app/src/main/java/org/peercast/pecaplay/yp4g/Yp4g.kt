@@ -43,7 +43,7 @@ enum class Yp4gColumn(val convert: (String) -> String = Converter.None) {
     companion object {
         private object Converter {
             val None: (String) -> String = { it }
-            val UnescapeHtml: (String) -> String = { HtmlEscape.unescapeHtml(it) }
+            val UnescapeHtml: (String) -> String = { HtmlEscape.unescapeHtml(it).trim() }
             val Number: (String) -> String = { it.toIntOrNull() ?: throw Yp4gFormatException("not number '$it'"); it }
             val ChannelId: (String) -> String = {
                 if (it.length != 32)
@@ -84,6 +84,12 @@ data class Yp4gField(
     val ypName: String,
     val ypUrl: Uri// #20
 )
+
+/**詳細が空のとき、ジャンルを返す。「たつひと」*/
+val Yp4gField.descriptionOrGenre : String
+    get() {
+        return description.ifEmpty { genre }
+    }
 
 
 /**

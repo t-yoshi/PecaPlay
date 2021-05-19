@@ -14,6 +14,7 @@ import org.peercast.pecaplay.app.YpHistoryChannel
 import org.peercast.pecaplay.app.saveRecentQuery
 import org.peercast.pecaplay.prefs.AppPreferences
 import org.peercast.pecaplay.yp4g.YpChannel
+import org.peercast.pecaplay.yp4g.descriptionOrGenre
 import timber.log.Timber
 import java.util.concurrent.TimeUnit
 
@@ -77,7 +78,7 @@ class PecaPlayPresenter(
         val extras = Bundle().also {
             it.putString(LibPeerCast.EXTRA_CONTACT_URL, ch.yp4g.url.toString())
             it.putString(LibPeerCast.EXTRA_NAME, ch.yp4g.name)
-            it.putString(LibPeerCast.EXTRA_DESCRIPTION, ch.yp4g.description)
+            it.putString(LibPeerCast.EXTRA_DESCRIPTION, ch.yp4g.descriptionOrGenre)
             it.putString(LibPeerCast.EXTRA_COMMENT, ch.yp4g.comment)
             //Timber.d("extras=${it.extras}")
         }

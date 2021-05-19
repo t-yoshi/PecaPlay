@@ -10,6 +10,7 @@ import org.peercast.pecaplay.prefs.AppPreferences
 import org.peercast.pecaplay.util.LiveDataUtils
 import org.peercast.pecaplay.yp4g.YpChannel
 import org.peercast.pecaplay.yp4g.YpDisplayOrder
+import org.peercast.pecaplay.yp4g.descriptionOrGenre
 import timber.log.Timber
 import java.util.*
 import kotlin.properties.Delegates
@@ -48,7 +49,7 @@ class PecaPlayViewModel(
     private val selectorLiveData = object : MediatorLiveData<List<YpChannel>>() {
         private val YpChannel.searchText: String
             get() = extTag("PecaPlayViewModel#searchText") {
-                toNormalizedJapanese(yp4g.run { "$name $comment $description" })
+                toNormalizedJapanese(yp4g.run { "$name $comment $descriptionOrGenre" })
             }!!
 
         var srcLiveData by Delegates.observable(EMPTY_LIVEDATA) { _, oldLd, newLd ->
