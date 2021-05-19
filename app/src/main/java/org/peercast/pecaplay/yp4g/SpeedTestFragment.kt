@@ -33,7 +33,7 @@ class SpeedTestFragment : AppCompatDialogFragment(), CoroutineScope {
     private val database: AppRoomDatabase by inject()
     private lateinit var adapter: ArrayAdapter<Yp4gSpeedTester>
     private val viewModel = ViewModel()
-    private val presenter = Presenter(this, viewModel)
+    private val presenter = Presenter()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -90,30 +90,27 @@ class SpeedTestFragment : AppCompatDialogFragment(), CoroutineScope {
         val isStartButtonEnabled = MutableLiveData(false)
     }
 
-    private class Presenter(
-        private val scope: CoroutineScope,
-        private val viewModel: ViewModel
-    ) {
+    private inner class Presenter {
         private lateinit var tester: Yp4gSpeedTester
 
         fun setTester(t: Yp4gSpeedTester) {
             viewModel.status.value = ""
             tester = t
-            scope.launch {
+            launch {
                 viewModel.isStartButtonEnabled.value =
                     tester.loadConfig() && tester.config.uptest.isCheckable
-                viewModel.status.value = tester.status
+                viewModel.status.value = tester.getStatus(requireContext())
             }
         }
 
         fun startTest() {
             viewModel.isStartButtonEnabled.value = false
-            scope.launch {
+            launch {
                 tester.startTest {
                     //Timber.d("progress=$progress")
                     viewModel.progress.postValue(it)
                 }
-                viewModel.status.value = tester.status
+                viewModel.status.value = tester.getStatus(requireContext())
             }
         }
     }

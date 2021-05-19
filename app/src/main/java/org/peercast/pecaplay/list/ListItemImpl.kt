@@ -12,12 +12,6 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.annotation.CallSuper
 import androidx.cardview.widget.CardView
-import androidx.core.view.children
-import androidx.databinding.Bindable
-import androidx.databinding.Observable
-import kotlinx.android.synthetic.main.ch_item.view.*
-import org.koin.core.KoinComponent
-import org.koin.core.inject
 import org.koin.dsl.module
 import org.peercast.pecaplay.BR
 import org.peercast.pecaplay.R
@@ -27,7 +21,6 @@ import org.peercast.pecaplay.databinding.ChItemBinding
 import org.peercast.pecaplay.prefs.AppPreferences
 import org.peercast.pecaplay.yp4g.descriptionOrGenre
 import java.text.DateFormat
-import kotlin.properties.Delegates
 
 val listItemModule = module {
     single<IListItemViewHolderFactory> {
@@ -65,8 +58,7 @@ private class ListItemViewHolderFactoryImpl(private val appPrefs: AppPreferences
     }
 }
 
-private class ListItemViewModelImpl : BaseListItemViewModel(), KoinComponent {
-    private val c: Context by inject()
+private class ListItemViewModelImpl(private val c: Context) : BaseListItemViewModel() {
 
     override var name: String = ""
     override var listener: String = ""
@@ -145,7 +137,7 @@ private sealed class ListItemViewHolder(itemView: View) :
 
     private var eventListener: IListItemEventListener? = null
 
-    override val viewModel = ListItemViewModelImpl()
+    override val viewModel = ListItemViewModelImpl(itemView.context)
 
     init {
         //コンテキストメニューを出すにはfalseを返す。

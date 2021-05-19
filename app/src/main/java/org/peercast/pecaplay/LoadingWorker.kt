@@ -16,8 +16,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.google.firebase.crashlytics.FirebaseCrashlytics
-import org.koin.core.KoinComponent
-import org.koin.core.inject
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.YellowPage
 import org.peercast.pecaplay.app.YpLiveChannel

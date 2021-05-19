@@ -15,8 +15,8 @@ import com.google.android.material.navigation.NavigationView
 import kotlinx.android.synthetic.main.navigation_action_view_checkbox.view.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.koin.core.KoinComponent
-import org.koin.core.inject
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.Favorite
 import org.peercast.pecaplay.app.YellowPage
@@ -75,10 +75,10 @@ class PecaNavigationViewExtension(
     savedInstanceState: Bundle?,
     owner: LifecycleOwner,
     private val onItemClick: (NavigationItem) -> Unit
-) : KoinComponent {
+) {
 
     private val inflater = LayoutInflater.from(view.context)
-    private val model: INavigationModel = NavigationModelImpl()
+    private val model: INavigationModel = NavigationModelImpl(view.context)
 
     private val invisiblePrefs = view.context.getSharedPreferences(
         "navigation_v5", Context.MODE_PRIVATE
@@ -254,8 +254,7 @@ private const val TAG_NOTIFICATED = "notificated"
 private const val TAG_HISTORY = "history"
 
 
-private class NavigationModelImpl : INavigationModel, KoinComponent {
-    private val c by inject<Context>()
+private class NavigationModelImpl(private val c: Context) : INavigationModel, KoinComponent {
     private val database by inject<AppRoomDatabase>()
     private val appPrefs by inject<AppPreferences>()
 

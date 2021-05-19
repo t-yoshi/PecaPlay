@@ -3,8 +3,8 @@ package org.peercast.pecaplay.prefs
 import android.app.Application
 import android.content.ComponentName
 import android.content.pm.PackageManager
-import org.koin.core.KoinComponent
-import org.koin.core.inject
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import timber.log.Timber
 
 object PecaPlayViewerSetting : KoinComponent {

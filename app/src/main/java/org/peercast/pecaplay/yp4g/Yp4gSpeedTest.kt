@@ -1,22 +1,15 @@
 package org.peercast.pecaplay.yp4g
 
-import android.app.Application
 import android.content.Context
 import androidx.annotation.WorkerThread
-import org.koin.core.KoinComponent
-import org.koin.core.get
-import org.koin.core.inject
 import org.peercast.pecaplay.R
 import org.peercast.pecaplay.app.YellowPage
 import org.peercast.pecaplay.util.SquareUtils
-import org.peercast.pecaplay.util.exAwait
 import timber.log.Timber
 import java.io.IOException
 
 
-class Yp4gSpeedTester(val yp: YellowPage) : KoinComponent {
-    private val a by inject<Application>()
-
+class Yp4gSpeedTester(val yp: YellowPage) {
     var config = NONE_CONFIG
         private set
     private var error = ""
@@ -77,19 +70,18 @@ class Yp4gSpeedTester(val yp: YellowPage) : KoinComponent {
         }
     }
 
-    val status: String
-        get() {
-            if (error != "")
-                return error
+    fun getStatus(c: Context): String {
+        if (error != "")
+            return error
 
-            var s = "${config.host.speed}kbps"
-            if (config.host.isOver)
-                s += " over "
-            if (!config.host.isPortOpen) {
-                s += " (${a.getString(R.string.closed_port)})"
-            }
-            return s
+        var s = "${config.host.speed}kbps"
+        if (config.host.isOver)
+            s += " over "
+        if (!config.host.isPortOpen) {
+            s += " (${c.getString(R.string.closed_port)})"
         }
+        return s
+    }
 
     override fun toString() = yp.name
 
