@@ -60,7 +60,7 @@ class Yp4gSpeedTester(val yp: YellowPage) {
 
         return try {
             val response = service.speedTest(obj, reqBody)
-            Timber.i("SpeedTest OK: %s", response.body())
+            Timber.i("SpeedTest OK: %s", response)
             //Configの再読込
             loadConfig(false)
         } catch (e: IOException) {
