@@ -6,8 +6,7 @@ import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import com.google.android.play.core.missingsplits.MissingSplitsManagerFactory
 import com.google.firebase.crashlytics.FirebaseCrashlytics
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.koin.android.ext.android.inject
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
@@ -27,6 +26,7 @@ import org.peercast.pecaplay.prefs.PecaPlayViewerSetting
 import timber.log.Timber
 import java.io.IOException
 import java.util.*
+import kotlin.coroutines.CoroutineContext
 
 
 val appModule = module {
@@ -51,9 +51,12 @@ sealed class PeerCastServiceBindEvent {
  * YPへの読み込みはPeerCastアプリが起動してから行う。
  * */
 class PeerCastServiceEventLiveData(a: Application, private val appPrefs: AppPreferences) :
-    MutableLiveData<PeerCastServiceBindEvent>(), PeerCastController.EventListener {
+    MutableLiveData<PeerCastServiceBindEvent>(), PeerCastController.EventListener, CoroutineScope {
 
     private val controller = PeerCastController.from(a)
+    private var job = Job()
+    override val coroutineContext: CoroutineContext
+        get() = job + Dispatchers.Main
 
     init {
         controller.eventListener = this
@@ -69,10 +72,12 @@ class PeerCastServiceEventLiveData(a: Application, private val appPrefs: AppPref
         }
         if (controller.isConnected && value is PeerCastServiceBindEvent.OnBind)
             return
+        job = Job()
         controller.bindService()
     }
 
     fun unbind() {
+        job.cancel()
         controller.unbindService()
         value = PeerCastServiceBindEvent.OnUnbind
     }
@@ -80,7 +85,7 @@ class PeerCastServiceEventLiveData(a: Application, private val appPrefs: AppPref
     override fun onConnectService(controller: PeerCastController) {
         val client = PeerCastRpcClient(controller)
 
-        GlobalScope.launch {
+        launch {
             val ev = try {
                 val port = client.getStatus().globalRelayEndPoint?.port ?: 7144
                 appPrefs.peerCastUrl = Uri.parse("http://localhost:$port/")
@@ -104,6 +109,7 @@ class PeerCastServiceEventLiveData(a: Application, private val appPrefs: AppPref
     }
 
     override fun onDisconnectService() {
+        job.cancel()
         value = PeerCastServiceBindEvent.OnUnbind
     }
 }
