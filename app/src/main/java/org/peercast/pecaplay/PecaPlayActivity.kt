@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.database.Cursor
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
@@ -21,12 +22,14 @@ import androidx.core.view.ActionProvider
 import androidx.core.view.MenuItemCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.pacaplay_activity.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
@@ -126,14 +129,16 @@ class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
 
         //回転後の再生成時には表示しない
         if (savedInstanceState == null) {
-            get<PeerCastServiceEventLiveData>().observe(
-                this,
-                SnackbarObserver(vYpChannelFragmentContainer) { ev ->
-                    if (ev is PeerCastServiceBindEvent.OnBind && ev.localServicePort > 0) {
-                        return@SnackbarObserver getString(R.string.peercast_has_started, ev.localServicePort)
+            lifecycleScope.launchWhenResumed {
+                viewModel.rpcClient.collect { client->
+                    if (client != null){
+                        Timber.i("--> service connected!")
+                        val u = Uri.parse(client.rpcEndPoint)
+                        val s = getString(R.string.peercast_has_started, u.port)
+                        Snackbar.make(vYpChannelFragmentContainer, s, Snackbar.LENGTH_LONG).show()
                     }
-                    null
-                })
+                }
+            }
         }
 
         get<LoadingWorkerLiveData>().observe(this, SnackbarObserver(vYpChannelFragmentContainer) { ev ->
@@ -183,6 +188,8 @@ class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
                 startActivity(it)
             }
         }
+
+        viewModel.bindService()
     }
 
     private fun removeNotification() {

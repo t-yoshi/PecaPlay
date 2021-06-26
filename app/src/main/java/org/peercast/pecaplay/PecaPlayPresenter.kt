@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.*
 import kotlinx.coroutines.launch
 import org.peercast.core.lib.LibPeerCast
+import org.peercast.core.lib.app.BasePeerCastWorker
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.YpHistoryChannel
 import org.peercast.pecaplay.app.saveRecentQuery
@@ -30,8 +31,7 @@ class PecaPlayPresenter(
     fun startLoading() {
         WorkManager.getInstance(a).beginUniqueWork(
             WORK_NAME, ExistingWorkPolicy.KEEP,
-            OneTimeWorkRequest.Builder(LoadingWorker::class.java)
-                .build()
+            OneTimeWorkRequest.Builder(LoadingWorker::class.java).build()
         ).enqueue()
     }
 
@@ -99,7 +99,6 @@ class PecaPlayPresenter(
             val req = PeriodicWorkRequest
                 .Builder(LoadingWorker::class.java, 15, TimeUnit.MINUTES)
                 .addTag(LOADING_WORK_TAG)
-
                 .setBackoffCriteria(BackoffPolicy.LINEAR, 5L, TimeUnit.MINUTES)
                 .setConstraints(
                     Constraints.Builder()

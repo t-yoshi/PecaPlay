@@ -5,6 +5,7 @@ import androidx.lifecycle.*
 import com.googlecode.kanaxs.KanaUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.peercast.core.lib.app.BasePeerCastViewModel
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.prefs.AppPreferences
 import org.peercast.pecaplay.util.LiveDataUtils
@@ -29,9 +30,8 @@ enum class YpChannelSource {
 class PecaPlayViewModel(
     a: Application,
     private val appPrefs: AppPreferences,
-    private val database: AppRoomDatabase,
-    private val peerCastServiceEventLiveData: PeerCastServiceEventLiveData
-) : AndroidViewModel(a) {
+    private val database: AppRoomDatabase
+) : BasePeerCastViewModel(a) {
     val presenter = PecaPlayPresenter(this, appPrefs, database)
 
     private val liveChannelLd = database.ypChannelDao.query()
@@ -112,12 +112,9 @@ class PecaPlayViewModel(
         favorites.firstOrNull { it.flags.run { !isNG && isNotification } } != null
     }
 
-    init {
-        peerCastServiceEventLiveData.bind()
-    }
-
-    override fun onCleared() {
-        peerCastServiceEventLiveData.unbind()
+    fun bindService(){
+        if (appPrefs.peerCastUrl.host in listOf(null, "", "localhost", "127.0.0.1"))
+            super.bindService(null)
     }
 
     companion object {

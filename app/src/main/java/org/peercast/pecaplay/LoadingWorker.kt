@@ -18,6 +18,8 @@ import androidx.work.WorkerParameters
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import org.peercast.core.lib.PeerCastRpcClient
+import org.peercast.core.lib.app.BasePeerCastWorker
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.YellowPage
 import org.peercast.pecaplay.app.YpLiveChannel
@@ -33,9 +35,8 @@ class LoadingWorkerLiveData : MutableLiveData<LoadingWorker.Event>()
 
 
 class LoadingWorker(c: Context, workerParams: WorkerParameters) :
-    CoroutineWorker(c, workerParams), KoinComponent {
+    BasePeerCastWorker(c, workerParams), KoinComponent {
 
-    private val peerCastServiceEventLiveData: PeerCastServiceEventLiveData by inject()
     private val appPrefs: AppPreferences by inject()
     private val database: AppRoomDatabase by inject()
     private val eventLiveData: LoadingWorkerLiveData by inject()
@@ -52,13 +53,6 @@ class LoadingWorker(c: Context, workerParams: WorkerParameters) :
                 //Timber.i("")
                 return false
             }
-
-            peerCastServiceEventLiveData.bind()
-            //PeerCastServiceの開始を待つ。
-            peerCastServiceEventLiveData.exAwait().let {
-                Timber.d("PeerCastService bound: %s", it)
-            }
-
             val yellowPages = database.yellowPageDao.queryAwait()
 
             Timber.d("start loading: %s", yellowPages)
@@ -238,7 +232,11 @@ class LoadingWorker(c: Context, workerParams: WorkerParameters) :
         }
     }
 
-    override suspend fun doWork(): Result {
+    override fun getPeerCastUrl(): Uri {
+        return appPrefs.peerCastUrl
+    }
+
+    override suspend fun doWorkOnServiceConnected(client: PeerCastRpcClient): Result {
         eventLiveData.postValue(Event.OnStart(id))
         val tasks = listOf(
             LoadingTask(),
