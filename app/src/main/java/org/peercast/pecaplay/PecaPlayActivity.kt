@@ -12,20 +12,21 @@ import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
 import android.view.*
-import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.SearchView
+import androidx.appcompat.widget.Toolbar
 import androidx.core.text.HtmlCompat
 import androidx.core.view.ActionProvider
 import androidx.core.view.MenuItemCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.fragment.app.FragmentContainerView
 import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.appbar.AppBarLayout
+import com.google.android.material.navigation.NavigationView
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.android.synthetic.main.pacaplay_activity.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -60,6 +61,13 @@ class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
     private var drawerToggle: ActionBarDrawerToggle? = null //縦長時のみ
     private var lastLoadedERTime = 0L
 
+    private lateinit var vToolbar: Toolbar
+    private var vDrawerLayout: DrawerLayout? = null
+    private lateinit var vNavigation: NavigationView
+    private lateinit var vAppBarLayout: AppBarLayout
+    private lateinit var vYpChannelFragmentContainer: FragmentContainerView
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
             delegate.localNightMode = AppCompatDelegate.getDefaultNightMode()
@@ -68,6 +76,12 @@ class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
         lastLoadedERTime = savedInstanceState?.getLong(STATE_LAST_LOADED_ER_TIME) ?: 0L
 
         setContentView(R.layout.pacaplay_activity)
+        vToolbar = findViewById(R.id.vToolbar)
+        vDrawerLayout = findViewById(R.id.vDrawerLayout)
+        vNavigation = findViewById(R.id.vNavigation)
+        vAppBarLayout = findViewById(R.id.vAppBarLayout)
+        vYpChannelFragmentContainer = findViewById(R.id.vYpChannelFragmentContainer)
+
         setTitle(R.string.app_name)
 
         setSupportActionBar(vToolbar)
@@ -102,7 +116,8 @@ class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
                 order = when (item.tag) {
                     "history" -> YpDisplayOrder.NONE
                     "notificated",
-                    "newly" -> {
+                    "newly",
+                    -> {
                         removeNotification()
                         YpDisplayOrder.AGE_ASC
                     }
@@ -130,8 +145,8 @@ class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
         //回転後の再生成時には表示しない
         if (savedInstanceState == null) {
             lifecycleScope.launchWhenResumed {
-                viewModel.rpcClient.collect { client->
-                    if (client != null){
+                viewModel.rpcClient.collect { client ->
+                    if (client != null) {
                         Timber.i("--> service connected!")
                         val u = Uri.parse(client.rpcEndPoint)
                         val s = getString(R.string.peercast_has_started, u.port)
@@ -141,29 +156,31 @@ class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
             }
         }
 
-        get<LoadingWorkerLiveData>().observe(this, SnackbarObserver(vYpChannelFragmentContainer) { ev ->
-            when (ev) {
-                is LoadingWorker.Event.OnException -> {
-                    val s = when (ev.ex) {
-                        is HttpException -> ev.ex.response()?.message()
-                            ?: ev.ex.localizedSystemMessage()
-                        else -> ev.ex.localizedSystemMessage()
+        get<LoadingWorkerLiveData>().observe(this,
+            SnackbarObserver(vYpChannelFragmentContainer) { ev ->
+                when (ev) {
+                    is LoadingWorker.Event.OnException -> {
+                        val s = when (ev.ex) {
+                            is HttpException -> ev.ex.response()?.message()
+                                ?: ev.ex.localizedSystemMessage()
+                            else -> ev.ex.localizedSystemMessage()
+                        }
+                        return@SnackbarObserver HtmlCompat.fromHtml("<font color=red>${ev.yp.name}: $s",
+                            0)
                     }
-                    return@SnackbarObserver HtmlCompat.fromHtml("<font color=red>${ev.yp.name}: $s", 0)
+                    is LoadingWorker.Event.OnFinished -> {
+                        lastLoadedERTime = SystemClock.elapsedRealtime()
+                    }
                 }
-                is LoadingWorker.Event.OnFinished -> {
-                    lastLoadedERTime = SystemClock.elapsedRealtime()
-                }
-            }
-            null
-        })
+                null
+            })
 
-        viewModel.isNotificationIconEnabled.observe(this, Observer {
+        viewModel.isNotificationIconEnabled.observe(this)  {
             if (!it) {
                 viewModel.presenter.setScheduledLoading(false)
             }
             invalidateOptionsMenu()
-        })
+        }
 
         if (appPrefs.isNotificationEnabled) {
             lastLoadedERTime = SystemClock.elapsedRealtime()
@@ -274,7 +291,8 @@ class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
             R.id.menu_sort_age_desc,
             R.id.menu_sort_age_asc,
             R.id.menu_sort_listener_desc,
-            R.id.menu_sort_listener_asc -> {
+            R.id.menu_sort_listener_asc,
+            -> {
                 val order = YpDisplayOrder.fromOrdinal(item.order)
                 viewModel.order = order
                 viewModel.notifyChange()
@@ -376,7 +394,7 @@ class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
 private class SearchViewEventHandler(
     private val searchView: SearchView,
     private val componentName: ComponentName,
-    private val onTextChange: (String) -> Unit
+    private val onTextChange: (String) -> Unit,
 ) :
     SearchView.OnQueryTextListener,
     SearchView.OnSuggestionListener {
@@ -419,7 +437,7 @@ private class SearchViewEventHandler(
 
 private class SnackbarObserver<T>(
     private val view: View,
-    private val translate: (T?) -> CharSequence?
+    private val translate: (T?) -> CharSequence?,
 ) : Observer<T> {
     override fun onChanged(t: T?) {
         val text = translate(t) ?: return

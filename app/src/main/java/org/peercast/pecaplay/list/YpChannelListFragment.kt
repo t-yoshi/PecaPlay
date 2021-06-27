@@ -14,7 +14,7 @@ import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import kotlinx.android.synthetic.main.yp_channel_list_fragment.*
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -43,6 +43,9 @@ class YpChannelFragment : Fragment(), CoroutineScope {
     private val viewModel: PecaPlayViewModel by sharedViewModel()
     private val adapter = ListAdapter()
 
+    private lateinit var vRecycler: RecyclerView
+    private lateinit var vSwipeRefresh: SwipeRefreshLayout
+
     //スクロール位置を保存する。
     private val scrollPositions = Bundle()
 
@@ -66,14 +69,14 @@ class YpChannelFragment : Fragment(), CoroutineScope {
                 val isNotification = favo.filter { it.flags.isNotification }.any { it.matches(ch) }
                 ListItemModel(ch, star, isNg, isNotification)
             }
-        }.observe(this, Observer {
+        }.observe(this) {
             adapter.items = it
             //Timber.d("-> $it")
             adapter.notifyDataSetChanged()
             restoreScrollPosition()
-        })
+        }
 
-        get<LoadingWorkerLiveData>().observe(this, Observer { ev->
+        get<LoadingWorkerLiveData>().observe(this) { ev->
             //Timber.d("ev=$ev")
             when(ev){
                 is LoadingWorker.Event.OnStart -> {
@@ -84,9 +87,7 @@ class YpChannelFragment : Fragment(), CoroutineScope {
                     vSwipeRefresh.isRefreshing = false
                 }
             }
-        })
-
-
+        }
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -95,6 +96,8 @@ class YpChannelFragment : Fragment(), CoroutineScope {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        vRecycler = view.findViewById(R.id.vRecycler)
+        vSwipeRefresh = view.findViewById(R.id.vSwipeRefresh)
 
         registerForContextMenu(vRecycler)
 
@@ -128,13 +131,13 @@ class YpChannelFragment : Fragment(), CoroutineScope {
     private fun storeScrollPosition() {
         scrollPositions.putParcelable(
             queryTag,
-            vRecycler?.layoutManager?.onSaveInstanceState()
+            vRecycler.layoutManager?.onSaveInstanceState()
         )
     }
 
     //スクロール位置の再現
     private fun restoreScrollPosition() {
-        if (adapter.itemCount == 0 || vRecycler == null)
+        if (adapter.itemCount == 0)
             return
         scrollPositions.getParcelable<Parcelable>(queryTag)?.let {
             vRecycler.layoutManager?.onRestoreInstanceState(it)

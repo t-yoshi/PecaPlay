@@ -3,7 +3,7 @@ package org.peercast.pecaplay.app
 import android.os.Parcelable
 import androidx.room.*
 import com.squareup.moshi.JsonClass
-import kotlinx.android.parcel.Parcelize
+import kotlinx.parcelize.Parcelize
 import org.peercast.pecaplay.util.SquareUtils
 import org.peercast.pecaplay.yp4g.Yp4gColumn
 import org.peercast.pecaplay.yp4g.YpChannel

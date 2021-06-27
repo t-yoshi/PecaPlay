@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.CheckBox
 import android.widget.TextView
 import androidx.annotation.DrawableRes
 import androidx.core.content.edit
@@ -12,7 +13,6 @@ import androidx.core.view.get
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.Observer
 import com.google.android.material.navigation.NavigationView
-import kotlinx.android.synthetic.main.navigation_action_view_checkbox.view.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
@@ -188,7 +188,7 @@ class PecaNavigationViewExtension(
             false
         }
 
-        mi.actionView.vCheckbox.let { cb ->
+        mi.actionView.findViewById<CheckBox>(R.id.vCheckbox).let { cb ->
             cb.isChecked = it.tag !in invisiblePrefs
             cb.setOnCheckedChangeListener { _, isChecked ->
                 if (isChecked) {

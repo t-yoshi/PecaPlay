@@ -111,7 +111,8 @@ private class Converters {
         YellowPage::class, Favorite::class,
         YpLiveChannel::class, YpHistoryChannel::class
     ],
-    version = 50100
+    version = 50100,
+    exportSchema = false
 )
 @TypeConverters(Converters::class)
 abstract class AppRoomDatabase : RoomDatabase() {
