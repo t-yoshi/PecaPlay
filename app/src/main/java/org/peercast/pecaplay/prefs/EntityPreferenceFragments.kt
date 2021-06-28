@@ -45,11 +45,7 @@ private val Fragment.isLandscapeMode: Boolean
  * チェックボックスで有効/無効。
  * */
 abstract class EntityPreferenceFragmentBase<ME : ManageableEntity>
-    : PreferenceFragmentCompat(), CoroutineScope {
-
-    private val job = Job()
-    override val coroutineContext: CoroutineContext
-        get() = job + Dispatchers.Main
+    : PreferenceFragmentCompat() {
 
     protected val database: AppRoomDatabase by inject()
     abstract val presenter: IPresenter<ME>
@@ -74,11 +70,6 @@ abstract class EntityPreferenceFragmentBase<ME : ManageableEntity>
     @CallSuper
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         preferenceScreen = preferenceManager.createPreferenceScreen(context)
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        job.cancel()
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {

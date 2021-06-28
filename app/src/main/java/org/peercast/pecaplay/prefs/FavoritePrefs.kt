@@ -14,6 +14,7 @@ import androidx.databinding.Bindable
 import androidx.databinding.Observable
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import org.peercast.pecaplay.BR
 import org.peercast.pecaplay.R
@@ -51,7 +52,7 @@ class FavoritePrefsFragment : EntityPreferenceFragmentBase<Favorite>() {
 
     override val presenter = object : IPresenter<Favorite> {
         override fun replaceItem(oldItem: Favorite?, newItem: Favorite) {
-            launch {
+            lifecycleScope.launch {
                 database.favoriteDao.run {
                     oldItem?.let { remove(it) }
                     add(newItem)
@@ -60,13 +61,13 @@ class FavoritePrefsFragment : EntityPreferenceFragmentBase<Favorite>() {
         }
 
         override fun removeItem(item: Favorite) {
-            launch {
+            lifecycleScope.launch {
                 database.favoriteDao.remove(item)
             }
         }
 
         override fun updateItem(item: Favorite, enabled: Boolean) {
-            launch {
+            lifecycleScope.launch {
                 database.favoriteDao.update(item.copy(isEnabled = enabled))
             }
         }

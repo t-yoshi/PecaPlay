@@ -11,6 +11,7 @@ import android.view.ViewGroup
 import androidx.annotation.StringRes
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -31,12 +32,8 @@ import org.peercast.pecaplay.view.MenuableRecyclerView
 import timber.log.Timber
 import kotlin.coroutines.CoroutineContext
 
-
-class YpChannelFragment : Fragment(), CoroutineScope {
-
-    private val job = Job()
-    override val coroutineContext: CoroutineContext
-        get() = Dispatchers.Main + job
+@Suppress("unused")
+class YpChannelFragment : Fragment() {
 
     private val favoriteDao
         get() = get<AppRoomDatabase>().favoriteDao
@@ -178,7 +175,7 @@ class YpChannelFragment : Fragment(), CoroutineScope {
                 true -> {
                     menu.add(R.string.notification_delete)
                         .setOnMenuItemClickListener { mi ->
-                            launch {
+                            lifecycleScope.launchWhenResumed {
                                 favoriteDao.update(star.copyFlags { it.copy(isNotification = false) })
                             }
                             false
@@ -187,7 +184,7 @@ class YpChannelFragment : Fragment(), CoroutineScope {
                 false -> {
                     menu.add(R.string.notification_add)
                         .setOnMenuItemClickListener { mi ->
-                            launch {
+                            lifecycleScope.launchWhenResumed {
                                 favoriteDao.update(star.copyFlags { it.copy(isNotification = true) })
                             }
                             false
@@ -254,7 +251,7 @@ class YpChannelFragment : Fragment(), CoroutineScope {
     private val listItemEventListener = object : IListItemEventListener {
         override fun onStarClicked(m: ListItemModel, isChecked: Boolean) {
             Timber.d("onStarClicked(%s, %s)", m, isChecked)
-            launch {
+            lifecycleScope.launchWhenResumed {
                 m.star?.let {
                     favoriteDao.remove(it)
                 } ?: Favorite.Star(m.ch).let {
@@ -282,11 +279,6 @@ class YpChannelFragment : Fragment(), CoroutineScope {
             }
             return false
         }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        job.cancel()
     }
 
     companion object {

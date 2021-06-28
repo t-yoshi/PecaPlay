@@ -11,6 +11,7 @@ import androidx.appcompat.app.AppCompatDialogFragment
 import androidx.core.content.res.ResourcesCompat
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -24,11 +25,7 @@ import org.peercast.pecaplay.databinding.SpeedtestDialogFooterBinding
 import kotlin.coroutines.CoroutineContext
 
 
-class SpeedTestFragment : AppCompatDialogFragment(), CoroutineScope {
-
-    private val job = Job()
-    override val coroutineContext: CoroutineContext
-        get() = job + Dispatchers.Main
+class SpeedTestFragment : AppCompatDialogFragment() {
 
     private val database: AppRoomDatabase by inject()
     private lateinit var adapter: ArrayAdapter<Yp4gSpeedTester>
@@ -41,7 +38,7 @@ class SpeedTestFragment : AppCompatDialogFragment(), CoroutineScope {
         isCancelable = false
 
         adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_single_choice)
-        launch {
+        lifecycleScope.launch {
             database.yellowPageDao.queryAwait()
                 .map(::Yp4gSpeedTester)
                 .let(adapter::addAll)
@@ -79,11 +76,6 @@ class SpeedTestFragment : AppCompatDialogFragment(), CoroutineScope {
             }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        job.cancel()
-    }
-
     class ViewModel {
         val status = MutableLiveData<CharSequence>("")
         val progress = MutableLiveData(0)
@@ -96,7 +88,7 @@ class SpeedTestFragment : AppCompatDialogFragment(), CoroutineScope {
         fun setTester(t: Yp4gSpeedTester) {
             viewModel.status.value = ""
             tester = t
-            launch {
+            lifecycleScope.launchWhenResumed {
                 viewModel.isStartButtonEnabled.value =
                     tester.loadConfig() && tester.config.uptest.isCheckable
                 viewModel.status.value = tester.getStatus(requireContext())
@@ -105,7 +97,7 @@ class SpeedTestFragment : AppCompatDialogFragment(), CoroutineScope {
 
         fun startTest() {
             viewModel.isStartButtonEnabled.value = false
-            launch {
+            lifecycleScope.launchWhenResumed {
                 tester.startTest {
                     //Timber.d("progress=$progress")
                     viewModel.progress.postValue(it)

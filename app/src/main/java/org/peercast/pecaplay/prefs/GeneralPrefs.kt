@@ -10,6 +10,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
@@ -24,24 +25,12 @@ import org.peercast.pecaplay.app.AppTheme
 import java.util.*
 import kotlin.coroutines.CoroutineContext
 
-class GeneralPrefsFragment : PreferenceFragmentCompat() , CoroutineScope {
-    private lateinit var job: Job
+class GeneralPrefsFragment : PreferenceFragmentCompat() {
     private val appPrefs: AppPreferences by inject()
     private val appDatabase: AppRoomDatabase by inject()
-    override val coroutineContext: CoroutineContext
-        get() = job + Dispatchers.Main
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         addPreferencesFromResource(R.xml.pref_general)
-    }
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        job = Job()
-        return super.onCreateView(inflater, container, savedInstanceState)
     }
 
     override fun onResume() {
@@ -62,7 +51,7 @@ class GeneralPrefsFragment : PreferenceFragmentCompat() , CoroutineScope {
         }
 
         with(findPreference<Preference>("pref_header_yellow_page")!!){
-            launch {
+            lifecycleScope.launchWhenResumed {
                 summary = appDatabase.yellowPageDao.queryAwait(true).map { it.name }.toString()
             }
         }
@@ -73,7 +62,7 @@ class GeneralPrefsFragment : PreferenceFragmentCompat() , CoroutineScope {
 
         with(findPreference<SwitchPreference>(AppPreferences.KEY_IS_NIGHT_MODE) as SwitchPreference) {
             setOnPreferenceChangeListener { _, newValue ->
-                launch {
+                lifecycleScope.launchWhenResumed {
                     delay(250)
                     AppTheme.initNightMode(context, newValue as Boolean)
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
@@ -139,11 +128,6 @@ class GeneralPrefsFragment : PreferenceFragmentCompat() , CoroutineScope {
                 appPrefs.notificationSoundUrl = u
             }
         }
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        job.cancel()
     }
 
     companion object {

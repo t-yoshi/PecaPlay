@@ -51,11 +51,8 @@ import kotlin.coroutines.CoroutineContext
  * |     (260dp)       |                      |
  * |                   |                      |
  * */
-class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
+class PecaPlayActivity : AppCompatActivity() {
 
-    private val job = Job()
-    override val coroutineContext: CoroutineContext
-        get() = job + Dispatchers.Main
     private val appPrefs: AppPreferences by inject()
     private val viewModel: PecaPlayViewModel by viewModel()
     private var drawerToggle: ActionBarDrawerToggle? = null //縦長時のみ
@@ -189,7 +186,7 @@ class PecaPlayActivity : AppCompatActivity(), CoroutineScope {
 
         if (intent.hasExtra(PecaPlayIntent.EXTRA_IS_NOTIFICATED)) {
             removeNotification()
-            launch {
+            lifecycleScope.launchWhenResumed {
                 vNavigation.extension?.navigate("notificated")
             }
         }

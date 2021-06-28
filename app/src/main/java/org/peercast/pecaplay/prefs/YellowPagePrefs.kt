@@ -8,6 +8,7 @@ import android.widget.ArrayAdapter
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import org.peercast.pecaplay.util.LiveDataUtils
 import org.peercast.pecaplay.R
@@ -38,13 +39,13 @@ class YellowPagePrefsFragment : EntityPreferenceFragmentBase<YellowPage>() {
 
     override val presenter = object : IPresenter<YellowPage> {
         override fun removeItem(item: YellowPage) {
-            launch {
+            lifecycleScope.launch {
                 database.yellowPageDao.remove(item)
             }
         }
 
         override fun replaceItem(oldItem: YellowPage?, newItem: YellowPage) {
-            launch {
+            lifecycleScope.launch {
                 database.yellowPageDao.run {
                     oldItem?.let { remove(it) }
                     add(newItem)
@@ -53,7 +54,7 @@ class YellowPagePrefsFragment : EntityPreferenceFragmentBase<YellowPage>() {
         }
 
         override fun updateItem(item: YellowPage, enabled: Boolean) {
-            launch {
+            lifecycleScope.launch {
                 database.yellowPageDao.update(item.copy(isEnabled = enabled))
             }
         }
