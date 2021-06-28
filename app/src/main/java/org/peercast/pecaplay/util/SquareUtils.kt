@@ -58,7 +58,7 @@ object SquareUtils {
         .writeTimeout(HTTP_RW_TIMEOUT, TimeUnit.SECONDS)
         .build()
 
-    val SIMPLE_XML_CONVERTER_FACTORY = SimpleXmlConverterFactory.create()!!
+    val SIMPLE_XML_CONVERTER_FACTORY = SimpleXmlConverterFactory.create()
 
     fun retrofitBuilder(): Retrofit.Builder = Retrofit.Builder().client(httpClient)
 

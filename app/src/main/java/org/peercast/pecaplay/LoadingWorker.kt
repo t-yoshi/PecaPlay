@@ -13,7 +13,6 @@ import android.text.SpannableStringBuilder
 import android.text.style.StyleSpan
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.MutableLiveData
-import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import org.koin.core.component.KoinComponent
@@ -24,7 +23,6 @@ import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.YellowPage
 import org.peercast.pecaplay.app.YpLiveChannel
 import org.peercast.pecaplay.prefs.AppPreferences
-import org.peercast.pecaplay.util.exAwait
 import org.peercast.pecaplay.yp4g.*
 import timber.log.Timber
 import java.io.IOException
@@ -104,7 +102,7 @@ class LoadingWorker(c: Context, workerParams: WorkerParameters) :
 
             database.compileStatement(sql).use { statement ->
                 lines.forEach { line ->
-                    Timber.d("->%s",line)
+                    Timber.d("->%s", line)
                     line.bindTo(statement, columnNames)
 
                     val r = statement.executeInsert()
@@ -203,9 +201,9 @@ class LoadingWorker(c: Context, workerParams: WorkerParameters) :
             //                R.drawable.ic_peercast);
 
             val builder = NotificationCompat.Builder(
-                    applicationContext,
-                    NOTIFICATION_CHANNEL_ID
-                )
+                applicationContext,
+                NOTIFICATION_CHANNEL_ID
+            )
                 .setCategory(NotificationCompat.CATEGORY_MESSAGE)
                 .setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)

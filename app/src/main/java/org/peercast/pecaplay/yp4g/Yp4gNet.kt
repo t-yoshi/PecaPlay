@@ -1,14 +1,12 @@
 package org.peercast.pecaplay.yp4g
 
 import androidx.sqlite.db.SupportSQLiteStatement
-import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import okio.BufferedSink
-import org.peercast.pecaplay.util.SquareUtils
 import org.peercast.pecaplay.app.YellowPage
-import retrofit2.Call
+import org.peercast.pecaplay.util.SquareUtils
 import retrofit2.Converter
 import retrofit2.Response
 import retrofit2.Retrofit
@@ -31,7 +29,7 @@ fun Yp4gRawField.bindTo(statement: SupportSQLiteStatement, columns: List<Yp4gCol
 class Yp4gRawFieldFactory(
     /**ypを注入して完成
      * @throws Yp4gFormatException*/
-    val create: (yp: YellowPage, url: String) -> Yp4gRawField
+    val create: (yp: YellowPage, url: String) -> Yp4gRawField,
 )
 
 private object Yp4gRawFieldFactoryConverter : Converter<ResponseBody, List<Yp4gRawFieldFactory>> {
@@ -84,7 +82,7 @@ interface Yp4gService {
     @POST("{object}")
     suspend fun speedTest(
         @Path("object", encoded = true) obj: String,
-        @Body data: RandomDataBody
+        @Body data: RandomDataBody,
     ): ResponseBody
 
 }
@@ -96,7 +94,7 @@ class RandomDataBody(
     /**upload速度制限 bytes/sec*/
     private val limit: Int,
     /**0 to 100*/
-    private val onProgress: (Int) -> Unit
+    private val onProgress: (Int) -> Unit,
 ) : RequestBody() {
 
     private val randomData = ByteArray(10 * 1024)
@@ -144,7 +142,7 @@ class RandomDataBody(
 private object YpConverterFactory : Converter.Factory() {
     override fun responseBodyConverter(
         type: Type?, annotations: Array<out Annotation>?,
-        retrofit: Retrofit?
+        retrofit: Retrofit?,
     ): Converter<ResponseBody, *>? {
 
         if (type is ParameterizedType &&
@@ -164,7 +162,6 @@ fun createYp4gService(yp: YellowPage): Yp4gService =
         .addConverterFactory(YpConverterFactory)
         .build()
         .create(Yp4gService::class.java)
-
 
 
 private const val TAG = "Yp4gNet"

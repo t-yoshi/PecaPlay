@@ -50,7 +50,7 @@ class NavigationItem(
 
     val selector: YpChannelSelector,
 
-    tag_: String? = null
+    tag_: String? = null,
 ) {
     /**非表示プリファレンスのキー*/
     val tag = tag_ ?: "$title groupId=$groupId"
@@ -74,7 +74,7 @@ class PecaNavigationViewExtension(
     private val view: NavigationView,
     savedInstanceState: Bundle?,
     owner: LifecycleOwner,
-    private val onItemClick: (NavigationItem) -> Unit
+    private val onItemClick: (NavigationItem) -> Unit,
 ) {
 
     private val inflater = LayoutInflater.from(view.context)
@@ -297,7 +297,7 @@ private class NavigationModelImpl(private val c: Context) : INavigationModel, Ko
     private suspend fun toNavigationItem(
         yellowPages: List<YellowPage>,
         favorites: List<Favorite>,
-        channels: List<YpChannel>
+        channels: List<YpChannel>,
     ): List<NavigationItem> {
         Timber.d("onUpdate()")
         val items = ArrayList<NavigationItem>(30)

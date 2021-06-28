@@ -27,13 +27,14 @@ abstract class ManageableEntity : Parcelable {
 @Entity(primaryKeys = ["name"])
 @Parcelize
 data class YellowPage(
-        override val name: String,
-        val url: String,
-        @ColumnInfo(name = "enabled")
-        override val isEnabled: Boolean = true) : ManageableEntity() {
+    override val name: String,
+    val url: String,
+    @ColumnInfo(name = "enabled")
+    override val isEnabled: Boolean = true,
+) : ManageableEntity() {
 
     companion object {
-        fun isValidUrl(u: String) : Boolean {
+        fun isValidUrl(u: String): Boolean {
             return u.matches("""^https?://\S+/$""".toRegex())
         }
     }
@@ -47,45 +48,46 @@ data class YellowPage(
 @Entity(primaryKeys = ["name"])
 @TypeConverters(Favorite.Converter::class)
 data class Favorite(
-        override val name: String,
-        val pattern: String,
-        val flags: Flags,
-        @ColumnInfo(name = "enabled")
-        override val isEnabled: Boolean = true) : ManageableEntity(), Parcelable {
+    override val name: String,
+    val pattern: String,
+    val flags: Flags,
+    @ColumnInfo(name = "enabled")
+    override val isEnabled: Boolean = true,
+) : ManageableEntity(), Parcelable {
 
     @Parcelize
     @JsonClass(generateAdapter = true)
     data class Flags(
-            /**Ch名にマッチする*/
-            val isName: Boolean = false,
+        /**Ch名にマッチする*/
+        val isName: Boolean = false,
 
-            /**Ch詳細にマッチする*/
-            val isDescription: Boolean = false,
+        /**Ch詳細にマッチする*/
+        val isDescription: Boolean = false,
 
-            /**Chコメントにマッチする*/
-            val isComment: Boolean = false,
+        /**Chコメントにマッチする*/
+        val isComment: Boolean = false,
 
-            /**ChコンタクトURLにマッチする*/
-            @Deprecated("")
-            val isUrl: Boolean = false,
+        /**ChコンタクトURLにマッチする*/
+        @Deprecated("")
+        val isUrl: Boolean = false,
 
-            /**Chジャンルにマッチする*/
-            val isGenre: Boolean = false,
+        /**Chジャンルにマッチする*/
+        val isGenre: Boolean = false,
 
-            /**NGである*/
-            val isNG: Boolean = false,
+        /**NGである*/
+        val isNG: Boolean = false,
 
-            /**通知する対象*/
-            val isNotification: Boolean = false,
+        /**通知する対象*/
+        val isNotification: Boolean = false,
 
-            /** 完全一致のみ。 */
-            val isExactMatch: Boolean = false,
+        /** 完全一致のみ。 */
+        val isExactMatch: Boolean = false,
 
-            /**正規表現*/
-            val isRegex: Boolean = false,
+        /**正規表現*/
+        val isRegex: Boolean = false,
 
-            /**  大文字小文字の違いを区別する */
-            val isCaseSensitive: Boolean = false
+        /**  大文字小文字の違いを区別する */
+        val isCaseSensitive: Boolean = false,
     ) : Parcelable
 
     fun matches(ch: YpChannel): Boolean {
@@ -105,10 +107,10 @@ data class Favorite(
             }
 
             booleanArrayOf(
-                    flags.isName && reMatches(rePattern.matcher(ch.yp4g.name)),
-                    flags.isDescription && reMatches(rePattern.matcher(ch.yp4g.description)),
-                    flags.isComment && reMatches(rePattern.matcher(ch.yp4g.comment)),
-                    flags.isGenre && reMatches(rePattern.matcher(ch.yp4g.genre))
+                flags.isName && reMatches(rePattern.matcher(ch.yp4g.name)),
+                flags.isDescription && reMatches(rePattern.matcher(ch.yp4g.description)),
+                flags.isComment && reMatches(rePattern.matcher(ch.yp4g.comment)),
+                flags.isGenre && reMatches(rePattern.matcher(ch.yp4g.genre))
             )
         } else {
             val strMatches: (String) -> Boolean = when (flags.isExactMatch) {
@@ -121,10 +123,10 @@ data class Favorite(
             }
 
             booleanArrayOf(
-                    flags.isName && strMatches(ch.yp4g.name),
-                    flags.isDescription && strMatches(ch.yp4g.description),
-                    flags.isComment && strMatches(ch.yp4g.comment),
-                    flags.isGenre && strMatches(ch.yp4g.genre)
+                flags.isName && strMatches(ch.yp4g.name),
+                flags.isDescription && strMatches(ch.yp4g.description),
+                flags.isComment && strMatches(ch.yp4g.comment),
+                flags.isGenre && strMatches(ch.yp4g.genre)
             )
         }
     }
@@ -138,24 +140,24 @@ data class Favorite(
     companion object {
         fun Star(ch: YpChannel): Favorite {
             return Favorite("[star]${ch.yp4g.name}", ch.yp4g.name, Flags(
-                    isName = true, isExactMatch = true
+                isName = true, isExactMatch = true
             ))
         }
     }
 
     class Converter {
         @TypeConverter
-        fun stringToFlags(s: String) : Flags {
+        fun stringToFlags(s: String): Flags {
             return try {
                 FLAGS_ADAPTER.fromJson(s)
-            } catch (e: IOException){
+            } catch (e: IOException) {
                 Timber.e(e, "fromJson($e)")
                 null
             } ?: Flags()
         }
 
         @TypeConverter
-        fun flagsToString(flags: Flags) : String {
+        fun flagsToString(flags: Flags): String {
             return FLAGS_ADAPTER.toJson(flags)
         }
 
@@ -171,8 +173,8 @@ data class Favorite(
  * @version 50100
  */
 @Entity(tableName = "YpLiveChannel",
-        primaryKeys = ["name", "id"],
-        indices = [Index("isLatest")])
+    primaryKeys = ["name", "id"],
+    indices = [Index("isLatest")])
 class YpLiveChannel : YpChannel() {
     /**直近の読み込みか*/
     var isLatest: Boolean = false
@@ -195,10 +197,10 @@ class YpLiveChannel : YpChannel() {
  * @version 50100
  * */
 @Entity(tableName = "YpHistoryChannel",
-        primaryKeys = ["name", "id"])
+    primaryKeys = ["name", "id"])
 class YpHistoryChannel() : YpChannel() {
     /**最終再生日*/
-    lateinit var lastPlay : Date
+    lateinit var lastPlay: Date
 
     /**現在もYPに掲載されていて再生可能か*/
     @Ignore
@@ -207,7 +209,7 @@ class YpHistoryChannel() : YpChannel() {
             field = value && super.isEnabled
         }
 
-    constructor(copy: YpChannel, lastPlay : Date = Date()) : this() {
+    constructor(copy: YpChannel, lastPlay: Date = Date()) : this() {
         yp4g = copy.yp4g
         this.lastPlay = lastPlay
     }

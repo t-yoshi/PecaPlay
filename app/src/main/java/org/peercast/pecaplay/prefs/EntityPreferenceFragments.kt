@@ -20,16 +20,12 @@ import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceViewHolder
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import org.koin.android.ext.android.inject
 import org.peercast.pecaplay.R
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.AppTheme
 import org.peercast.pecaplay.app.ManageableEntity
 import timber.log.Timber
-import kotlin.coroutines.CoroutineContext
 
 
 /**w600dp 以上 */
@@ -72,7 +68,11 @@ abstract class EntityPreferenceFragmentBase<ME : ManageableEntity>
         preferenceScreen = preferenceManager.createPreferenceScreen(context)
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?,
+    ): View? {
         val vg = super.onCreateView(inflater, container, savedInstanceState) as ViewGroup
 
         // +ボタン
@@ -148,7 +148,7 @@ abstract class EntityPreferenceFragmentBase<ME : ManageableEntity>
     private inner class CustomCheckBoxPreference(
         initChecked: Boolean,
         val onCheckedChange: (Boolean) -> Unit,
-        val onLongClick: () -> Unit
+        val onLongClick: () -> Unit,
     ) : Preference(preferenceScreen.context) {
 
         var isChecked: Boolean = initChecked
@@ -220,7 +220,7 @@ abstract class EntityEditDialogFragmentBase<ME : ManageableEntity>
         Timber.d("editSource = $editSource")
     }
 
-    protected val presenter : EntityPreferenceFragmentBase.IPresenter<ME>
+    protected val presenter: EntityPreferenceFragmentBase.IPresenter<ME>
         @Suppress("unchecked_cast")
         get() = (targetFragment as EntityPreferenceFragmentBase<ME>).presenter
 

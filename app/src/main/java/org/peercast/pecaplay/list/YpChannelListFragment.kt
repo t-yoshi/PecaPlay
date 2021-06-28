@@ -10,27 +10,23 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.annotation.StringRes
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
-import org.koin.androidx.viewmodel.ext.android.getViewModel
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
-import org.peercast.pecaplay.*
+import org.peercast.pecaplay.LoadingWorker
+import org.peercast.pecaplay.LoadingWorkerLiveData
+import org.peercast.pecaplay.PecaPlayViewModel
+import org.peercast.pecaplay.R
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.Favorite
 import org.peercast.pecaplay.util.LiveDataUtils
 import org.peercast.pecaplay.view.MenuableRecyclerView
 import timber.log.Timber
-import kotlin.coroutines.CoroutineContext
 
 @Suppress("unused")
 class YpChannelFragment : Fragment() {
@@ -73,9 +69,9 @@ class YpChannelFragment : Fragment() {
             restoreScrollPosition()
         }
 
-        get<LoadingWorkerLiveData>().observe(this) { ev->
+        get<LoadingWorkerLiveData>().observe(this) { ev ->
             //Timber.d("ev=$ev")
-            when(ev){
+            when (ev) {
                 is LoadingWorker.Event.OnStart -> {
                     vSwipeRefresh.isRefreshing = true
                     scrollPositions.clear()
@@ -87,7 +83,11 @@ class YpChannelFragment : Fragment() {
         }
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?,
+    ): View? {
         return inflater.inflate(R.layout.yp_channel_list_fragment, container, false)
     }
 
@@ -98,7 +98,7 @@ class YpChannelFragment : Fragment() {
 
         registerForContextMenu(vRecycler)
 
-        vRecycler.let { v->
+        vRecycler.let { v ->
             v.addOnScrollListener(object : RecyclerView.OnScrollListener() {
                 override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
                 }
@@ -110,7 +110,7 @@ class YpChannelFragment : Fragment() {
             })
             v.layoutManager = LinearLayoutManager(v.context)
             v.adapter = adapter
-            (v.itemAnimator as DefaultItemAnimator?)?.let { a->
+            (v.itemAnimator as DefaultItemAnimator?)?.let { a ->
                 a.moveDuration = 0
                 a.changeDuration = 10
                 a.addDuration = 0
@@ -143,7 +143,11 @@ class YpChannelFragment : Fragment() {
         }
     }
 
-    override fun onCreateContextMenu(menu: ContextMenu, v: View, menuInfo: ContextMenu.ContextMenuInfo?) {
+    override fun onCreateContextMenu(
+        menu: ContextMenu,
+        v: View,
+        menuInfo: ContextMenu.ContextMenuInfo?,
+    ) {
         val info = menuInfo as MenuableRecyclerView.ContextMenuInfo? ?: return
         val item = adapter.items[info.position]
         val ch = item.ch
@@ -216,8 +220,8 @@ class YpChannelFragment : Fragment() {
 
         var items = emptyList<ListItemModel>()
 
-        inline fun updateItem(position: Int, updated: (ListItemModel)-> ListItemModel){
-            items = ArrayList(items).also{
+        inline fun updateItem(position: Int, updated: (ListItemModel) -> ListItemModel) {
+            items = ArrayList(items).also {
                 it[position] = updated(it[position])
             }
             notifyItemChanged(position)
@@ -262,7 +266,7 @@ class YpChannelFragment : Fragment() {
 
         override fun onItemClick(m: ListItemModel, position: Int) {
             if (m.ch.isEnabled && !m.isNg) {
-                viewModel.presenter.startPlay(m.ch){
+                viewModel.presenter.startPlay(m.ch) {
                     startActivity(it)
                 }
             }
@@ -271,8 +275,8 @@ class YpChannelFragment : Fragment() {
         override fun onItemLongClick(m: ListItemModel, position: Int): Boolean {
             if (m.isNg) {
                 //対象NGを一時的に解除
-                adapter.updateItem(position){
-                    it.copy(isNg=false)
+                adapter.updateItem(position) {
+                    it.copy(isNg = false)
                 }
                 adapter.notifyItemChanged(position)
                 return true

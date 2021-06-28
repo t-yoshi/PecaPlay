@@ -27,11 +27,7 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
 import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -42,7 +38,6 @@ import org.peercast.pecaplay.yp4g.SpeedTestFragment
 import org.peercast.pecaplay.yp4g.YpDisplayOrder
 import retrofit2.HttpException
 import timber.log.Timber
-import kotlin.coroutines.CoroutineContext
 
 /*
  *vDrawerLayout(縦長時のみ)
@@ -172,7 +167,7 @@ class PecaPlayActivity : AppCompatActivity() {
                 null
             })
 
-        viewModel.isNotificationIconEnabled.observe(this)  {
+        viewModel.isNotificationIconEnabled.observe(this) {
             if (!it) {
                 viewModel.presenter.setScheduledLoading(false)
             }

@@ -46,7 +46,7 @@ object LiveDataUtils {
     fun <R, T0, T1> combineLatest(
         src0: LiveData<T0>,
         src1: LiveData<T1>,
-        combine: suspend (T0, T1) -> R
+        combine: suspend (T0, T1) -> R,
     ): LiveData<R> {
         return CombinedLiveData<R>()
             .addCombineSource(src0)
@@ -59,7 +59,7 @@ object LiveDataUtils {
 
     fun <T0, T1, T2, R> combineLatest(
         src0: LiveData<T0>, src1: LiveData<T1>, src2: LiveData<T2>,
-        combine: suspend (T0, T1, T2) -> R
+        combine: suspend (T0, T1, T2) -> R,
     ): LiveData<R> {
         return CombinedLiveData<R>()
             .addCombineSource(src0)
@@ -73,7 +73,7 @@ object LiveDataUtils {
 
     fun <R, T0, T1, T2, T3> combineLatest(
         src0: LiveData<T0>, src1: LiveData<T1>, src2: LiveData<T2>, src3: LiveData<T3>,
-        combine: suspend (T0, T1, T2, T3) -> R
+        combine: suspend (T0, T1, T2, T3) -> R,
     ): LiveData<R> {
         return CombinedLiveData<R>()
             .addCombineSource(src0)
@@ -93,7 +93,8 @@ suspend fun <T> LiveData<T>.exAwait(): T = suspendCancellableCoroutine { cont ->
     val observer = object : Observer<T> {
         override fun onChanged(value: T) {
             removeObserver(this)
-            value?.let { cont.resume(it)} ?: cont.resumeWithException(NullPointerException("value is null"))
+            value?.let { cont.resume(it) }
+                ?: cont.resumeWithException(NullPointerException("value is null"))
         }
     }
 

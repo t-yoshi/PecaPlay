@@ -6,13 +6,14 @@ import android.content.pm.PackageManager
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import timber.log.Timber
+import java.util.*
 
 object PecaPlayViewerSetting : KoinComponent {
     private val a by inject<Application>()
     private val appPrefs by inject<AppPreferences>()
 
     fun setEnabled(type: String, enabled: Boolean) {
-        val aliasName = "org.peercast.pecaplay.PecaPlayViewer_${type.toUpperCase()}"
+        val aliasName = "org.peercast.pecaplay.PecaPlayViewer_${type.uppercase(Locale.getDefault())}"
         val name = ComponentName(a.packageName, aliasName)
         val state = if (enabled)
             PackageManager.COMPONENT_ENABLED_STATE_ENABLED
@@ -37,11 +38,12 @@ object PecaPlayViewerSetting : KoinComponent {
             }
         }
 
-    val enabledTypes : List<String> get() {
-        if (installedVersion == null)
-            return emptyList()
-        return TYPES.filter(appPrefs::isViewerEnabled)
-    }
+    val enabledTypes: List<String>
+        get() {
+            if (installedVersion == null)
+                return emptyList()
+            return TYPES.filter(appPrefs::isViewerEnabled)
+        }
 
     fun initComponentSetting() {
         val installed = installedVersion != null

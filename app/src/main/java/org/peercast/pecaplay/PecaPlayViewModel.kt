@@ -30,7 +30,7 @@ enum class YpChannelSource {
 class PecaPlayViewModel(
     a: Application,
     private val appPrefs: AppPreferences,
-    private val database: AppRoomDatabase
+    private val database: AppRoomDatabase,
 ) : BasePeerCastViewModel(a) {
     val presenter = PecaPlayPresenter(this, appPrefs, database)
 
@@ -61,23 +61,25 @@ class PecaPlayViewModel(
             srcLiveData = database.ypChannelDao.query()
         }
 
-        private fun onChanged(channels: List<YpChannel>) = viewModelScope.launch(Dispatchers.Default) {
-            var l = channels.filter(selector)
+        private fun onChanged(channels: List<YpChannel>) =
+            viewModelScope.launch(Dispatchers.Default) {
+                var l = channels.filter(selector)
 
-            if (searchString.isNotBlank()) {
-                val constraints = toNormalizedJapanese(searchString).split("[\\s　]+".toRegex())
-                l = l.filter { ch ->
-                    constraints.all { ch.searchText.contains(it) }
+                if (searchString.isNotBlank()) {
+                    val constraints = toNormalizedJapanese(searchString).split("[\\s　]+".toRegex())
+                    l = l.filter { ch ->
+                        constraints.all { ch.searchText.contains(it) }
+                    }
                 }
-            }
 
-            when (order) {
-                YpDisplayOrder.NONE -> {}
-                else -> l = l.sortedWith(order.comparator)
-            }
+                when (order) {
+                    YpDisplayOrder.NONE -> {
+                    }
+                    else -> l = l.sortedWith(order.comparator)
+                }
 
-            postValue(l)
-        }
+                postValue(l)
+            }
     }
 
     /**リスト表示用*/
@@ -112,7 +114,7 @@ class PecaPlayViewModel(
         favorites.firstOrNull { it.flags.run { !isNG && isNotification } } != null
     }
 
-    fun bindService(){
+    fun bindService() {
         if (appPrefs.peerCastUrl.host in listOf(null, "", "localhost", "127.0.0.1"))
             super.bindService(null)
     }
@@ -125,7 +127,7 @@ class PecaPlayViewModel(
          */
         private fun toNormalizedJapanese(text: String): String =
             text.let {
-                var s = it.toLowerCase(Locale.JAPANESE)
+                var s = it.lowercase(Locale.JAPANESE)
                 s = KanaUtil.toHanalphCase(s)
                 KanaUtil.toHiraganaCase(s)
             }

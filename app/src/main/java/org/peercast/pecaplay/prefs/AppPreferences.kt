@@ -6,6 +6,7 @@ import android.net.Uri
 import android.preference.PreferenceManager
 import androidx.core.content.edit
 import org.peercast.pecaplay.yp4g.YpDisplayOrder
+import java.util.*
 
 abstract class AppPreferences {
     /**夜間モードか */
@@ -68,7 +69,7 @@ class DefaultAppPreferences(c: Context) : AppPreferences() {
 
 
     override fun isViewerEnabled(type: String): Boolean {
-        val type = type.toLowerCase()
+        val type = type.lowercase(Locale.getDefault())
         val default = type in listOf("wmv", "flv")//default true
         return prefs.getBoolean(KEY_PLAYER_ENABLED_PREFIX + type, default)
     }
@@ -91,7 +92,8 @@ class DefaultAppPreferences(c: Context) : AppPreferences() {
         get() = prefs.getString(KEY_NOTIFICATION_SOUND_URL, null)?.let(Uri::parse) ?: Uri.EMPTY
 
     override var notificationNewlyChannelsId: List<String>
-        get() = prefs.getStringSet(KEY_NOTIFICATION_NEWLY_CHANNELS_ID, null)?.toList() ?: emptyList()
+        get() = prefs.getStringSet(KEY_NOTIFICATION_NEWLY_CHANNELS_ID, null)?.toList()
+            ?: emptyList()
         set(value) {
             prefs.edit { putStringSet(KEY_NOTIFICATION_NEWLY_CHANNELS_ID, value.toSet()) }
         }

@@ -6,9 +6,6 @@ import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.EditTextPreference
@@ -16,14 +13,13 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.SwitchPreference
 import com.google.android.gms.oss.licenses.OssLicensesMenuActivity
-import kotlinx.coroutines.*
+import kotlinx.coroutines.delay
 import org.koin.android.ext.android.inject
 import org.peercast.pecaplay.BuildConfig
 import org.peercast.pecaplay.R
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.AppTheme
 import java.util.*
-import kotlin.coroutines.CoroutineContext
 
 class GeneralPrefsFragment : PreferenceFragmentCompat() {
     private val appPrefs: AppPreferences by inject()
@@ -50,13 +46,13 @@ class GeneralPrefsFragment : PreferenceFragmentCompat() {
             summary = appPrefs.peerCastUrl.toString()
         }
 
-        with(findPreference<Preference>("pref_header_yellow_page")!!){
+        with(findPreference<Preference>("pref_header_yellow_page")!!) {
             lifecycleScope.launchWhenResumed {
                 summary = appDatabase.yellowPageDao.queryAwait(true).map { it.name }.toString()
             }
         }
 
-        with(findPreference<Preference>("pref_header_viewer")!!){
+        with(findPreference<Preference>("pref_header_viewer")!!) {
             summary = PecaPlayViewerSetting.enabledTypes.toString()
         }
 
@@ -66,7 +62,7 @@ class GeneralPrefsFragment : PreferenceFragmentCompat() {
                     delay(250)
                     AppTheme.initNightMode(context, newValue as Boolean)
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-                        activity?.let { a->
+                        activity?.let { a ->
                             //a.recreate()
                             a.setResult(SettingsActivity.RESULT_NIGHT_MODE_CHANGED)
                         }
@@ -86,8 +82,10 @@ class GeneralPrefsFragment : PreferenceFragmentCompat() {
                 startActivityForResult(Intent().apply {
                     action = RingtoneManager.ACTION_RINGTONE_PICKER
                     putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_NOTIFICATION)
-                    putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI, appPrefs.notificationSoundUrl)
-                    putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE, getString(R.string.notification_sound))
+                    putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI,
+                        appPrefs.notificationSoundUrl)
+                    putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE,
+                        getString(R.string.notification_sound))
                 }, REQ_SOUND_PICKER)
                 true
             }
@@ -104,7 +102,8 @@ class GeneralPrefsFragment : PreferenceFragmentCompat() {
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        (activity as AppCompatActivity?)?.supportActionBar?.title = getString(R.string.pref_header_general)
+        (activity as AppCompatActivity?)?.supportActionBar?.title =
+            getString(R.string.pref_header_general)
     }
 
     private fun getNotificationSoundTitle(u: Uri?): String {
@@ -124,7 +123,8 @@ class GeneralPrefsFragment : PreferenceFragmentCompat() {
             REQ_SOUND_PICKER -> {
                 val u: Uri? = data.extras?.getParcelable(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
                 //Timber.d("${data.extras.keySet().toList()}")
-                findPreference<Preference>("pref_notification_sound")!!.summary = getNotificationSoundTitle(u)
+                findPreference<Preference>("pref_notification_sound")!!.summary =
+                    getNotificationSoundTitle(u)
                 appPrefs.notificationSoundUrl = u
             }
         }

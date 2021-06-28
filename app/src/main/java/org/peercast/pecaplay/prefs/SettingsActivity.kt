@@ -1,6 +1,5 @@
 package org.peercast.pecaplay.prefs
 
-import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import android.view.MenuItem
@@ -37,7 +36,7 @@ class SettingsActivity : AppCompatActivity(),
 
     override fun onPreferenceStartFragment(
         caller: PreferenceFragmentCompat,
-        pref: Preference
+        pref: Preference,
     ): Boolean {
         val f = supportFragmentManager.fragmentFactory.instantiate(classLoader, pref.fragment)
         supportFragmentManager.beginTransaction()

@@ -10,11 +10,11 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
-import org.peercast.pecaplay.util.LiveDataUtils
 import org.peercast.pecaplay.R
 import org.peercast.pecaplay.app.AppTheme
 import org.peercast.pecaplay.app.YellowPage
 import org.peercast.pecaplay.databinding.PrefYellowpageEditorBinding
+import org.peercast.pecaplay.util.LiveDataUtils
 
 
 class YellowPagePrefsFragment : EntityPreferenceFragmentBase<YellowPage>() {

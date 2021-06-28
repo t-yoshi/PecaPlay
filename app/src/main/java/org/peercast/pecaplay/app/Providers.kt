@@ -17,8 +17,8 @@ fun saveRecentQuery(c: Context, query: String) {
     if (query.isEmpty())
         return
     val suggestions = SearchRecentSuggestions(
-            c, AUTHORITY,
-            SearchRecentSuggestionsProvider.DATABASE_MODE_QUERIES
+        c, AUTHORITY,
+        SearchRecentSuggestionsProvider.DATABASE_MODE_QUERIES
     )
     suggestions.saveRecentQuery(query, null)
 }

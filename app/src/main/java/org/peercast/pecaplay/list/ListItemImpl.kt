@@ -32,7 +32,7 @@ val listItemModule = module {
 private class ListItemViewHolderFactoryImpl(private val appPrefs: AppPreferences) :
     IListItemViewHolderFactory {
     override fun createViewHolder(
-        parent: ViewGroup, viewType: Int
+        parent: ViewGroup, viewType: Int,
     ): BaseListItemViewHolder {
         return HOLDER_FACTORIES[viewType](parent)
     }
@@ -46,7 +46,7 @@ private class ListItemViewHolderFactoryImpl(private val appPrefs: AppPreferences
     }
 
     companion object {
-        private val HOLDER_FACTORIES = listOf<(ViewGroup)->BaseListItemViewHolder>(
+        private val HOLDER_FACTORIES = listOf<(ViewGroup) -> BaseListItemViewHolder>(
             ListItemViewHolder::Default,
             ListItemViewHolder::Ng,
             ListItemViewHolder::NgHidden

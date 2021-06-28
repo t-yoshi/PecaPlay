@@ -13,16 +13,12 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.peercast.pecaplay.R
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.AppTheme
 import org.peercast.pecaplay.databinding.SpeedtestDialogFooterBinding
-import kotlin.coroutines.CoroutineContext
 
 
 class SpeedTestFragment : AppCompatDialogFragment() {

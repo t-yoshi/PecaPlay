@@ -1,9 +1,7 @@
 package org.peercast.pecaplay
 
 import android.app.Application
-import android.net.Uri
 import android.util.Log
-import androidx.lifecycle.MutableLiveData
 import com.google.android.play.core.missingsplits.MissingSplitsManagerFactory
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import kotlinx.coroutines.*
@@ -12,11 +10,6 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
-import org.peercast.core.lib.PeerCastController
-import org.peercast.core.lib.PeerCastRpcClient
-import org.peercast.core.lib.notify.NotifyChannelType
-import org.peercast.core.lib.notify.NotifyMessageType
-import org.peercast.core.lib.rpc.ChannelInfo
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.AppTheme
 import org.peercast.pecaplay.list.listItemModule
@@ -24,9 +17,7 @@ import org.peercast.pecaplay.prefs.AppPreferences
 import org.peercast.pecaplay.prefs.DefaultAppPreferences
 import org.peercast.pecaplay.prefs.PecaPlayViewerSetting
 import timber.log.Timber
-import java.io.IOException
 import java.util.*
-import kotlin.coroutines.CoroutineContext
 
 
 val appModule = module {

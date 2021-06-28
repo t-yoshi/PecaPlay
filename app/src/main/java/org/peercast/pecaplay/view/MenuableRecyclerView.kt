@@ -17,11 +17,13 @@ import androidx.recyclerview.widget.RecyclerView
 class MenuableRecyclerView : RecyclerView {
     constructor(context: Context) : super(context)
     constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
-    constructor(context: Context, attrs: AttributeSet?, defStyle: Int) : super(context, attrs, defStyle)
+    constructor(context: Context, attrs: AttributeSet?, defStyle: Int) : super(context,
+        attrs,
+        defStyle)
 
     data class ContextMenuInfo(
-            val position: Int,
-            val id: Long
+        val position: Int,
+        val id: Long,
     ) : ContextMenu.ContextMenuInfo
 
     private var menuInfo: ContextMenuInfo? = null

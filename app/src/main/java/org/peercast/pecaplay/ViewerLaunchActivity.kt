@@ -19,6 +19,7 @@ class ViewerLaunchActivity : FragmentActivity() {
         it.putExtra(EX_LAUNCH_EXPIRE, System.currentTimeMillis() + 3_000)
         startActivity(it)
     }
+
     companion object {
         const val ACTION_LAUNCH_PECA_VIEWER = "org.peercast.pecaplay.launch-pecaviewer"
         const val EX_LAUNCH_EXPIRE = "launch-expire"

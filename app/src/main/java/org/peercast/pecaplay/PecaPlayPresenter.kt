@@ -9,7 +9,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.work.*
 import kotlinx.coroutines.launch
 import org.peercast.core.lib.LibPeerCast
-import org.peercast.core.lib.app.BasePeerCastWorker
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.YpHistoryChannel
 import org.peercast.pecaplay.app.saveRecentQuery
@@ -23,7 +22,7 @@ import java.util.concurrent.TimeUnit
 class PecaPlayPresenter(
     private val viewModel: PecaPlayViewModel,
     private val appPrefs: AppPreferences,
-    private val database: AppRoomDatabase
+    private val database: AppRoomDatabase,
 ) {
     private val a = viewModel.getApplication<Application>()
 
@@ -45,7 +44,7 @@ class PecaPlayPresenter(
         streamUrl: Uri,
         isLaunchPecaViewer: Boolean,
         extras: Bundle?,
-        refStartActivity: (Intent) -> Unit
+        refStartActivity: (Intent) -> Unit,
     ) {
         val intent = Intent(Intent.ACTION_VIEW, streamUrl)
         intent.putExtras(extras ?: Bundle.EMPTY)
@@ -84,7 +83,7 @@ class PecaPlayPresenter(
         }
 
         val isLaunchPecaViewer = appPrefs.isViewerEnabled(ch.yp4g.type)
-        startPlayerActivity(streamUrl, isLaunchPecaViewer, extras){
+        startPlayerActivity(streamUrl, isLaunchPecaViewer, extras) {
             refStartActivity(it)
             viewModel.viewModelScope.launch {
                 database.ypHistoryDao.addHistory(YpHistoryChannel(ch))

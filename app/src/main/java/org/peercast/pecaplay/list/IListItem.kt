@@ -3,23 +3,20 @@ package org.peercast.pecaplay.list
 import android.view.View
 import android.view.ViewGroup
 import androidx.databinding.BaseObservable
-import androidx.databinding.DataBindingUtil
-import androidx.databinding.ViewDataBinding
 import androidx.recyclerview.widget.RecyclerView
 import org.peercast.pecaplay.app.Favorite
 import org.peercast.pecaplay.yp4g.YpChannel
-import timber.log.Timber
 
 //View
 abstract class BaseListItemViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
     abstract val viewModel: IListItemViewModel
-    open fun executePendingBindings(){}
+    open fun executePendingBindings() {}
     abstract fun setItemEventListener(listener: IListItemEventListener?)
 }
 
 interface IListItemViewHolderFactory {
     fun createViewHolder(
-        parent: ViewGroup, viewType: Int
+        parent: ViewGroup, viewType: Int,
     ): BaseListItemViewHolder
 
     fun getViewType(model: ListItemModel): Int
@@ -54,6 +51,7 @@ interface IListItemEventListener {
     fun onStarClicked(m: ListItemModel, isChecked: Boolean)
 
     fun onItemClick(m: ListItemModel, position: Int)
+
     /**
      * @return イベントを消費したか。コンテキストメニューを出す必要があるならfalseを返すこと。
      * */
@@ -64,7 +62,7 @@ data class ListItemModel(
     val ch: YpChannel,
     val star: Favorite?,
     val isNg: Boolean,
-    val isNotification: Boolean
+    val isNotification: Boolean,
 ) {
     override fun toString() = "$ch"
 }

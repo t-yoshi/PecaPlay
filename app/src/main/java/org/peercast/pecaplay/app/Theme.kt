@@ -10,9 +10,9 @@ import androidx.core.content.res.ResourcesCompat
 
 object AppTheme {
 
-    fun initNightMode(c: Context, isNightMode:  Boolean){
+    fun initNightMode(c: Context, isNightMode: Boolean) {
         val uiMan = c.getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
-        if (isNightMode){
+        if (isNightMode) {
             uiMan.nightMode = UiModeManager.MODE_NIGHT_YES
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
         } else {

@@ -44,7 +44,8 @@ enum class Yp4gColumn(val convert: (String) -> String = Converter.None) {
         private object Converter {
             val None: (String) -> String = { it }
             val UnescapeHtml: (String) -> String = { HtmlEscape.unescapeHtml(it).trim() }
-            val Number: (String) -> String = { it.toIntOrNull() ?: throw Yp4gFormatException("not number '$it'"); it }
+            val Number: (String) -> String =
+                { it.toIntOrNull() ?: throw Yp4gFormatException("not number '$it'"); it }
             val ChannelId: (String) -> String = {
                 if (it.length != 32)
                     throw Yp4gFormatException("ch.id.size != 32")
@@ -82,11 +83,11 @@ data class Yp4gField(
     // __END_OF_index_txt
 
     val ypName: String,
-    val ypUrl: Uri// #20
+    val ypUrl: Uri,// #20
 )
 
 /**詳細が空のとき、ジャンルを返す。「たつひと」*/
-val Yp4gField.descriptionOrGenre : String
+val Yp4gField.descriptionOrGenre: String
     get() {
         return description.ifEmpty { genre }
     }
@@ -112,7 +113,7 @@ abstract class YpChannel {
     }
 
     fun stream(peca: Uri): Uri {
-        val t = yp4g.type.toLowerCase()
+        val t = yp4g.type.lowercase(Locale.getDefault())
         return when {
             t == "wmv" ->
                 Uri.parse("mmsh://${peca.host}:${peca.port}/stream/${yp4g.id}.wmv?tip=${yp4g.ip}")
@@ -206,7 +207,7 @@ enum class YpDisplayOrder(cmp: Comparator<YpChannel>) {
                 a.yp4g.listeners.compareTo(b.yp4g.listeners)
             }
 
-            val LISTENERS_REV = Collections.reverseOrder(LISTENERS)!!
+            val LISTENERS_REV = Collections.reverseOrder(LISTENERS)
 
             //Ch名で比較
             val NAME = Comparator<YpChannel> { a, b ->
@@ -219,7 +220,7 @@ enum class YpDisplayOrder(cmp: Comparator<YpChannel>) {
                 a.ageAsMinutes.compareTo(b.ageAsMinutes)
             }
 
-            val AGE_REV = Collections.reverseOrder(AGE)!!
+            val AGE_REV = Collections.reverseOrder(AGE)
 
             //複数のコンパレータをつなげる
             fun chained(vararg cmps: Comparator<YpChannel>): Comparator<YpChannel> {
