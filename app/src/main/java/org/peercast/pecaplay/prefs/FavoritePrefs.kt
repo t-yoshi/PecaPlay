@@ -91,8 +91,8 @@ class FavoritePrefsFragment : EntityPreferenceFragmentBase<Favorite>() {
         val theme = c.theme
 
         val icons = arrayOf(
-            res.getDrawable(ic1, theme),
-            res.getDrawable(ic2, theme)
+            requireNotNull(ResourcesCompat.getDrawable(res, ic1, theme)),
+            requireNotNull(ResourcesCompat.getDrawable(res, ic2, theme))
         )
         icons[0].setTint(AppTheme.getIconColor(c))
         icons[1].setTint(ResourcesCompat.getColor(res, R.color.colorIconAlarm, theme))
