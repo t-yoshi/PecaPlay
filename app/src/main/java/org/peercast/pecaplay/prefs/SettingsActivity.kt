@@ -13,9 +13,6 @@ class SettingsActivity : AppCompatActivity(),
     PreferenceFragmentCompat.OnPreferenceStartFragmentCallback {
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            delegate.localNightMode = AppCompatDelegate.getDefaultNightMode()
-        }
         super.onCreate(savedInstanceState)
 
         supportActionBar?.let {

@@ -12,6 +12,10 @@ import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
 import android.view.*
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.ActivityResultCallback
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.app.AppCompatDelegate
@@ -63,11 +67,7 @@ class PecaPlayActivity : AppCompatActivity() {
     private lateinit var vAppBarLayout: AppBarLayout
     private lateinit var vYpChannelFragmentContainer: FragmentContainerView
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            delegate.localNightMode = AppCompatDelegate.getDefaultNightMode()
-        }
         super.onCreate(savedInstanceState)
         lastLoadedERTime = savedInstanceState?.getLong(STATE_LAST_LOADED_ER_TIME) ?: 0L
 
@@ -77,7 +77,6 @@ class PecaPlayActivity : AppCompatActivity() {
         vNavigation = findViewById(R.id.vNavigation)
         vAppBarLayout = findViewById(R.id.vAppBarLayout)
         vYpChannelFragmentContainer = findViewById(R.id.vYpChannelFragmentContainer)
-
         setTitle(R.string.app_name)
 
         setSupportActionBar(vToolbar)
@@ -316,9 +315,8 @@ class PecaPlayActivity : AppCompatActivity() {
             }
 
             R.id.menu_settings -> {
-                startActivityForResult(
+                startActivity(
                     Intent(this, SettingsActivity::class.java),
-                    REQ_SETTING_ACTIVITY
                 )
             }
 
@@ -329,13 +327,6 @@ class PecaPlayActivity : AppCompatActivity() {
         }
 
         return true
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        Timber.d("requestCode=$requestCode, resultCode=$resultCode")
-        if (requestCode == REQ_SETTING_ACTIVITY && resultCode == SettingsActivity.RESULT_NIGHT_MODE_CHANGED)
-            recreate()
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {

@@ -61,12 +61,6 @@ class GeneralPrefsFragment : PreferenceFragmentCompat() {
                 lifecycleScope.launchWhenResumed {
                     delay(250)
                     AppTheme.initNightMode(context, newValue as Boolean)
-                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-                        activity?.let { a ->
-                            //a.recreate()
-                            a.setResult(SettingsActivity.RESULT_NIGHT_MODE_CHANGED)
-                        }
-                    }
                 }
                 true
             }

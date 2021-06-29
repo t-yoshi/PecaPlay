@@ -98,13 +98,7 @@ class FavoritePrefsFragment : EntityPreferenceFragmentBase<Favorite>() {
         icons[1].setTint(ResourcesCompat.getColor(res, R.color.colorIconAlarm, theme))
 
         val ld = LayerDrawable(icons)
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            val pl = ld.intrinsicWidth - icons[1].intrinsicWidth
-            val pt = ld.intrinsicHeight - icons[1].intrinsicHeight
-            ld.setLayerInset(1, pl, pt, 0, 0)
-        } else {
-            ld.setLayerGravity(1, Gravity.BOTTOM or Gravity.RIGHT)
-        }
+        ld.setLayerGravity(1, Gravity.BOTTOM or Gravity.RIGHT)
         return ld
     }
 
