@@ -25,18 +25,40 @@ class PecaPlayPresenter(
     private val database: AppRoomDatabase,
 ) {
     private val a = viewModel.getApplication<Application>()
+    private val workManager = WorkManager.getInstance(a)
 
     /**YP読み込みを開始する*/
     fun startLoading() {
-        WorkManager.getInstance(a).beginUniqueWork(
-            WORK_NAME, ExistingWorkPolicy.KEEP,
-            OneTimeWorkRequest.Builder(LoadingWorker::class.java).build()
-        ).enqueue()
+        stopLoading()
+
+        if (viewModel.existsNotification.value && appPrefs.isNotificationEnabled){
+            //15分毎にYP読み込みを行う
+            val req = PeriodicWorkRequest
+                .Builder(LoadingWorker::class.java, 15, TimeUnit.MINUTES)
+                .addTag(LOADING_WORK_TAG)
+                .setBackoffCriteria(BackoffPolicy.LINEAR, 5L, TimeUnit.MINUTES)
+                .setConstraints(
+                    Constraints.Builder()
+                        .setRequiredNetworkType(NetworkType.CONNECTED)
+                        .setRequiresBatteryNotLow(true)
+                        .build()
+                )
+                .build()
+            workManager.enqueue(req)
+        } else {
+            //1回限り
+            workManager.beginUniqueWork(
+                WORK_NAME, ExistingWorkPolicy.KEEP,
+                OneTimeWorkRequest.Builder(LoadingWorker::class.java)
+                    .addTag(LOADING_WORK_TAG)
+                    .build()
+            ).enqueue()
+        }
     }
 
     /**YP読み込みを停止する*/
     fun stopLoading() {
-        WorkManager.getInstance(a).cancelUniqueWork(WORK_NAME)
+        workManager.cancelAllWorkByTag(LOADING_WORK_TAG)
     }
 
     /**プレーヤーを起動する*/
@@ -88,28 +110,6 @@ class PecaPlayPresenter(
             viewModel.viewModelScope.launch {
                 database.ypHistoryDao.addHistory(YpHistoryChannel(ch))
             }
-        }
-    }
-
-    /**15分毎にYP読み込みを行う/行わない (通知用)*/
-    fun setScheduledLoading(enabled: Boolean) {
-        val manager = WorkManager.getInstance(a)
-        if (enabled) {
-            val req = PeriodicWorkRequest
-                .Builder(LoadingWorker::class.java, 15, TimeUnit.MINUTES)
-                .addTag(LOADING_WORK_TAG)
-                .setBackoffCriteria(BackoffPolicy.LINEAR, 5L, TimeUnit.MINUTES)
-                .setConstraints(
-                    Constraints.Builder()
-                        .setRequiredNetworkType(NetworkType.CONNECTED)
-                        .setRequiresBatteryNotLow(true)
-                        .build()
-                )
-                .build()
-            manager.cancelAllWorkByTag(LOADING_WORK_TAG)
-            manager.enqueue(req)
-        } else {
-            manager.cancelAllWorkByTag(LOADING_WORK_TAG)
         }
     }
 
