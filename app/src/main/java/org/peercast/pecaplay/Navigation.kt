@@ -10,10 +10,12 @@ import android.widget.TextView
 import androidx.annotation.DrawableRes
 import androidx.core.content.edit
 import androidx.core.view.get
+import androidx.lifecycle.LifecycleCoroutineScope
 import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.Observer
 import com.google.android.material.navigation.NavigationView
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -22,7 +24,6 @@ import org.peercast.pecaplay.app.Favorite
 import org.peercast.pecaplay.app.YellowPage
 import org.peercast.pecaplay.app.YpLiveChannel
 import org.peercast.pecaplay.prefs.AppPreferences
-import org.peercast.pecaplay.util.LiveDataUtils
 import org.peercast.pecaplay.yp4g.YpChannel
 import org.peercast.pecaplay.yp4g.YpChannelSelector
 import timber.log.Timber
@@ -66,14 +67,14 @@ class NavigationItem(
 interface INavigationModel {
     val items: List<NavigationItem>
     fun setOnChangedObserver(observer: () -> Unit)
-    fun setLifecycleOwner(owner: LifecycleOwner)
+    suspend fun collect()
 }
 
 
 class PecaNavigationViewExtension(
     private val view: NavigationView,
     savedInstanceState: Bundle?,
-    owner: LifecycleOwner,
+    scope: LifecycleCoroutineScope,
     private val onItemClick: (NavigationItem) -> Unit,
 ) {
 
@@ -97,7 +98,9 @@ class PecaNavigationViewExtension(
     init {
         view.tag = this
         model.setOnChangedObserver(::rebuildMenu)
-        model.setLifecycleOwner(owner)
+        scope.launchWhenResumed {
+            model.collect()
+        }
     }
 
     private fun rebuildMenu() {
@@ -282,16 +285,16 @@ private class NavigationModelImpl(private val c: Context) : INavigationModel, Ko
         onChangedObserver = observer
     }
 
-    override fun setLifecycleOwner(owner: LifecycleOwner) {
-        LiveDataUtils.combineLatest(
-            database.yellowPageDao.query(),
-            database.favoriteDao.query(),
-            database.ypChannelDao.query(),
+    override suspend fun collect() {
+        combine(
+            database.yellowPageDao.query2(),
+            database.favoriteDao.query2(),
+            database.ypChannelDao.query2(),
             ::toNavigationItem
-        ).observe(owner, Observer {
+        ).collect {
             items = it
             onChangedObserver()
-        })
+        }
     }
 
     private suspend fun toNavigationItem(

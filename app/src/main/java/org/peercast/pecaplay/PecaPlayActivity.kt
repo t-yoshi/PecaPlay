@@ -28,6 +28,7 @@ import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.onEach
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -105,7 +106,7 @@ class PecaPlayActivity : AppCompatActivity() {
             })
         }
 
-        PecaNavigationViewExtension(vNavigation, savedInstanceState, this) { item ->
+        PecaNavigationViewExtension(vNavigation, savedInstanceState, lifecycleScope) { item ->
             Timber.d("onItemClick(${item.tag})")
             viewModel.run {
                 displayOrder = when (item.tag) {
@@ -139,14 +140,12 @@ class PecaPlayActivity : AppCompatActivity() {
         //回転後の再生成時には表示しない
         if (savedInstanceState == null) {
             lifecycleScope.launchWhenResumed {
-                viewModel.rpcClient.collect { client ->
-                    if (client != null) {
-                        Timber.i("--> service connected!")
-                        val u = Uri.parse(client.rpcEndPoint)
-                        val s = getString(R.string.peercast_has_started, u.port)
-                        Snackbar.make(vYpChannelFragmentContainer, s, Snackbar.LENGTH_LONG).show()
-                    }
-                }
+                viewModel.rpcClient.filterNotNull().onEach { client->
+                    Timber.i("--> service connected!")
+                    val u = Uri.parse(client.rpcEndPoint)
+                    val s = getString(R.string.peercast_has_started, u.port)
+                    Snackbar.make(vYpChannelFragmentContainer, s, Snackbar.LENGTH_LONG).show()
+                }.collect()
             }
         }
 
@@ -192,6 +191,7 @@ class PecaPlayActivity : AppCompatActivity() {
                 vNavigation.extension?.navigate("notificated")
             }
         }
+
 
         //各activity-aliasからのPecaPlayViewer起動用インテントを処理する
         if (intent.action == ViewerLaunchActivity.ACTION_LAUNCH_PECA_VIEWER &&
