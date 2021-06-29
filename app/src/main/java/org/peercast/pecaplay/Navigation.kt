@@ -389,9 +389,10 @@ private class NavigationModelImpl(private val c: Context) : INavigationModel, Ko
         withContext(Dispatchers.Default) {
             items.filter { it.tag !in badgeInvisibleItems }.forEach {
                 val n = channels.count(it.selector)
+                val m = channels.filter { !it.isEmptyId }.count(it.selector)
                 it.badge = when {
                     n > 99 -> "99+"
-                    n > 0 -> "$n"
+                    n > 0 -> "$m"
                     else -> {
                         it.isVisible = false
                         ""
