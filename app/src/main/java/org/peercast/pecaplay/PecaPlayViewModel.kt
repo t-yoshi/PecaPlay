@@ -1,32 +1,22 @@
 package org.peercast.pecaplay
 
 import android.app.Application
-import androidx.lifecycle.*
-import com.googlecode.kanaxs.KanaUtil
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.Transformations
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.peercast.core.lib.app.BasePeerCastViewModel
 import org.peercast.pecaplay.app.AppRoomDatabase
-import org.peercast.pecaplay.app.YpLiveChannel
 import org.peercast.pecaplay.prefs.AppPreferences
-import org.peercast.pecaplay.util.LiveDataUtils
+import org.peercast.pecaplay.util.TextUtils.normalize
 import org.peercast.pecaplay.yp4g.YpChannel
 import org.peercast.pecaplay.yp4g.YpDisplayOrder
 import org.peercast.pecaplay.yp4g.descriptionOrGenre
-import timber.log.Timber
-import java.util.*
 import kotlin.properties.Delegates
-
-
-/**ソースの選択*/
-enum class YpChannelSource {
-    /**配信中*/
-    LIVE,
-
-    /**再生履歴*/
-    HISTORY
-}
 
 
 class PecaPlayViewModel(
@@ -36,111 +26,93 @@ class PecaPlayViewModel(
 ) : BasePeerCastViewModel(a) {
     val presenter = PecaPlayPresenter(this, appPrefs, database)
 
-    @Deprecated("")
-    private val liveChannelLd = database.ypChannelDao.query()
-
-    @Deprecated("")
-    private val historyChannelLd = LiveDataUtils.combineLatest(
-        database.ypChannelDao.query(),
-        database.ypHistoryDao.query()
-    ) { channels, histories ->
-        histories.forEach { his ->
-            //現在存在して再生可能か
-            his.isEnabled = channels.any(his::equalsIdName)
-        }
-        histories
-    }
-
     private val liveChannelFlow = database.ypChannelDao.query2()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
     private val historyChannelFlow = combine(
         database.ypChannelDao.query2(),
         database.ypHistoryDao.query2()
     ) { channels, histories ->
-        histories.forEach { his ->
-            //現在存在して再生可能か
-            his.isEnabled = channels.any(his::equalsIdName)
+        withContext(Dispatchers.Default) {
+            histories.forEach { his ->
+                //現在存在して再生可能か
+                his.isEnabled = channels.any(his::equalsIdName)
+            }
+            histories
         }
-        histories
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
-
-    private val channelsFlow = combine(
-        liveChannelFlow, historyChannelFlow
-    ){ channels, histories ->
-        liveChannelFlow.replay().conn
-        emptyList<YpChannel>()
     }
 
-    @Deprecated("")
-    private val selectorLiveData = object : MediatorLiveData<List<YpChannel>>() {
-        private val YpChannel.searchText: String
-            get() = extTag("PecaPlayViewModel#searchText") {
-                toNormalizedJapanese(yp4g.run { "$name $comment $descriptionOrGenre" })
-            }!!
+    /**リスト表示用*/
+    val channelsFlow: Flow<List<YpChannel>> = MutableStateFlow(emptyList())
 
-        var srcLiveData by Delegates.observable(EMPTY_LIVEDATA) { _, oldLd, newLd ->
-            removeSource(oldLd)
-            addSource(newLd) { onChanged(it) }
+    private var j: Job? = null
+
+    private fun changeSource(src: YpChannelSource) {
+        j?.cancel()
+        val f = when (src) {
+            YpChannelSource.NONE -> MutableStateFlow(emptyList())
+            YpChannelSource.LIVE -> liveChannelFlow
+            YpChannelSource.HISTORY -> historyChannelFlow
         }
-
-        init {
-            srcLiveData = database.ypChannelDao.query()
-        }
-
-        private fun onChanged(channels: List<YpChannel>) =
-            viewModelScope.launch(Dispatchers.Default) {
+        j = viewModelScope.launch {
+            f.onEach { channels ->
                 var l = channels.filter(selector)
 
-                if (searchString.isNotBlank()) {
-                    val constraints = toNormalizedJapanese(searchString).split("[\\s　]+".toRegex())
+                if (searchQuery.isNotBlank()) {
+                    val constraints = searchQuery.normalize().split(RE_SPACE)
                     l = l.filter { ch ->
                         constraints.all { ch.searchText.contains(it) }
                     }
                 }
 
-                when (order) {
-                    YpDisplayOrder.NONE -> {
-                    }
-                    else -> l = l.sortedWith(order.comparator)
+                (channelsFlow as MutableStateFlow).value = when (displayOrder) {
+                    YpDisplayOrder.NONE -> l
+                    else -> l.sortedWith(displayOrder.comparator)
                 }
-
-                postValue(l)
             }
-    }
-
-    /**リスト表示用*/
-    @Deprecated("")
-    val viewLiveData = Transformations.distinctUntilChanged(selectorLiveData)
-
-    /**配信中or履歴**/
-    var source = YpChannelSource.LIVE
-
-    /**お気に入り/ジャンル等で選別するセレクタ*/
-    var selector: (YpChannel) -> Boolean = { true }
-
-    /**表示する順序*/
-    var order = appPrefs.displayOrder
-
-    /**検索窓から*/
-    var searchString = ""
-
-    /**変更を[viewLiveData]に適用する*/
-    fun notifyChange() {
-        Timber.d("notifyChange()")
-        selectorLiveData.srcLiveData = when (source) {
-            YpChannelSource.LIVE -> liveChannelLd
-            YpChannelSource.HISTORY -> historyChannelLd
+                .flowOn(Dispatchers.Default)
+                .collect()
         }
     }
 
 
+    /**配信中or履歴**/
+    var source by Delegates.observable(YpChannelSource.NONE) { _, old, new ->
+        if (old != new)
+            changeSource(new)
+    }
+
+    /**お気に入り/ジャンル等で選別するセレクタ*/
+    var selector by Delegates.observable<(YpChannel) -> Boolean>({ true }) { _, old, new ->
+        if (old != new)
+            changeSource(source)
+    }
+
+    /**表示する順序*/
+    var displayOrder by Delegates.observable(appPrefs.displayOrder) { _, old, new ->
+        if (old != new)
+            changeSource(source)
+    }
+
+    /**検索窓から*/
+    var searchQuery by Delegates.observable("") { _, old, new ->
+        if (old != new)
+            changeSource(source)
+    }
+
+
     /**通知アイコン(ベルのマーク)の有効/無効*/
+    @Deprecated("")
     val isNotificationIconEnabled: LiveData<Boolean> = Transformations.map(
         database.favoriteDao.query()
     ) { favorites ->
         favorites.firstOrNull { it.flags.run { !isNG && isNotification } } != null
     }
+
+    /**通知アイコン(ベルのマーク)の有効/無効*/
+    val existsNotification =
+        database.favoriteDao.query2().map { favorites ->
+            favorites.firstOrNull { it.flags.run { !isNG && isNotification } } != null
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     fun bindService() {
         if (appPrefs.peerCastUrl.host in listOf(null, "", "localhost", "127.0.0.1"))
@@ -148,17 +120,11 @@ class PecaPlayViewModel(
     }
 
     companion object {
-        private val EMPTY_LIVEDATA: LiveData<out List<YpChannel>> = MutableLiveData()
+        private val RE_SPACE = """[\s　]+""".toRegex()
 
-        /**
-         * 検索用:　小文字、半角英数、 ひらがな化
-         */
-        private fun toNormalizedJapanese(text: String): String =
-            text.let {
-                var s = it.lowercase(Locale.JAPANESE)
-                s = KanaUtil.toHanalphCase(s)
-                KanaUtil.toHiraganaCase(s)
-            }
+        private val YpChannel.searchText: String
+            get() = yp4g.run { "$name $comment $descriptionOrGenre" }.normalize()
+
     }
 }
 

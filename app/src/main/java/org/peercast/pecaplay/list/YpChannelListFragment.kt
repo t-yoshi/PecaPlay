@@ -15,6 +15,9 @@ import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
@@ -51,9 +54,9 @@ class YpChannelFragment : Fragment() {
             scrollPositions.putAll(it)
         }
 
-        LiveDataUtils.combineLatest(
-            viewModel.viewLiveData,
-            favoriteDao.query()
+        combine(
+            viewModel.channelsFlow,
+            favoriteDao.query2()
         ) { channels, favorites ->
             val (favNg, favo) = favorites.partition { it.flags.isNG }
             channels.map { ch ->
@@ -62,12 +65,12 @@ class YpChannelFragment : Fragment() {
                 val isNotification = favo.filter { it.flags.isNotification }.any { it.matches(ch) }
                 ListItemModel(ch, star, isNg, isNotification)
             }
-        }.observe(this) {
+        }.onEach {
             adapter.items = it
             //Timber.d("-> $it")
             adapter.notifyDataSetChanged()
             restoreScrollPosition()
-        }
+        }.launchIn(lifecycleScope)
 
         get<LoadingWorkerLiveData>().observe(this) { ev ->
             //Timber.d("ev=$ev")

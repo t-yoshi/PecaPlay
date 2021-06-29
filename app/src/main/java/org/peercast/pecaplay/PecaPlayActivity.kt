@@ -105,7 +105,7 @@ class PecaPlayActivity : AppCompatActivity() {
         PecaNavigationViewExtension(vNavigation, savedInstanceState, this) { item ->
             Timber.d("onItemClick(${item.tag})")
             viewModel.run {
-                order = when (item.tag) {
+                displayOrder = when (item.tag) {
                     "history" -> YpDisplayOrder.NONE
                     "notificated",
                     "newly",
@@ -120,7 +120,6 @@ class PecaPlayActivity : AppCompatActivity() {
                     "history" -> YpChannelSource.HISTORY
                     else -> YpChannelSource.LIVE
                 }
-                notifyChange()
             }
 
             vDrawerLayout?.let {
@@ -255,8 +254,7 @@ class PecaPlayActivity : AppCompatActivity() {
             (mi.actionView as SearchView?)?.let { v ->
                 SearchViewEventHandler(v, componentName) { text ->
                     Timber.d("onTextChange(%s)", text)
-                    viewModel.searchString = text
-                    viewModel.notifyChange()
+                    viewModel.searchQuery = text
                 }
             }
         }
@@ -286,9 +284,7 @@ class PecaPlayActivity : AppCompatActivity() {
             R.id.menu_sort_listener_asc,
             -> {
                 val order = YpDisplayOrder.fromOrdinal(item.order)
-                viewModel.order = order
-                viewModel.notifyChange()
-
+                viewModel.displayOrder = order
                 appPrefs.displayOrder = order
                 item.isChecked = true
             }
