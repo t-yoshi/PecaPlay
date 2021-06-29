@@ -8,7 +8,7 @@ private const val AUTHORITY = "org.peercast.pecaplay.app.SuggestionProvider"
 
 class SuggestionProvider : SearchRecentSuggestionsProvider() {
     init {
-        setupSuggestions(AUTHORITY, SearchRecentSuggestionsProvider.DATABASE_MODE_QUERIES)
+        setupSuggestions(AUTHORITY, DATABASE_MODE_QUERIES)
     }
 }
 

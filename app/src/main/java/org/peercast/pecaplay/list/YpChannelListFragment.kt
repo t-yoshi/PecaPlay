@@ -33,7 +33,7 @@ class YpChannelFragment : Fragment() {
 
     private val favoriteDao
         get() = get<AppRoomDatabase>().favoriteDao
-    private val viewModel: PecaPlayViewModel by sharedViewModel()
+    private val viewModel by sharedViewModel<PecaPlayViewModel>()
     private val adapter = ListAdapter()
 
     private lateinit var vRecycler: RecyclerView

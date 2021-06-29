@@ -2,12 +2,14 @@ package org.peercast.pecaplay.app
 
 import android.app.Application
 import android.net.Uri
+import android.os.AsyncTask
 import androidx.lifecycle.LiveData
 import androidx.room.*
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.text.SimpleDateFormat
@@ -25,11 +27,17 @@ interface YellowPageDao {
     @Delete
     suspend fun remove(item: YellowPage)
 
+    @Deprecated("")
     @Query("SELECT * FROM YellowPage WHERE NOT :isEnabled OR enabled ORDER BY Name")
     suspend fun queryAwait(isEnabled: Boolean = true): List<YellowPage>
 
+    @Deprecated("")
     @Query("SELECT * FROM YellowPage WHERE NOT :isSelectEnabled OR enabled ORDER BY Name")
     fun query(isSelectEnabled: Boolean = true): LiveData<List<YellowPage>>
+
+    @Deprecated("")
+    @Query("SELECT * FROM YellowPage WHERE NOT :isSelectEnabled OR enabled ORDER BY Name")
+    fun query2(isSelectEnabled: Boolean = true): Flow<List<YellowPage>>
 
 }
 
@@ -47,17 +55,25 @@ interface FavoriteDao {
     @Query("SELECT * FROM Favorite WHERE NOT :isSelectEnabled OR enabled")
     suspend fun queryAwait(isSelectEnabled: Boolean = true): List<Favorite>
 
+    @Deprecated("")
     @Query("SELECT * FROM Favorite WHERE NOT :isSelectEnabled OR enabled")
     fun query(isSelectEnabled: Boolean = true): LiveData<List<Favorite>>
 
+    @Query("SELECT * FROM Favorite WHERE NOT :isSelectEnabled OR enabled")
+    fun query2(isSelectEnabled: Boolean = true): Flow<List<Favorite>>
 }
 
 
 @Dao
 interface YpLiveChannelDao {
+    @Deprecated("")
     @Query("SELECT * FROM YpLiveChannel WHERE isLatest")
     fun query(): LiveData<List<YpLiveChannel>>
 
+    @Query("SELECT * FROM YpLiveChannel WHERE isLatest")
+    fun query2(): Flow<List<YpLiveChannel>>
+
+    @Deprecated("")
     @Query("SELECT * FROM YpLiveChannel WHERE isLatest")
     suspend fun queryAwait(): List<YpLiveChannel>
 
@@ -74,11 +90,16 @@ interface YpHistoryChannelDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun addHistory(ch: YpHistoryChannel)
 
+    @Deprecated("")
     @Query("SELECT * FROM YpHistoryChannel ORDER BY lastPlay DESC")
     suspend fun queryAwait(): List<YpHistoryChannel>
 
+    @Deprecated("")
     @Query("SELECT * FROM YpHistoryChannel ORDER BY lastPlay DESC")
     fun query(): LiveData<List<YpHistoryChannel>>
+
+    @Query("SELECT * FROM YpHistoryChannel ORDER BY lastPlay DESC")
+    fun query2(): Flow<List<YpHistoryChannel>>
 }
 
 private class Converters {
@@ -154,13 +175,12 @@ DELETE FROM YpLiveChannel
             )
                 .addMigrations(*MIGRATIONS)
                 .build().also {
-                    GlobalScope.launch(Dispatchers.IO) {
+                    AsyncTask.execute {
                         it.truncate()
                     }
                 }
         }
     }
-
 
 }
 

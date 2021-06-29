@@ -4,9 +4,11 @@ import android.app.Application
 import androidx.lifecycle.*
 import com.googlecode.kanaxs.KanaUtil
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.peercast.core.lib.app.BasePeerCastViewModel
 import org.peercast.pecaplay.app.AppRoomDatabase
+import org.peercast.pecaplay.app.YpLiveChannel
 import org.peercast.pecaplay.prefs.AppPreferences
 import org.peercast.pecaplay.util.LiveDataUtils
 import org.peercast.pecaplay.yp4g.YpChannel
@@ -34,7 +36,10 @@ class PecaPlayViewModel(
 ) : BasePeerCastViewModel(a) {
     val presenter = PecaPlayPresenter(this, appPrefs, database)
 
+    @Deprecated("")
     private val liveChannelLd = database.ypChannelDao.query()
+
+    @Deprecated("")
     private val historyChannelLd = LiveDataUtils.combineLatest(
         database.ypChannelDao.query(),
         database.ypHistoryDao.query()
@@ -46,6 +51,28 @@ class PecaPlayViewModel(
         histories
     }
 
+    private val liveChannelFlow = database.ypChannelDao.query2()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+
+    private val historyChannelFlow = combine(
+        database.ypChannelDao.query2(),
+        database.ypHistoryDao.query2()
+    ) { channels, histories ->
+        histories.forEach { his ->
+            //現在存在して再生可能か
+            his.isEnabled = channels.any(his::equalsIdName)
+        }
+        histories
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+
+    private val channelsFlow = combine(
+        liveChannelFlow, historyChannelFlow
+    ){ channels, histories ->
+        liveChannelFlow.replay().conn
+        emptyList<YpChannel>()
+    }
+
+    @Deprecated("")
     private val selectorLiveData = object : MediatorLiveData<List<YpChannel>>() {
         private val YpChannel.searchText: String
             get() = extTag("PecaPlayViewModel#searchText") {
@@ -83,6 +110,7 @@ class PecaPlayViewModel(
     }
 
     /**リスト表示用*/
+    @Deprecated("")
     val viewLiveData = Transformations.distinctUntilChanged(selectorLiveData)
 
     /**配信中or履歴**/

@@ -1,44 +1,18 @@
 package org.peercast.pecaplay.app
 
 import android.os.Parcelable
-import androidx.room.*
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.TypeConverter
+import androidx.room.TypeConverters
 import com.squareup.moshi.JsonClass
 import kotlinx.parcelize.Parcelize
 import org.peercast.pecaplay.util.SquareUtils
-import org.peercast.pecaplay.yp4g.Yp4gColumn
 import org.peercast.pecaplay.yp4g.YpChannel
 import timber.log.Timber
 import java.io.IOException
-import java.util.*
 import java.util.regex.Matcher
 import java.util.regex.Pattern
-
-
-abstract class ManageableEntity : Parcelable {
-    abstract val name: String
-    abstract val isEnabled: Boolean
-}
-
-
-/**
- * イエローページ
- * @version 50000
- */
-@Entity(primaryKeys = ["name"])
-@Parcelize
-data class YellowPage(
-    override val name: String,
-    val url: String,
-    @ColumnInfo(name = "enabled")
-    override val isEnabled: Boolean = true,
-) : ManageableEntity() {
-
-    companion object {
-        fun isValidUrl(u: String): Boolean {
-            return u.matches("""^https?://\S+/$""".toRegex())
-        }
-    }
-}
 
 /**
  * お気に入り
@@ -166,54 +140,3 @@ data class Favorite(
         }
     }
 }
-
-
-/**
- * 現在配信中のChannel情報です。
- * @version 50100
- */
-@Entity(tableName = "YpLiveChannel",
-    primaryKeys = ["name", "id"],
-    indices = [Index("isLatest")])
-class YpLiveChannel : YpChannel() {
-    /**直近の読み込みか*/
-    var isLatest: Boolean = false
-
-    /**読み込んだ時刻。*/
-    lateinit var lastLoadedTime: Date
-
-    /**読み込み回数*/
-    var numLoaded: Int = 0
-
-    companion object {
-        val COLUMNS = Yp4gColumn.values().map { "$it" } +
-                listOf("isLatest", "lastLoadedTime", "numLoaded")
-    }
-}
-
-
-/**
- * 再生した履歴
- * @version 50100
- * */
-@Entity(tableName = "YpHistoryChannel",
-    primaryKeys = ["name", "id"])
-class YpHistoryChannel() : YpChannel() {
-    /**最終再生日*/
-    lateinit var lastPlay: Date
-
-    /**現在もYPに掲載されていて再生可能か*/
-    @Ignore
-    override var isEnabled = false
-        set(value) {
-            field = value && super.isEnabled
-        }
-
-    constructor(copy: YpChannel, lastPlay: Date = Date()) : this() {
-        yp4g = copy.yp4g
-        this.lastPlay = lastPlay
-    }
-}
-
-
-private const val TAG = "AppManageable"
