@@ -28,12 +28,14 @@ import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.flow.collect
-import org.koin.android.ext.android.get
+import kotlinx.coroutines.flow.onEach
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.peercast.pecaplay.prefs.AppPreferences
 import org.peercast.pecaplay.prefs.SettingsActivity
 import org.peercast.pecaplay.util.localizedSystemMessage
+import org.peercast.pecaplay.worker.LoadingEvent
+import org.peercast.pecaplay.worker.LoadingEventFlow
 import org.peercast.pecaplay.yp4g.SpeedTestFragment
 import org.peercast.pecaplay.yp4g.YpDisplayOrder
 import retrofit2.HttpException
@@ -50,6 +52,7 @@ class PecaPlayActivity : AppCompatActivity() {
 
     private val appPrefs: AppPreferences by inject()
     private val viewModel: PecaPlayViewModel by viewModel()
+    private val loadingEvent by inject<LoadingEventFlow>()
     private var drawerToggle: ActionBarDrawerToggle? = null //縦長時のみ
     private var lastLoadedERTime = 0L
 
@@ -147,36 +150,41 @@ class PecaPlayActivity : AppCompatActivity() {
             }
         }
 
-        get<LoadingWorkerLiveData>().observe(this,
-            SnackbarObserver(vYpChannelFragmentContainer) { ev ->
+        lifecycleScope.launchWhenResumed {
+            loadingEvent.onEach { ev ->
                 when (ev) {
-                    is LoadingWorker.Event.OnException -> {
-                        val s = when (ev.ex) {
-                            is HttpException -> ev.ex.response()?.message()
-                                ?: ev.ex.localizedSystemMessage()
-                            else -> ev.ex.localizedSystemMessage()
+                    is LoadingEvent.OnException -> {
+                        val s = when (ev.e) {
+                            is HttpException -> ev.e.response()?.message()
+                                ?: ev.e.localizedSystemMessage()
+                            else -> ev.e.localizedSystemMessage()
                         }
-                        return@SnackbarObserver HtmlCompat.fromHtml("<font color=red>${ev.yp.name}: $s",
-                            0)
+                        Snackbar.make(
+                            vYpChannelFragmentContainer,
+                            HtmlCompat.fromHtml("<font color=red>${ev.yp.name}: $s", 0),
+                            Snackbar.LENGTH_LONG
+                        ).show()
                     }
-                    is LoadingWorker.Event.OnFinished -> {
+                    is LoadingEvent.OnFinished -> {
                         lastLoadedERTime = SystemClock.elapsedRealtime()
                     }
                 }
-                null
-            })
+            }.collect()
+        }
 
-        viewModel.isNotificationIconEnabled.observe(this) {
-            if (!it) {
-                viewModel.presenter.setScheduledLoading(false)
+        lifecycleScope.launchWhenResumed {
+            viewModel.existsNotification.collect {
+//                if (!it) {
+//                    viewModel.presenter.startLoading()
+//                }
+                invalidateOptionsMenu()
             }
-            invalidateOptionsMenu()
         }
 
-        if (appPrefs.isNotificationEnabled) {
-            lastLoadedERTime = SystemClock.elapsedRealtime()
-            viewModel.presenter.setScheduledLoading(true)
-        }
+//        if (appPrefs.isNotificationEnabled) {
+//            lastLoadedERTime = SystemClock.elapsedRealtime()
+//            viewModel.presenter.setScheduledLoading(true)
+//        }
 
         if (intent.hasExtra(PecaPlayIntent.EXTRA_IS_NOTIFICATED)) {
             removeNotification()
@@ -220,7 +228,7 @@ class PecaPlayActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         //前回の読み込みからN分以上経過している場合は読み込む
-        if (lastLoadedERTime < SystemClock.elapsedRealtime() - 10 * 60_000)
+        if (lastLoadedERTime < SystemClock.elapsedRealtime() - 5 * 60_000)
             viewModel.presenter.startLoading()
     }
 
@@ -235,7 +243,7 @@ class PecaPlayActivity : AppCompatActivity() {
 
         menu.findItem(R.id.menu_notification).let {
             it.isEnabled =
-                viewModel.isNotificationIconEnabled.value == true  // #schedulePresenter.isNotificationIconEnabled
+                viewModel.existsNotification.value == true  // #schedulePresenter.isNotificationIconEnabled
             val b = appPrefs.isNotificationEnabled
             it.setIcon(
                 when (b) {
@@ -273,8 +281,11 @@ class PecaPlayActivity : AppCompatActivity() {
                 val enabled = !item.isChecked
                 //viewModel.isNotificationIconEnabled.value = enabled
                 appPrefs.isNotificationEnabled = enabled
-                viewModel.presenter.setScheduledLoading(enabled)
-                //schedulePresenter.resetScheduler()
+                if (enabled)
+                    viewModel.presenter.startLoading()
+                else
+                    viewModel.presenter.stopLoading()
+
                 invalidateOptionsMenu()
             }
 

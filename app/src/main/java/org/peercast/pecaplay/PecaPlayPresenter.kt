@@ -6,17 +6,16 @@ import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.lifecycle.viewModelScope
-import androidx.work.*
 import kotlinx.coroutines.launch
 import org.peercast.core.lib.LibPeerCast
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.YpHistoryChannel
 import org.peercast.pecaplay.app.saveRecentQuery
 import org.peercast.pecaplay.prefs.AppPreferences
+import org.peercast.pecaplay.worker.LoadingWorkerManager
 import org.peercast.pecaplay.yp4g.YpChannel
 import org.peercast.pecaplay.yp4g.descriptionOrGenre
 import timber.log.Timber
-import java.util.concurrent.TimeUnit
 
 
 class PecaPlayPresenter(
@@ -25,40 +24,24 @@ class PecaPlayPresenter(
     private val database: AppRoomDatabase,
 ) {
     private val a = viewModel.getApplication<Application>()
-    private val workManager = WorkManager.getInstance(a)
+    private val workerManager = LoadingWorkerManager(a)
 
     /**YP読み込みを開始する*/
     fun startLoading() {
         stopLoading()
 
-        if (viewModel.existsNotification.value && appPrefs.isNotificationEnabled){
+        if (appPrefs.isNotificationEnabled){
             //15分毎にYP読み込みを行う
-            val req = PeriodicWorkRequest
-                .Builder(LoadingWorker::class.java, 15, TimeUnit.MINUTES)
-                .addTag(LOADING_WORK_TAG)
-                .setBackoffCriteria(BackoffPolicy.LINEAR, 5L, TimeUnit.MINUTES)
-                .setConstraints(
-                    Constraints.Builder()
-                        .setRequiredNetworkType(NetworkType.CONNECTED)
-                        .setRequiresBatteryNotLow(true)
-                        .build()
-                )
-                .build()
-            workManager.enqueue(req)
+            workerManager.enqueuePeriodic()
         } else {
             //1回限り
-            workManager.beginUniqueWork(
-                WORK_NAME, ExistingWorkPolicy.KEEP,
-                OneTimeWorkRequest.Builder(LoadingWorker::class.java)
-                    .addTag(LOADING_WORK_TAG)
-                    .build()
-            ).enqueue()
+            workerManager.enqueueOneshot()
         }
     }
 
     /**YP読み込みを停止する*/
     fun stopLoading() {
-        workManager.cancelAllWorkByTag(LOADING_WORK_TAG)
+        workerManager.cancel()
     }
 
     /**プレーヤーを起動する*/
@@ -113,8 +96,4 @@ class PecaPlayPresenter(
         }
     }
 
-    companion object {
-        private const val WORK_NAME = "yp_loading_work"
-        const val LOADING_WORK_TAG = "yp_loading_work_tag"
-    }
 }

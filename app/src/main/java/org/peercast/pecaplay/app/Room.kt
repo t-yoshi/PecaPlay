@@ -35,7 +35,6 @@ interface YellowPageDao {
     @Query("SELECT * FROM YellowPage WHERE NOT :isSelectEnabled OR enabled ORDER BY Name")
     fun query(isSelectEnabled: Boolean = true): LiveData<List<YellowPage>>
 
-    @Deprecated("")
     @Query("SELECT * FROM YellowPage WHERE NOT :isSelectEnabled OR enabled ORDER BY Name")
     fun query2(isSelectEnabled: Boolean = true): Flow<List<YellowPage>>
 
@@ -52,6 +51,7 @@ interface FavoriteDao {
     @Delete
     suspend fun remove(item: Favorite)
 
+    @Deprecated("")
     @Query("SELECT * FROM Favorite WHERE NOT :isSelectEnabled OR enabled")
     suspend fun queryAwait(isSelectEnabled: Boolean = true): List<Favorite>
 

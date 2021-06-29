@@ -15,20 +15,21 @@ import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
-import org.peercast.pecaplay.LoadingWorker
-import org.peercast.pecaplay.LoadingWorkerLiveData
 import org.peercast.pecaplay.PecaPlayViewModel
 import org.peercast.pecaplay.R
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.Favorite
-import org.peercast.pecaplay.util.LiveDataUtils
 import org.peercast.pecaplay.view.MenuableRecyclerView
+import org.peercast.pecaplay.worker.LoadingEvent
+import org.peercast.pecaplay.worker.LoadingEventFlow
 import timber.log.Timber
 
 @Suppress("unused")
@@ -41,6 +42,7 @@ class YpChannelFragment : Fragment() {
 
     private lateinit var vRecycler: RecyclerView
     private lateinit var vSwipeRefresh: SwipeRefreshLayout
+    private val loadingEvent by inject<LoadingEventFlow>()
 
     //スクロール位置を保存する。
     private val scrollPositions = Bundle()
@@ -72,17 +74,19 @@ class YpChannelFragment : Fragment() {
             restoreScrollPosition()
         }.launchIn(lifecycleScope)
 
-        get<LoadingWorkerLiveData>().observe(this) { ev ->
-            //Timber.d("ev=$ev")
-            when (ev) {
-                is LoadingWorker.Event.OnStart -> {
-                    vSwipeRefresh.isRefreshing = true
-                    scrollPositions.clear()
+        lifecycleScope.launchWhenResumed {
+            loadingEvent.onEach { ev ->
+                //Timber.d("ev=$ev")
+                when (ev) {
+                    is LoadingEvent.OnStart -> {
+                        vSwipeRefresh.isRefreshing = true
+                        scrollPositions.clear()
+                    }
+                    else -> {
+                        vSwipeRefresh.isRefreshing = false
+                    }
                 }
-                is LoadingWorker.Event.OnFinished -> {
-                    vSwipeRefresh.isRefreshing = false
-                }
-            }
+            }.collect()
         }
     }
 
@@ -107,7 +111,7 @@ class YpChannelFragment : Fragment() {
                 }
 
                 override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                    if (newState == RecyclerView.SCROLL_STATE_IDLE)
+                    if (newState == RecyclerView.SCROLL_STATE_IDLE && isResumed)
                         storeScrollPosition()
                 }
             })
@@ -258,7 +262,7 @@ class YpChannelFragment : Fragment() {
     private val listItemEventListener = object : IListItemEventListener {
         override fun onStarClicked(m: ListItemModel, isChecked: Boolean) {
             Timber.d("onStarClicked(%s, %s)", m, isChecked)
-            lifecycleScope.launchWhenResumed {
+            lifecycleScope.launch {
                 m.star?.let {
                     favoriteDao.remove(it)
                 } ?: Favorite.Star(m.ch).let {

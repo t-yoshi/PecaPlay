@@ -16,6 +16,7 @@ import org.peercast.pecaplay.list.listItemModule
 import org.peercast.pecaplay.prefs.AppPreferences
 import org.peercast.pecaplay.prefs.DefaultAppPreferences
 import org.peercast.pecaplay.prefs.PecaPlayViewerSetting
+import org.peercast.pecaplay.worker.LoadingEventFlow
 import timber.log.Timber
 import java.util.*
 
@@ -23,7 +24,7 @@ import java.util.*
 val appModule = module {
     single { AppRoomDatabase.createInstance(get(), "pecaplay-5") }
     single<AppPreferences> { DefaultAppPreferences(get()) }
-    single { LoadingWorkerLiveData() }
+    single { LoadingEventFlow() }
     viewModel { PecaPlayViewModel(get(), get(), get()) }
 }
 
