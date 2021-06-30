@@ -2,23 +2,15 @@ package org.peercast.pecaplay
 
 import android.app.NotificationManager
 import android.app.SearchManager
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.database.Cursor
-import android.net.Uri
-import android.os.Build
 import android.os.Bundle
 import android.os.SystemClock
 import android.view.*
-import androidx.activity.result.ActivityResult
-import androidx.activity.result.ActivityResultCallback
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
 import androidx.core.text.HtmlCompat
@@ -26,7 +18,6 @@ import androidx.core.view.ActionProvider
 import androidx.core.view.MenuItemCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.FragmentContainerView
-import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.navigation.NavigationView
@@ -139,10 +130,9 @@ class PecaPlayActivity : AppCompatActivity() {
         //回転後の再生成時には表示しない
         if (savedInstanceState == null) {
             lifecycleScope.launchWhenResumed {
-                viewModel.rpcClient.filterNotNull().onEach { client->
+                viewModel.rpcClient.filterNotNull().onEach { client ->
                     Timber.i("--> service connected!")
-                    val u = Uri.parse(client.rpcEndPoint)
-                    val s = getString(R.string.peercast_has_started, u.port)
+                    val s = getString(R.string.peercast_has_started, client.rpcEndPoint.port)
                     Snackbar.make(vYpChannelFragmentContainer, s, Snackbar.LENGTH_LONG).show()
                 }.collect()
             }
@@ -241,8 +231,7 @@ class PecaPlayActivity : AppCompatActivity() {
         menuInflater.inflate(R.menu.main_menu, menu)
 
         menu.findItem(R.id.menu_notification).let {
-            it.isEnabled =
-                viewModel.existsNotification.value == true  // #schedulePresenter.isNotificationIconEnabled
+            it.isEnabled = viewModel.existsNotification.value
             val b = appPrefs.isNotificationEnabled
             it.setIcon(
                 when (b) {

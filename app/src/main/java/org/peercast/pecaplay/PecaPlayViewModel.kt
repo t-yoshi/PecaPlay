@@ -1,6 +1,8 @@
 package org.peercast.pecaplay
 
 import android.app.Application
+import android.net.Uri
+import androidx.core.net.UriCompat
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Transformations
 import androidx.lifecycle.viewModelScope
@@ -115,8 +117,15 @@ class PecaPlayViewModel(
         }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     fun bindService() {
-        if (appPrefs.peerCastUrl.host in listOf(null, "", "localhost", "127.0.0.1"))
+        val u = appPrefs.peerCastUrl
+        if (u.host in listOf(null, "", "localhost", "127.0.0.1")) {
             super.bindService(null)
+            rpcClient.filterNotNull()
+                .onEach { cl->
+                    appPrefs.peerCastUrl = Uri.parse("http://${u.host}:${cl.rpcEndPoint.port}/")
+                }
+                .launchIn(viewModelScope)
+        }
     }
 
     companion object {

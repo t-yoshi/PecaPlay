@@ -113,7 +113,7 @@ dependencies {
     implementation 'org.unbescape:unbescape:1.1.6.RELEASE'
     implementation 'com.google.android.gms:play-services-oss-licenses:17.0.0'
     implementation 'com.google.android.play:core:1.10.0'
-    implementation 'com.github.t-yoshi:peca-android:39d70eac1f'
+    implementation 'com.github.t-yoshi:peca-android:5782179074'
 
     implementation platform('com.google.firebase:firebase-bom:28.1.0')
     implementation 'com.google.firebase:firebase-crashlytics'
