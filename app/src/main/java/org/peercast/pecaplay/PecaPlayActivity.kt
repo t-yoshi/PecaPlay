@@ -258,12 +258,7 @@ class PecaPlayActivity : AppCompatActivity() {
         }
 
         menu.findItem(R.id.menu_search).let { mi ->
-            (mi.actionView as SearchView?)?.let { v ->
-                SearchViewEventHandler(v, componentName) { text ->
-                    Timber.d("onTextChange(%s)", text)
-                    viewModel.searchQuery = text
-                }
-            }
+            (mi.actionView as? SearchView)?.let(::SearchViewEventHandler)
         }
 
         return true
@@ -372,67 +367,46 @@ class PecaPlayActivity : AppCompatActivity() {
         }
     }
 
-    companion object {
-        private const val STATE_LAST_LOADED_ER_TIME = "lastLoadedERTime"
-        private const val REQ_SETTING_ACTIVITY = 0x1234
-    }
-}
+    /**
+     * 検索窓のイベント処理。
+     */
+    private inner class SearchViewEventHandler(
+        private val searchView: SearchView,
+    ) : SearchView.OnQueryTextListener,
+        SearchView.OnSuggestionListener {
 
-/**
- * 検索窓のイベント処理。
- */
-private class SearchViewEventHandler(
-    private val searchView: SearchView,
-    private val componentName: ComponentName,
-    private val onTextChange: (String) -> Unit,
-) :
-    SearchView.OnQueryTextListener,
-    SearchView.OnSuggestionListener {
+        init {
+            val sm = getSystemService(Context.SEARCH_SERVICE) as SearchManager
+            searchView.let {
+                it.setSearchableInfo(sm.getSearchableInfo(componentName))
+                it.setOnSuggestionListener(this)
+                it.setOnQueryTextListener(this)
+            }
+        }
 
-    init {
-        val manager = searchView.context.getSystemService(Context.SEARCH_SERVICE) as SearchManager
+        override fun onQueryTextChange(newText: String): Boolean {
+            viewModel.searchQuery = newText
+            return true
+        }
 
-        searchView.let {
-            it.setSearchableInfo(manager.getSearchableInfo(componentName))
-            it.setOnSuggestionListener(this)
-            it.setOnQueryTextListener(this)
+        override fun onQueryTextSubmit(query: String): Boolean {
+            return false
+        }
+
+        override fun onSuggestionSelect(position: Int): Boolean {
+            return false
+        }
+
+        override fun onSuggestionClick(position: Int): Boolean {
+            val cursor = searchView.suggestionsAdapter.getItem(position) as Cursor
+            // Log.d(TAG, "onSuggestionClick: "+cursor);
+            searchView.setQuery(cursor.getString(2), false)
+            return true
         }
     }
 
-    private var oldText = ""
-
-    /** */
-    override fun onQueryTextChange(newText: String): Boolean {
-        if (newText != oldText)
-            onTextChange(newText)
-        oldText = newText
-        return true
-    }
-
-    override fun onQueryTextSubmit(query: String): Boolean {
-        return false
-    }
-
-    override fun onSuggestionSelect(position: Int): Boolean {
-        return false
-    }
-
-    override fun onSuggestionClick(position: Int): Boolean {
-        val cursor = searchView.suggestionsAdapter.getItem(position) as Cursor
-        // Log.d(TAG, "onSuggestionClick: "+cursor);
-        searchView.setQuery(cursor.getString(2), false)
-        return true
+    companion object {
+        private const val STATE_LAST_LOADED_ER_TIME = "lastLoadedERTime"
     }
 }
-
-private class SnackbarObserver<T>(
-    private val view: View,
-    private val translate: (T?) -> CharSequence?,
-) : Observer<T> {
-    override fun onChanged(t: T?) {
-        val text = translate(t) ?: return
-        Snackbar.make(view, text, Snackbar.LENGTH_LONG).show()
-    }
-}
-
 
