@@ -2,9 +2,6 @@ package org.peercast.pecaplay
 
 import android.app.Application
 import android.net.Uri
-import androidx.core.net.UriCompat
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.Transformations
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -28,11 +25,11 @@ class PecaPlayViewModel(
 ) : BasePeerCastViewModel(a) {
     val presenter = PecaPlayPresenter(this, appPrefs, database)
 
-    private val liveChannelFlow = database.ypChannelDao.query2()
+    private val liveChannelFlow = database.ypChannelDao.query()
 
     private val historyChannelFlow = combine(
-        database.ypChannelDao.query2(),
-        database.ypHistoryDao.query2()
+        database.ypChannelDao.query(),
+        database.ypHistoryDao.query()
     ) { channels, histories ->
         withContext(Dispatchers.Default) {
             histories.forEach { his ->
@@ -103,16 +100,8 @@ class PecaPlayViewModel(
 
 
     /**通知アイコン(ベルのマーク)の有効/無効*/
-    @Deprecated("")
-    val isNotificationIconEnabled: LiveData<Boolean> = Transformations.map(
-        database.favoriteDao.query()
-    ) { favorites ->
-        favorites.firstOrNull { it.flags.run { !isNG && isNotification } } != null
-    }
-
-    /**通知アイコン(ベルのマーク)の有効/無効*/
     val existsNotification =
-        database.favoriteDao.query2().map { favorites ->
+        database.favoriteDao.query().map { favorites ->
             favorites.firstOrNull { it.flags.run { !isNG && isNotification } } != null
         }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 

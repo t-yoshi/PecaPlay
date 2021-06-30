@@ -13,6 +13,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.peercast.pecaplay.R
@@ -35,7 +36,8 @@ class SpeedTestFragment : AppCompatDialogFragment() {
 
         adapter = ArrayAdapter(requireContext(), android.R.layout.simple_list_item_single_choice)
         lifecycleScope.launch {
-            database.yellowPageDao.queryAwait()
+            database.yellowPageDao.query()
+                .first()
                 .map(::Yp4gSpeedTester)
                 .let(adapter::addAll)
         }

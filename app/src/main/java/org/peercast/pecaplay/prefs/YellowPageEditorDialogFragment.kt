@@ -7,79 +7,28 @@ import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Observer
+import androidx.lifecycle.asFlow
 import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import org.peercast.pecaplay.R
-import org.peercast.pecaplay.app.AppTheme
 import org.peercast.pecaplay.app.YellowPage
 import org.peercast.pecaplay.databinding.PrefYellowpageEditorBinding
-import org.peercast.pecaplay.util.LiveDataUtils
 
+class YellowPageEditorDialogFragment : BaseEntityEditDialogFragment<YellowPage>() {
 
-class YellowPagePrefsFragment : EntityPreferenceFragmentBase<YellowPage>() {
-
-    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        super.onCreatePreferences(savedInstanceState, rootKey)
-
-        val iconColor = AppTheme.getIconColor(requireContext())
-
-        database.yellowPageDao.query(false).observe(this, Observer {
-            preferenceScreen.removeAll()
-            it?.forEach { yp ->
-                createCheckBoxPreference(yp).let { p ->
-                    p.setIcon(R.drawable.ic_peercast)
-                    p.icon.setTint(iconColor)
-                    p.summary = yp.url
-                    preferenceScreen.addPreference(p)
-                }
-            }
-        })
-    }
-
-    override val presenter = object : IPresenter<YellowPage> {
-        override fun removeItem(item: YellowPage) {
-            lifecycleScope.launch {
-                database.yellowPageDao.remove(item)
-            }
-        }
-
-        override fun replaceItem(oldItem: YellowPage?, newItem: YellowPage) {
-            lifecycleScope.launch {
-                database.yellowPageDao.run {
-                    oldItem?.let { remove(it) }
-                    add(newItem)
-                }
-            }
-        }
-
-        override fun updateItem(item: YellowPage, enabled: Boolean) {
-            lifecycleScope.launch {
-                database.yellowPageDao.update(item.copy(isEnabled = enabled))
-            }
-        }
-    }
-
-    override fun createEditDialogFragment(): EntityEditDialogFragmentBase<YellowPage> {
-        return YellowPageEditorDialogFragment()
-    }
-
-    companion object {
-        private const val TAG = "YellowPagePrefsFragment"
-    }
-}
-
-
-class YellowPageEditorDialogFragment : EntityEditDialogFragmentBase<YellowPage>() {
-
-    class ViewModel : DialogViewModelBase() {
+    class ViewModel {
         val name = MutableLiveData("NewYP")
         val url = MutableLiveData("http://")
 
-        fun toYellowPage() = YellowPage(name.value!!, url.value!!, true)
+        fun toYellowPage() = YellowPage(
+            requireNotNull(name.value),
+            requireNotNull(url.value)
+        )
     }
 
-    override val viewModel = ViewModel()
+    private val viewModel = ViewModel()
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -91,18 +40,21 @@ class YellowPageEditorDialogFragment : EntityEditDialogFragmentBase<YellowPage>(
             viewModel.url.value = it.url
         }
 
-        val ypLd = database.yellowPageDao.query(false)
-
-        //検証: nameとurlが正しいか。新規作成なら既に存在していないか。
-        LiveDataUtils.combineLatest(ypLd, viewModel.name, viewModel.url) { yellowPages, name, url ->
+        combine(
+            database.yellowPageDao.query(false),
+            viewModel.name.asFlow(),
+            viewModel.url.asFlow(),
+        ) { yellowPages, name, url ->
             val existsNames = yellowPages.map { it.name }
             val existsUrls = yellowPages.map { it.url }
 
             name.isNotBlank() && YellowPage.isValidUrl(url) &&
                     (isEditMode || (name !in existsNames && url !in existsUrls))
-        }.observe(this, Observer<Boolean> {
-            viewModel.isOkButtonEnabled.value = it
-        })
+        }
+            .onEach {
+               //Timber.d("--> $it")
+                isOkButtonEnabled.value = it
+            }.launchIn(lifecycleScope)
     }
 
     override fun onBuildDialog(builder: AlertDialog.Builder) {
@@ -153,6 +105,3 @@ class YellowPageEditorDialogFragment : EntityEditDialogFragmentBase<YellowPage>(
         private const val STATE_EDITING_ITEM = "$TAG#editing-item"
     }
 }
-
-
-

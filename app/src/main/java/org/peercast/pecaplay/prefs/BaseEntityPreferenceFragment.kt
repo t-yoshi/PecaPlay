@@ -1,20 +1,11 @@
 package org.peercast.pecaplay.prefs
 
-import android.app.Dialog
-import android.content.DialogInterface
 import android.os.Bundle
 import android.view.*
-import android.widget.Button
 import android.widget.CheckBox
 import android.widget.LinearLayout
 import androidx.annotation.CallSuper
-import androidx.appcompat.app.AlertDialog
-import androidx.core.content.ContextCompat
-import androidx.databinding.BaseObservable
-import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Observer
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceViewHolder
@@ -23,15 +14,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import org.koin.android.ext.android.inject
 import org.peercast.pecaplay.R
 import org.peercast.pecaplay.app.AppRoomDatabase
-import org.peercast.pecaplay.app.AppTheme
 import org.peercast.pecaplay.app.ManageableEntity
-import timber.log.Timber
-
-
-/**w600dp 以上 */
-private val Fragment.isLandscapeMode: Boolean
-    get() = resources.getBoolean(R.bool.landscape_mode)
-
 
 /**
  * YP/お気に入り編集用のPreferenceFragment
@@ -40,7 +23,7 @@ private val Fragment.isLandscapeMode: Boolean
  * 長押しで削除。
  * チェックボックスで有効/無効。
  * */
-abstract class EntityPreferenceFragmentBase<ME : ManageableEntity>
+abstract class BaseEntityPreferenceFragment<ME : ManageableEntity>
     : PreferenceFragmentCompat() {
 
     protected val database: AppRoomDatabase by inject()
@@ -106,13 +89,13 @@ abstract class EntityPreferenceFragmentBase<ME : ManageableEntity>
     }
 
     /**編集ダイアログの作成*/
-    protected abstract fun createEditDialogFragment(): EntityEditDialogFragmentBase<ME>
+    protected abstract fun createEditDialogFragment(): BaseEntityEditDialogFragment<ME>
 
     //item==null 新規
     private fun showEditDialog(item: ME?) {
         val f = createEditDialogFragment()
         f.arguments = Bundle().also {
-            it.putParcelable(EntityEditDialogFragmentBase.ARG_EDIT_SOURCE, item)
+            it.putParcelable(BaseEntityEditDialogFragment.ARG_EDIT_SOURCE, item)
         }
         f.setTargetFragment(this, 0)
         f.show(parentFragmentManager, "EditDialog@$item")
@@ -186,126 +169,13 @@ abstract class EntityPreferenceFragmentBase<ME : ManageableEntity>
         }
     }
 
+    /**w600dp 以上 */
+    val isLandscapeMode: Boolean
+        get() = resources.getBoolean(R.bool.landscape_mode)
+
     companion object {
         private const val EXT_TARGET = "target"
     }
 }
 
-
-/**編集ダイアログ*/
-abstract class EntityEditDialogFragmentBase<ME : ManageableEntity>
-    : DialogFragment(), DialogInterface.OnShowListener {
-
-    abstract class DialogViewModelBase : BaseObservable() {
-        val isOkButtonEnabled = MutableLiveData(false)
-    }
-
-    protected val database: AppRoomDatabase by inject()
-    protected val dialog: AlertDialog get() = super.getDialog() as AlertDialog
-
-    protected abstract val viewModel: DialogViewModelBase
-
-
-    /**編集対象*/
-    val editSource: ME?
-        get() = arguments?.getParcelable(ARG_EDIT_SOURCE)
-
-    /**編集or新規*/
-    val isEditMode get() = editSource != null
-
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        isCancelable = false
-        Timber.d("editSource = $editSource")
-    }
-
-    protected val presenter: EntityPreferenceFragmentBase.IPresenter<ME>
-        @Suppress("unchecked_cast")
-        get() = (targetFragment as EntityPreferenceFragmentBase<ME>).presenter
-
-
-    final override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val c = requireContext()
-        return MaterialAlertDialogBuilder(c)
-            .setPositiveButton(android.R.string.ok) { _, _ ->
-                @Suppress("unchecked_cast")
-                onOkButtonClicked()
-            }
-            .setNegativeButton(android.R.string.cancel, null)
-            .apply {
-                val icon: Int
-                if (isEditMode) {
-                    setTitle(R.string.edit)
-                    icon = R.drawable.ic_mode_edit_36dp
-                } else {
-                    setTitle(R.string.new_item)
-                    icon = R.drawable.ic_add_circle_36dp
-                }
-                ContextCompat.getDrawable(c, icon)?.let { d ->
-                    d.setTint(AppTheme.getIconColor(c))
-                    setIcon(d)
-                }
-            }
-            .setOnKeyListener(DialogInterface.OnKeyListener { _, _, keyEvent ->
-                if (keyEvent.keyCode == KeyEvent.KEYCODE_BACK && keyEvent.action == KeyEvent.ACTION_UP) {
-                    return@OnKeyListener onBackPressed()
-                }
-                false
-            })
-            .also(::onBuildDialog)
-            .create()
-            .also {
-                it.setOnShowListener(this)
-            }
-    }
-
-    protected open fun onBuildDialog(builder: AlertDialog.Builder) {}
-
-    protected abstract fun onOkButtonClicked()
-
-    protected open fun onBackPressed(): Boolean = false
-
-
-    @CallSuper
-    override fun onShow(d: DialogInterface) {
-        viewModel.isOkButtonEnabled.observe(this, Observer {
-            dialog.okButton.isEnabled = it
-        })
-
-        if (!isLandscapeMode) {
-            dialog.window?.let { w ->
-                w.attributes = w.attributes.also {
-                    it.width = WindowManager.LayoutParams.MATCH_PARENT
-                    //it.height = WindowManager.LayoutParams.MATCH_PARENT;
-                }
-            }
-        }
-    }
-
-
-    companion object {
-        private const val TAG = "EntityEditDialogFragmentBase"
-        const val ARG_EDIT_SOURCE = "ARG_EDIT_SOURCE"
-
-        /**Positive button*/
-        @JvmStatic
-        protected val AlertDialog.okButton: Button
-            get() =
-                getButton(DialogInterface.BUTTON_POSITIVE)
-
-        /**Negative button*/
-        @JvmStatic
-        protected val AlertDialog.cancelButton: Button
-            get() =
-                getButton(DialogInterface.BUTTON_NEGATIVE)
-
-        @JvmStatic
-        protected val AlertDialog.neutralButton: Button
-            get() =
-                getButton(DialogInterface.BUTTON_NEUTRAL)
-
-
-    }
-}
 

@@ -17,7 +17,7 @@ class LoadingTask(
             return false
         }
 
-        val yellowPages = worker.database.yellowPageDao.query2().first()
+        val yellowPages = worker.database.yellowPageDao.query().first()
 
         Timber.d("start loading: %s", yellowPages)
 

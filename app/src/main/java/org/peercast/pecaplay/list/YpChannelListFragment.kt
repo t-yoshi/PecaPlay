@@ -58,7 +58,7 @@ class YpChannelFragment : Fragment() {
 
         combine(
             viewModel.channelsFlow,
-            favoriteDao.query2()
+            favoriteDao.query()
         ) { channels, favorites ->
             val (favNg, favo) = favorites.partition { it.flags.isNG }
             channels.map { ch ->

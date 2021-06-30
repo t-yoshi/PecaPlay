@@ -12,6 +12,8 @@ import android.os.Build
 import android.text.SpannableStringBuilder
 import android.text.style.StyleSpan
 import androidx.core.app.NotificationCompat
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import org.peercast.pecaplay.LoadingWorker
 import org.peercast.pecaplay.PecaPlayActivity
 import org.peercast.pecaplay.PecaPlayIntent
@@ -51,8 +53,9 @@ class NotificationTask(private val worker: LoadingWorker) : LoadingWorker.Task()
         if (!worker.appPrefs.isNotificationEnabled)
             return true
 
-        val channels = worker.database.ypChannelDao.queryAwait()
-        val favorites = worker.database.favoriteDao.queryAwait()
+        val channels = worker.database.ypChannelDao.query().first()
+        val favorites = worker.database.favoriteDao.query().first()
+
         val favoNotify = favorites.filter { it.flags.isNotification }
         val favoNG = favorites.filter { it.flags.isNG }
 

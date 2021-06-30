@@ -1,131 +1,36 @@
 package org.peercast.pecaplay.prefs
 
 import android.content.DialogInterface
-import android.graphics.drawable.Drawable
-import android.graphics.drawable.LayerDrawable
-import android.os.Build
 import android.os.Bundle
-import android.view.Gravity
 import android.view.LayoutInflater
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.res.ResourcesCompat
+import androidx.databinding.BaseObservable
 import androidx.databinding.Bindable
 import androidx.databinding.Observable
 import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.peercast.pecaplay.BR
 import org.peercast.pecaplay.R
-import org.peercast.pecaplay.app.AppTheme
 import org.peercast.pecaplay.app.Favorite
 import org.peercast.pecaplay.databinding.PrefFavoriteEditorBinding
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
 
-
-class FavoritePrefsFragment : EntityPreferenceFragmentBase<Favorite>() {
-    override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        super.onCreatePreferences(savedInstanceState, rootKey)
-
-        database.favoriteDao.query(false).observe(this, Observer {
-            preferenceScreen.removeAll()
-            it.sortedWith(COMPARATOR).forEach { f ->
-                val p = createCheckBoxPreference(f)
-                p.title = p.title.removePrefix("[star]")
-                p.icon = getIconDrawable(f)
-                preferenceScreen.addPreference(p)
-            }
-        })
-    }
-
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-        (activity as AppCompatActivity?)?.supportActionBar?.title =
-            getString(R.string.pref_header_favorites)
-    }
-
-    override fun createEditDialogFragment(): EntityEditDialogFragmentBase<Favorite> {
-        return FavoriteEditorDialogFragment()
-    }
-
-    override val presenter = object : IPresenter<Favorite> {
-        override fun replaceItem(oldItem: Favorite?, newItem: Favorite) {
-            lifecycleScope.launch {
-                database.favoriteDao.run {
-                    oldItem?.let { remove(it) }
-                    add(newItem)
-                }
-            }
-        }
-
-        override fun removeItem(item: Favorite) {
-            lifecycleScope.launch {
-                database.favoriteDao.remove(item)
-            }
-        }
-
-        override fun updateItem(item: Favorite, enabled: Boolean) {
-            lifecycleScope.launch {
-                database.favoriteDao.update(item.copy(isEnabled = enabled))
-            }
-        }
-    }
-
-
-    private fun getIconDrawable(fav: Favorite): Drawable {
-        val ic1 = when {
-            fav.flags.isNG -> R.drawable.ic_ng
-            fav.isStar -> R.drawable.ic_star_36dp
-            else -> R.drawable.ic_bookmark_36dp
-        }
-
-        val ic2 = when {
-            fav.flags.isNotification -> R.drawable.ic_notifications_active_16dp
-            else -> android.R.color.transparent
-        }
-
-        val c = requireContext()
-        val res = resources
-        val theme = c.theme
-
-        val icons = arrayOf(
-            requireNotNull(ResourcesCompat.getDrawable(res, ic1, theme)),
-            requireNotNull(ResourcesCompat.getDrawable(res, ic2, theme))
-        )
-        icons[0].setTint(AppTheme.getIconColor(c))
-        icons[1].setTint(ResourcesCompat.getColor(res, R.color.colorIconAlarm, theme))
-
-        val ld = LayerDrawable(icons)
-        ld.setLayerGravity(1, Gravity.BOTTOM or Gravity.RIGHT)
-        return ld
-    }
-
-    companion object {
-        private const val TAG = "FavoritePrefsFragment"
-
-        private val COMPARATOR = Comparator<Favorite> { a, b ->
-            if (a.flags.isNG != b.flags.isNG)
-                return@Comparator if (a.flags.isNG) 1 else -1
-            if (a.isStar != b.isStar)
-                return@Comparator if (a.isStar) 1 else -1
-            a.name.compareTo(b.name)
-        }
-    }
-}
-
-
-class FavoriteEditorDialogFragment : EntityEditDialogFragmentBase<Favorite>() {
-    override lateinit var viewModel: ViewModel
+class FavoriteEditorDialogFragment : BaseEntityEditDialogFragment<Favorite>() {
+    private lateinit var viewModel: ViewModel
     private var existsNames = emptyList<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        database.favoriteDao.query(false).observe(this, Observer {
-            existsNames = it.map { it.name }
-        })
+        lifecycleScope.launch {
+            database.favoriteDao.query(false)
+                .collect {
+                    existsNames = it.map { it.name }
+                }
+        }
 
         //編集途中 or 編集 or 新規
         viewModel = ViewModel(
@@ -140,11 +45,9 @@ class FavoriteEditorDialogFragment : EntityEditDialogFragmentBase<Favorite>() {
         viewModel.run {
             addOnPropertyChangedCallback(object : Observable.OnPropertyChangedCallback() {
                 override fun onPropertyChanged(sender: Observable, propertyId: Int) {
-                    val b = (flagName || flagDescription || flagComment) &&
-                            isValid && (name !in existsNames || isEditMode)
-                    viewModel.isOkButtonEnabled.run {
-                        if (value != b) value = b
-                    }
+                    isOkButtonEnabled.value =
+                        (flagName || flagDescription || flagComment) &&
+                                isValid && (name !in existsNames || isEditMode)
                     //Timber.d("-> ${viewModel.fav}")
                 }
             })
@@ -178,15 +81,16 @@ class FavoriteEditorDialogFragment : EntityEditDialogFragmentBase<Favorite>() {
         dialog.neutralButton.setOnClickListener {
             viewModel.isAdvancedMode.value = !viewModel.isAdvancedMode.value!!
         }
-        viewModel.isAdvancedMode.observe(this, Observer { b ->
-            if (b) {
+
+        viewModel.isAdvancedMode.observe(this) {
+            if (it) {
                 dialog.neutralButton.setText(R.string.manageable_editor_back)
                 dialog.cancelButton.isEnabled = false
             } else {
                 dialog.neutralButton.setText(R.string.manageable_editor_options)
                 dialog.cancelButton.isEnabled = true
             }
-        })
+        }
     }
 
     override fun onOkButtonClicked() {
@@ -209,7 +113,7 @@ class FavoriteEditorDialogFragment : EntityEditDialogFragmentBase<Favorite>() {
         private const val STATE_EDITING_ITEM = "$TAG#editing-item"
     }
 
-    class ViewModel(var fav: Favorite) : DialogViewModelBase() {
+    class ViewModel(var fav: Favorite) : BaseObservable() {
         private fun validRegExp() {
             errorRegex = try {
                 Pattern.compile(pattern)

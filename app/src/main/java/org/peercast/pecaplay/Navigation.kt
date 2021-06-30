@@ -11,7 +11,6 @@ import androidx.annotation.DrawableRes
 import androidx.core.content.edit
 import androidx.core.view.get
 import androidx.lifecycle.LifecycleCoroutineScope
-import androidx.lifecycle.LifecycleOwner
 import com.google.android.material.navigation.NavigationView
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
@@ -287,9 +286,9 @@ private class NavigationModelImpl(private val c: Context) : INavigationModel, Ko
 
     override suspend fun collect() {
         combine(
-            database.yellowPageDao.query2(),
-            database.favoriteDao.query2(),
-            database.ypChannelDao.query2(),
+            database.yellowPageDao.query(),
+            database.favoriteDao.query(),
+            database.ypChannelDao.query(),
             ::toNavigationItem
         ).collect {
             items = it
