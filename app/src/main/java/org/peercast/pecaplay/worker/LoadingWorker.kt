@@ -1,4 +1,4 @@
-package org.peercast.pecaplay
+package org.peercast.pecaplay.worker
 
 import android.content.Context
 import android.net.Uri
@@ -7,20 +7,17 @@ import com.google.firebase.crashlytics.FirebaseCrashlytics
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.peercast.core.lib.PeerCastRpcClient
-import org.peercast.core.lib.app.BasePeerCastWorker
+import org.peercast.core.lib.app.BaseClientWorker
 import org.peercast.pecaplay.app.AppRoomDatabase
-import org.peercast.pecaplay.app.YellowPage
 import org.peercast.pecaplay.prefs.AppPreferences
 import org.peercast.pecaplay.worker.LoadingEvent
 import org.peercast.pecaplay.worker.LoadingEventFlow
 import org.peercast.pecaplay.worker.LoadingTask
 import org.peercast.pecaplay.worker.NotificationTask
-import java.io.IOException
-import java.util.*
 
 
 class LoadingWorker(c: Context, workerParams: WorkerParameters) :
-    BasePeerCastWorker(c, workerParams), KoinComponent {
+    BaseClientWorker(c, workerParams), KoinComponent {
 
     val database by inject<AppRoomDatabase>()
     val appPrefs by inject<AppPreferences>()

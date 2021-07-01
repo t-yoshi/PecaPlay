@@ -6,6 +6,10 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <queries>
+        <package android:name="org.peercast.pecaviewer"/>
+    </queries>
+
     <application
         android:name=".PecaPlayApplication"
         android:allowBackup="true"

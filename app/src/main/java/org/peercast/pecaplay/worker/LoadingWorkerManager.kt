@@ -2,7 +2,6 @@ package org.peercast.pecaplay.worker
 
 import android.content.Context
 import androidx.work.*
-import org.peercast.pecaplay.LoadingWorker
 import java.util.concurrent.TimeUnit
 
 class LoadingWorkerManager(c: Context) {

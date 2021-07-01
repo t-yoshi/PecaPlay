@@ -2,8 +2,6 @@ package org.peercast.pecaplay
 
 /**ソースの選択*/
 enum class YpChannelSource {
-    NONE,
-
     /**配信中*/
     LIVE,
 

@@ -12,9 +12,7 @@ import android.os.Build
 import android.text.SpannableStringBuilder
 import android.text.style.StyleSpan
 import androidx.core.app.NotificationCompat
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
-import org.peercast.pecaplay.LoadingWorker
 import org.peercast.pecaplay.PecaPlayActivity
 import org.peercast.pecaplay.PecaPlayIntent
 import org.peercast.pecaplay.R

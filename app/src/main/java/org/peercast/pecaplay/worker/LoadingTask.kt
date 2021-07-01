@@ -1,7 +1,6 @@
 package org.peercast.pecaplay.worker
 
 import kotlinx.coroutines.flow.first
-import org.peercast.pecaplay.LoadingWorker
 import org.peercast.pecaplay.app.YpLiveChannel
 import org.peercast.pecaplay.yp4g.*
 import timber.log.Timber

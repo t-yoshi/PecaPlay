@@ -23,8 +23,10 @@ import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.navigation.NavigationView
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.peercast.pecaplay.prefs.AppPreferences
@@ -50,7 +52,7 @@ class PecaPlayActivity : AppCompatActivity() {
     private val viewModel: PecaPlayViewModel by viewModel()
     private val loadingEvent by inject<LoadingEventFlow>()
     private var drawerToggle: ActionBarDrawerToggle? = null //縦長時のみ
-    private var lastLoadedERTime = 0L
+    private var lastLoadedET = 0L
 
     private lateinit var vToolbar: Toolbar
     private var vDrawerLayout: DrawerLayout? = null
@@ -60,7 +62,7 @@ class PecaPlayActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        lastLoadedERTime = savedInstanceState?.getLong(STATE_LAST_LOADED_ER_TIME) ?: 0L
+        lastLoadedET = savedInstanceState?.getLong(STATE_LAST_LOADED_ER_TIME) ?: 0L
 
         setContentView(R.layout.pacaplay_activity)
         vToolbar = findViewById(R.id.vToolbar)
@@ -127,45 +129,38 @@ class PecaPlayActivity : AppCompatActivity() {
             }
         }
 
-        //回転後の再生成時には表示しない
-        if (savedInstanceState == null) {
-            lifecycleScope.launchWhenResumed {
-                viewModel.rpcClient.filterNotNull().onEach { client ->
-                    Timber.i("--> service connected!")
-                    val s = getString(R.string.peercast_has_started, client.rpcEndPoint.port)
-                    Snackbar.make(vYpChannelFragmentContainer, s, Snackbar.LENGTH_LONG).show()
-                }.collect()
-            }
-        }
-
         lifecycleScope.launchWhenResumed {
-            loadingEvent.onEach { ev ->
-                when (ev) {
-                    is LoadingEvent.OnException -> {
-                        val s = when (ev.e) {
-                            is HttpException -> ev.e.response()?.message()
-                                ?: ev.e.localizedSystemMessage()
-                            else -> ev.e.localizedSystemMessage()
-                        }
-                        Snackbar.make(
-                            vYpChannelFragmentContainer,
-                            HtmlCompat.fromHtml("<font color=red>${ev.yp.name}: $s", 0),
-                            Snackbar.LENGTH_LONG
-                        ).show()
-                    }
-                    is LoadingEvent.OnFinished -> {
-                        lastLoadedERTime = SystemClock.elapsedRealtime()
-                    }
-                }
+            viewModel.rpcClient.filterNotNull().onEach { client ->
+                Timber.i("--> service connected!")
+                val s = getString(R.string.peercast_has_started, client.rpcEndPoint.port)
+                Snackbar.make(vYpChannelFragmentContainer, s, Snackbar.LENGTH_LONG).show()
             }.collect()
-        }
 
-        lifecycleScope.launchWhenResumed {
+            loadingEvent.filterIsInstance<LoadingEvent.OnException>().collect { ev ->
+                val s = when (ev.e) {
+                    is HttpException -> ev.e.response()?.message()
+                        ?: ev.e.localizedSystemMessage()
+                    else -> ev.e.localizedSystemMessage()
+                }
+                Snackbar.make(
+                    vYpChannelFragmentContainer,
+                    HtmlCompat.fromHtml("<font color=red>${ev.yp.name}: $s", 0),
+                    Snackbar.LENGTH_LONG
+                ).show()
+            }
+
             viewModel.existsNotification.collect {
 //                if (!it) {
 //                    viewModel.presenter.startLoading()
 //                }
                 invalidateOptionsMenu()
+            }
+        }
+
+        lifecycleScope.launch {
+            loadingEvent.filterIsInstance<LoadingEvent.OnFinished>().collect {
+                lastLoadedET = SystemClock.elapsedRealtime()
+                Timber.i("loading finished: $lastLoadedET")
             }
         }
 
@@ -217,14 +212,14 @@ class PecaPlayActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         //前回の読み込みからN分以上経過している場合は読み込む
-        if (lastLoadedERTime < SystemClock.elapsedRealtime() - 5 * 60_000)
+        if (lastLoadedET == 0L || lastLoadedET < SystemClock.elapsedRealtime() - 5 * 60_000)
             viewModel.presenter.startLoading()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         vNavigation.extension?.onSaveInstanceState(outState)
-        outState.putLong(STATE_LAST_LOADED_ER_TIME, lastLoadedERTime)
+        outState.putLong(STATE_LAST_LOADED_ER_TIME, lastLoadedET)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

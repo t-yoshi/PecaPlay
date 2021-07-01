@@ -8,7 +8,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.peercast.core.lib.app.BasePeerCastViewModel
+import org.peercast.core.lib.app.BaseClientViewModel
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.prefs.AppPreferences
 import org.peercast.pecaplay.util.TextUtils.normalize
@@ -19,10 +19,10 @@ import kotlin.properties.Delegates
 
 
 class PecaPlayViewModel(
-    a: Application,
+    private val a: Application,
     private val appPrefs: AppPreferences,
     private val database: AppRoomDatabase,
-) : BasePeerCastViewModel(a) {
+) : BaseClientViewModel(a) {
     val presenter = PecaPlayPresenter(this, appPrefs, database)
 
     private val liveChannelFlow = database.ypChannelDao.query()
@@ -48,7 +48,6 @@ class PecaPlayViewModel(
     private fun changeSource(src: YpChannelSource) {
         j?.cancel()
         val f = when (src) {
-            YpChannelSource.NONE -> MutableStateFlow(emptyList())
             YpChannelSource.LIVE -> liveChannelFlow
             YpChannelSource.HISTORY -> historyChannelFlow
         }
@@ -75,7 +74,7 @@ class PecaPlayViewModel(
 
 
     /**配信中or履歴**/
-    var source by Delegates.observable(YpChannelSource.NONE) { _, old, new ->
+    var source by Delegates.observable(YpChannelSource.LIVE) { _, old, new ->
         if (old != new)
             changeSource(new)
     }
@@ -105,13 +104,13 @@ class PecaPlayViewModel(
             favorites.firstOrNull { it.flags.run { !isNG && isNotification } } != null
         }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
-    fun bindService() {
+    override fun bindService() {
         val u = appPrefs.peerCastUrl
         if (u.host in listOf(null, "", "localhost", "127.0.0.1")) {
-            super.bindService(null)
+            super.bindService()
             rpcClient.filterNotNull()
-                .onEach { cl->
-                    appPrefs.peerCastUrl = Uri.parse("http://${u.host}:${cl.rpcEndPoint.port}/")
+                .onEach { cl ->
+                    appPrefs.peerCastUrl = Uri.parse("http://localhost:${cl.rpcEndPoint.port}/")
                 }
                 .launchIn(viewModelScope)
         }
@@ -125,4 +124,3 @@ class PecaPlayViewModel(
 
     }
 }
-

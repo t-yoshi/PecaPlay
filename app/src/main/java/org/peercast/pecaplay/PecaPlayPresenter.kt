@@ -1,6 +1,7 @@
 package org.peercast.pecaplay
 
 import android.app.Application
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -67,7 +68,12 @@ class PecaPlayPresenter(
         try {
             refStartActivity(intent)
         } catch (e: RuntimeException) {
-            Toast.makeText(a, e.localizedMessage, Toast.LENGTH_LONG).show()
+            val s = if (e is ActivityNotFoundException){
+                "Plaese install player app."
+            } else {
+                e.localizedMessage
+            }
+            Toast.makeText(a, s, Toast.LENGTH_LONG).show()
         }
     }
 
