@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="colorIconAlarm">@color/yellow_800</color>
+    <bool name="landscape_mode">false</bool>
+
+</resources>

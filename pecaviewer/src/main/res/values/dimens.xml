@@ -1,0 +1,11 @@
+<resources>
+    <dimen name="player_toolbar_padding_right">0dp</dimen>
+    <integer name="vThreadListRefresh_layout_weight">40</integer>
+    <integer name="vMessageListRefresh_layout_weight">60</integer>
+    <dimen name="post_dialog_button_margin_right_normal">30dp</dimen>
+    <dimen name="post_dialog_button_margin_right_hide">-45dp</dimen>
+
+    <!--anchorPoint(%)-->
+    <integer name="sliding_up_panel_anchor_point_land">100</integer>
+    <integer name="sliding_up_panel_anchor_point_port">40</integer>
+</resources>

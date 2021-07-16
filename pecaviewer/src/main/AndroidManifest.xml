@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.peercast.pecaviewer">
+
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+    <application>
+        <activity
+            android:name="org.peercast.pecaviewer.PecaViewerActivity"
+            android:theme="@style/ViewerTheme"
+            android:windowSoftInputMode="adjustPan"
+            android:supportsPictureInPicture="false"
+            android:launchMode="singleTop"
+            android:taskAffinity="org.peercast.pecaplay"
+            android:parentActivityName="org.peercast.pecaplay.PecaPlayActivity"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"/>
+
+        <service
+            android:name="org.peercast.pecaviewer.service.PlayerService"
+            android:exported="false" />
+
+    </application>
+
+</manifest>

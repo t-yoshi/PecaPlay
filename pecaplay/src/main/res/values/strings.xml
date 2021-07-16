@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_activity">Settings</string>
+    <string name="application_not_installed">Application not installed. [%s]</string>
+    <string name="yp_loading">Loading…</string>
+    <string name="yp_cache">(Cache)</string>
+    <string name="yp_connect_failed">%s connect failed:</string>
+    <string name="yp_reload">Reload YellowPages..</string>
+
+    <string name="starred">Starred</string>
+    <string name="new_item">New</string>
+    <string name="newly">
+        <b>!</b>
+    </string>
+    <string name="delete">Delete</string>
+    <string name="edit">Edit</string>
+    <string name="start">Start</string>
+    <string name="reset">Reset</string>
+    <string name="none">None</string>
+
+    <string name="sort">Sort</string>
+    <string name="favorites">Favorites</string>
+    <string name="search">Search</string>
+    <string name="favorite_label">Label</string>
+    <string name="favorite_expr">Matching condition</string>
+
+    <string name="manageable_editor_options">Options</string>
+    <string name="manageable_editor_back">Back</string>
+
+    <string name="favorite_name">Channel Name</string>
+    <string name="favorite_comment">Comment</string>
+    <string name="favorite_description">Playing</string>
+    <string name="favorite_genre">Genre</string>
+    <string name="favorite_match_partial">Partial</string>
+    <string name="favorite_match_exact">Exact Match</string>
+    <string name="favorite_match_regexp">RegExp</string>
+    <string name="favorite_short_name">Name</string>
+    <string name="favorite_short_comment">Comment</string>
+    <string name="favorite_short_description">Playing</string>
+    <string name="favorite_short_contact">Contact</string>
+    <string name="favorite_short_match_partial">Partial</string>
+    <string name="favorite_short_match_exact">Exact</string>
+    <string name="favorite_short_match_regexp">RegExp</string>
+    <string name="favorite_ng">NG</string>
+
+    <string name="navigate_all">All</string>
+    <string name="navigate_favorite">Favorite</string>
+    <string name="navigate_newer">New</string>
+    <string name="navigate_history">History</string>
+    <string name="navigate_menu">Menu</string>
+    <string name="favorite_match">Favorite matches:</string>
+
+
+    <!--preference-->
+    <string name="pref_header_general">General</string>
+    <string name="pref_header_yellow_page">Yellow Page</string>
+    <string name="pref_header_viewer">Viewer</string>
+    <string name="about" translatable="false">About</string>
+    <string name="pref_header_favorites">Favorites</string>
+
+
+    <string name="pref_peercast_url">PeerCast Url</string>
+
+    <string-array name="pref_wma_protocol_entries" translatable="false">
+        <item>mmsh</item>
+        <item>mms</item>
+        <item>http</item>
+    </string-array>
+
+
+    <string name="pref_wma_protocol">WMV protocol</string>
+    <string name="peercast_start_on_startups">PeerCast start on startups.</string>
+    <string name="ng_hidden">NG hidden</string>
+    <string name="save_search_history">Save search history</string>
+    <string name="pref_night_mode">Night mode</string>
+
+    <string name="visible">Visible</string>
+    <string name="invisible">Invisible</string>
+    <string name="oss_license" translatable="false">Open Source Licenses</string>
+
+
+    <!--Menu-->
+    <string name="sort_order">Sort by</string>
+    <string name="sort_listener_desc">Viewer+</string>
+    <string name="sort_age_asc">Duration-</string>
+    <string name="sort_listener_asc">Viewer-</string>
+    <string name="sort_age_desc">Duration+</string>
+    <string name="speed_test">Uptest</string>
+    <string name="settings">Settings</string>
+    <string name="peercast_has_started">PeerCast has started on %d</string>
+    <string name="reload">Reload</string>
+
+    <string name="yp4g_statistics">Statistics</string>
+    <string name="yp4g_chat">Chat</string>
+    <string name="star_delete">Remove Star</string>
+    <string name="star_add">Add Star</string>
+    <string name="contact">Contact</string>
+
+    <string name="ch_listeners_fmt" translatable="false">%1$d/%2$s</string>
+    <string name="pref_header_about" translatable="false">About</string>
+    <string name="viewer_goto_google_play">Go to Google play…</string>
+    <string name="viewer_installed">PecaViewer installed.</string>
+    <string name="viewer_not_installed">Not installed</string>
+    <string name="debug_mode">Debug mode</string>
+
+    <!--Notification-->
+    <string name="notification">Notification</string>
+    <string name="notificated">Notificated</string>
+    <string name="notification_add">Add Notification</string>
+    <string name="notification_delete">Remove Notification</string>
+    <string name="notification_sound">Notification Sound</string>
+    <string name="notification_new_channels">PecaPlay: now %dchannels found</string>
+
+    <!--
+    <string name="notification_types">Notification types</string>
+    <string name="notification_sound">Sound</string>
+    <string name="notification_vibration">Vibration</string>
+    <string name="notification_led" translatable="false">LED</string>
+    <string name="notification_wakeup">Wakeup</string>
+-->
+
+    <string name="closed_port">Port is not open</string>
+
+
+    <string name="enabled">Enabled</string>
+    <string name="disabled">Disabled</string>
+
+</resources>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+
+        <variable
+                name="vm"
+                type="org.peercast.pecaviewer.chat.thumbnail.ItemViewModel" />
+
+        <import type="android.view.View" />
+    </data>
+
+    <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="2dp"
+            android:background="@{vm.background}"
+            android:padding="3dp">
+
+        <ImageView
+                android:id="@android:id/icon"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:background="?android:attr/selectableItemBackgroundBorderless"
+                android:src="@{vm.src}" />
+
+        <TextView
+                android:layout_width="64dp"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|right"
+                android:ellipsize="start"
+                android:padding="1dp"
+                android:text="@{vm.error}"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:textColor="@color/grey_800" />
+
+        <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="bottom|right"
+                android:src="@drawable/ic_launch_black_12dp"
+                android:visibility="@{vm.isLinkUrl ? View.VISIBLE : View.INVISIBLE}" />
+
+        <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_play_circle_outline_black_24dp"
+                android:visibility="@{vm.isAnimation ? View.VISIBLE : View.INVISIBLE}"
+                app:tint="@color/grey_600" />
+
+    </FrameLayout>
+
+</layout>

@@ -1,0 +1,16 @@
+<resources>
+
+    <style name="ViewerTheme" parent="AppTheme.NoActionBar">
+        <item name="windowActionBarOverlay">true</item>
+        <item name="actionOverflowButtonStyle">@style/ViewerTheme.OverflowButtonStyle</item>
+    </style>
+
+    <style name="ViewerTheme.OverflowButtonStyle" parent="Widget.AppCompat.Light.ActionButton.Overflow">
+        <item name="android:src">@drawable/ic_more_vert_white_36dp</item>
+    </style>
+
+    <style name="IconOnlyButton" parent="Widget.MaterialComponents.Button.OutlinedButton">
+        <item name="iconPadding">0dp</item>
+        <item name="iconGravity">textStart</item>
+    </style>
+</resources>

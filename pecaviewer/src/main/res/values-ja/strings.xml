@@ -1,0 +1,12 @@
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+    <string name="background">バックグラウンド</string>
+    <string name="sending">送信しています…</string>
+
+    <string name="buffering_p">バッファ中です… % 2d%%</string>
+    <string name="buffering">バッファ中です…</string>
+    <string name="start_loading">読み込みを開始しています…</string>
+    <string name="error_loading">読み込みエラー %s</string>
+
+    <string name="chat_auto_reload">自動リロード</string>
+    <string name="chat_simple_display">簡易表示</string>
+</resources>

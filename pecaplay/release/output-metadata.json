@@ -1,0 +1,18 @@
+{
+  "version": 2,
+  "artifactType": {
+    "type": "APK",
+    "kind": "Directory"
+  },
+  "applicationId": "org.peercast.pecaplay",
+  "variantName": "release",
+  "elements": [
+    {
+      "type": "SINGLE",
+      "filters": [],
+      "versionCode": 7990000,
+      "versionName": "7.99.0-0",
+      "outputFile": "pecaplay-release.apk"
+    }
+  ]
+}

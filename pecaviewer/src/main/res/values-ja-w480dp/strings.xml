@@ -1,0 +1,7 @@
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+    <string name="et_seconds_fmt">%d秒</string>
+    <string name="et_minutes_fmt">%d分</string>
+    <string name="et_hours_fmt">%d時間</string>
+    <string name="et_days_fmt">%d日</string>
+    <string name="et_years_fmt">%d年</string>
+</resources>

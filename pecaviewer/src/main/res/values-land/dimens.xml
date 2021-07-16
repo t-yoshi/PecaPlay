@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="player_toolbar_padding_right">100dp</dimen>
+    <integer name="vThreadListRefresh_layout_weight">70</integer>
+    <integer name="vMessageListRefresh_layout_weight">30</integer>
+</resources>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name" translatable="false">PecaPlay</string>
+    <string name="app_version_full" translatable="false">PecaPlay v%s</string>
+
+
+</resources>

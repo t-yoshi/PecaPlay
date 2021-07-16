@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+
+        <variable
+                name="viewModel"
+                type="org.peercast.pecaviewer.chat.adapter.MessageViewModel" />
+
+        <import type="android.view.View" />
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="3dp">
+
+        <TextView
+                android:id="@+id/vNumber"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:minWidth="30sp"
+                android:paddingRight="3dp"
+                android:text="@{viewModel.number}"
+                android:textAppearance="?attr/textAppearanceListItem"
+                android:textStyle="bold"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        <TextView
+                android:id="@+id/vBody"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@{viewModel.body}"
+                android:textAppearance="?attr/textAppearanceListItem"
+                android:textIsSelectable="false"
+                app:layout_constrainedWidth="true"
+                app:layout_constraintHorizontal_bias="0"
+                app:layout_constraintStart_toEndOf="@id/vNumber"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+        <org.peercast.pecaviewer.chat.thumbnail.ThumbnailView
+                android:id="@+id/vThumbnail"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="30sp"
+                app:flexWrap="wrap"
+                app:layout_constraintTop_toBottomOf="@+id/vBody"
+                app:layout_constraintStart_toEndOf="@id/vNumber"
+                app:layout_constraintRight_toRightOf="parent" />
+
+        <TextView
+                android:id="@+id/vElapsedTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:alpha="0.4"
+                android:text="@{viewModel.elapsedTime}"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:visibility="@{viewModel.elapsedTime.length() > 0 ? View.VISIBLE : View.INVISIBLE}"
+                app:layout_constraintBottom_toBottomOf="@+id/vThumbnail"
+                app:layout_constraintRight_toRightOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</layout>

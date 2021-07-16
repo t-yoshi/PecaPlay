@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="isLandscapeMode">false</bool>
+    <bool name="isNarrowScreen">true</bool>
+    <dimen name="min_popup_image_width">250dp</dimen>
+    <dimen name="min_popup_image_height">250dp</dimen>
+
+    <!--狭いスマホ画面で引っ込めた書き込みボタンの再表示-->
+    <integer name="post_button_show_after_sec">8</integer>
+</resources>

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:peca="http://schemas.android.com/apk/res-auto">
+
+    <data>
+
+        <variable
+                name="viewModel"
+                type="org.peercast.pecaviewer.chat.ChatViewModel" />
+
+        <import type="android.view.View" />
+    </data>
+
+
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="?android:attr/colorBackground"
+            android:orientation="vertical">
+
+        <androidx.appcompat.widget.Toolbar
+                android:id="@+id/vChatToolbar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="top"
+                android:background="@color/amber_900"
+                app:navigationIcon="@{safeUnbox(viewModel.isThreadListVisible) ? @drawable/ic_arrow_back_black_24dp : @drawable/ic_menu_black_24dp}"
+                app:subtitle="@{viewModel.chatToolbarSubTitle}"
+                app:subtitleTextColor="@color/grey_1000b"
+                app:title="@{viewModel.chatToolbarTitle}"
+                app:titleTextColor="@color/grey_1000b" />
+
+
+        <com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout
+                android:id="@+id/vThreadListRefresh"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="@integer/vThreadListRefresh_layout_weight"
+                android:visibility="@{safeUnbox(viewModel.isThreadListVisible) ? View.VISIBLE : View.GONE}"
+                app:srl_direction="top"
+                peca:colorScheme="@{@color/light_blue_A700}"
+                peca:refreshing="@{safeUnbox(viewModel.isThreadListRefreshing)}">
+
+            <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/vThreadList"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scrollbarStyle="outsideInset"
+                    android:scrollbars="vertical" />
+        </com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout>
+
+        <View
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                android:layout_marginTop="5dp"
+                android:layout_marginBottom="5dp"
+                android:background="@color/grey_400"
+                android:visibility="@{safeUnbox(viewModel.isThreadListVisible) ? View.VISIBLE : View.GONE}" />
+
+
+        <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="@integer/vMessageListRefresh_layout_weight">
+
+            <ProgressBar
+                    style="?android:progressBarStyleHorizontal"
+                    android:layout_width="16dp"
+                    android:layout_height="2dp"
+                    android:layout_gravity="right|top"
+                    android:alpha="0.8"
+                    android:progress="@{viewModel.reloadRemain}"
+                    android:visibility="@{viewModel.reloadRemain > 0 ? View.VISIBLE : View.INVISIBLE}" />
+
+            <com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout
+                    android:id="@+id/vMessageListRefresh"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    app:srl_direction="bottom"
+                    peca:colorScheme="@{@color/light_blue_A700}"
+                    peca:refreshing="@{safeUnbox(viewModel.isMessageListRefreshing)}">
+
+                <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/vMessageList"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:fadeScrollbars="false"
+                        android:scrollbarStyle="outsideInset"
+                        android:scrollbars="vertical"
+                        app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
+            </com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout>
+        </FrameLayout>
+
+    </LinearLayout>
+
+</layout>

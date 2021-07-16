@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+            android:title="Reload"
+            app:showAsAction="ifRoom"
+            android:id="@+id/menu_reload"
+            android:icon="@drawable/ic_refresh_black_24dp" />
+
+    <item
+            android:title="Abort"
+            app:showAsAction="ifRoom"
+            android:visible="false"
+            android:id="@+id/menu_abort"
+            android:icon="@drawable/ic_close_black_24dp" />
+
+    <item
+            android:title="Top"
+            app:showAsAction="ifRoom"
+            android:id="@+id/menu_align_top"
+            android:icon="@drawable/ic_vertical_align_top_black_24dp" />
+
+    <item
+            android:title="Bottom"
+            app:showAsAction="ifRoom"
+            android:id="@+id/menu_align_bottom"
+            android:icon="@drawable/ic_vertical_align_bottom_black_24dp" />
+
+
+</menu>

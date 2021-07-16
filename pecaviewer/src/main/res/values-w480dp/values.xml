@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <bool name="isNarrowScreen">false</bool>
+    <dimen name="min_popup_image_width">320dp</dimen>
+    <dimen name="min_popup_image_height">320dp</dimen>
+</resources>

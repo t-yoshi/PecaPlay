@@ -1,0 +1,20 @@
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+
+    <string name="background">Background</string>
+
+    <string name="et_seconds_fmt"> %ds</string>
+    <string name="et_minutes_fmt"> %dm</string>
+    <string name="et_hours_fmt"> %dh</string>
+    <string name="et_days_fmt"> %dd</string>
+    <string name="et_years_fmt"> %dy</string>
+
+    <string name="sending">Sending…</string>
+
+    <string name="buffering_p">Buffering… % 2d%%</string>
+    <string name="buffering">Buffering…</string>
+    <string name="start_loading">Started loading…</string>
+    <string name="error_loading">Error loading… %s</string>
+
+    <string name="chat_auto_reload">Auto Reload</string>
+    <string name="chat_simple_display">Simple Display</string>
+</resources>

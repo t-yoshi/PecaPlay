@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="BaseAppTheme" parent="Theme.MaterialComponents.DayNight.DarkActionBar" />
+
+    <style name="BaseAppDialogTheme" parent="Theme.MaterialComponents.DayNight.Dialog.Alert" />
+
+    <style name="BaseAppTheme.Override">
+        <item name="android:textColorSecondary">@color/app_text_color_secondary_daylight</item>
+    </style>
+
+    <style name="AppTheme" parent="BaseAppTheme.Override">
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
+        <item name="materialAlertDialogTheme">@style/BaseAppDialogTheme</item>
+        <item name="alertDialogTheme">@style/BaseAppDialogTheme</item>
+    </style>
+
+    <style name="AppTheme.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+    </style>
+
+    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.MaterialComponents.Dark.ActionBar" />
+    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.MaterialComponents.Light" />
+
+
+</resources>

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:tools="http://schemas.android.com/tools"
+        xmlns:peca="http://schemas.android.com/apk/res-auto"
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        tools:ignore="RtlHardcoded,RtlSymmetry">
+
+    <data>
+
+        <variable
+                name="playerViewModel"
+                type="org.peercast.pecaviewer.player.PlayerViewModel" />
+
+        <variable
+                name="appViewModel"
+                type="org.peercast.pecaviewer.ViewerViewModel" />
+
+        <import type="android.view.View" />
+
+        <import type="android.text.TextUtils" />
+    </data>
+
+    <RelativeLayout
+            android:id="@+id/vPlayerToolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?android:attr/actionBarSize"
+            android:background="#212121"
+            android:layout_gravity="bottom"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp"
+            android:paddingLeft="3dp"
+            android:focusable="true"
+            android:clickable="true"
+            peca:visibleAnimate="@{!safeUnbox(playerViewModel.isFullScreenMode) || safeUnbox(playerViewModel.isControlsViewVisible) || safeUnbox(appViewModel.slidingPanelState==1)}"
+            android:paddingRight="@dimen/player_toolbar_padding_right">
+
+        <ImageView
+                android:layout_height="match_parent"
+                android:layout_width="wrap_content"
+                android:id="@+id/vNavigation"
+                android:padding="5dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:layout_alignParentLeft="true"
+                android:layout_gravity="center_vertical"
+                android:src="@drawable/ic_expand_more_white_24dp"
+                android:contentDescription="@null"/>
+
+        <TextView
+                android:id="@android:id/title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:textStyle="bold"
+                android:gravity="center_vertical"
+                android:singleLine="true"
+                android:ellipsize="end"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentRight="true"
+                android:layout_above="@android:id/text1"
+                android:layout_toRightOf="@id/vNavigation"
+                android:textColor="@color/green_700" />
+
+        <TextView
+                android:layout_width="wrap_content"
+                android:id="@android:id/text1"
+                android:singleLine="true"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:layout_toRightOf="@id/vNavigation"
+                android:textColor="@color/green_800"
+                android:layout_toLeftOf="@android:id/text2" />
+
+        <TextView
+                android:id="@android:id/text2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@{TextUtils.isEmpty(playerViewModel.channelWarning) ? @color/green_800 : @color/deep_orange_500 }"
+                android:singleLine="true"
+                android:text="@{TextUtils.isEmpty(playerViewModel.channelWarning) ? playerViewModel.channelStatus : playerViewModel.channelWarning}"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:layout_alignBaseline="@android:id/text1"
+                android:layout_alignParentRight="true"
+                android:paddingRight="10dp"
+                android:paddingLeft="10dp" />
+
+    </RelativeLayout>
+</layout>
