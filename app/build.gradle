@@ -11,8 +11,8 @@ android {
         applicationId "org.peercast.pecaplay"
         minSdkVersion 23
         targetSdkVersion 30
-        versionCode 7_04_01_00
-        versionName '7.4.1-0'
+        versionCode 7_04_01_01
+        versionName '7.4.1-1'
         buildConfigField "long", "TIMESTAMP", System.currentTimeMillis() + "L"
 
         javaCompileOptions {
@@ -113,7 +113,7 @@ dependencies {
 
     implementation 'org.unbescape:unbescape:1.1.6.RELEASE'
     implementation 'com.google.android.gms:play-services-oss-licenses:17.0.0'
-    implementation 'com.github.t-yoshi:peca-android:65e2122632'
+    implementation 'com.github.t-yoshi:peca-android:7b5372169b'
 
     implementation platform('com.google.firebase:firebase-bom:28.1.0')
     implementation 'com.google.firebase:firebase-crashlytics'
