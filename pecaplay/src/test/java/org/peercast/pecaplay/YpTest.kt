@@ -5,8 +5,6 @@ import org.peercast.pecaplay.app.YellowPage
 import org.peercast.pecaplay.yp4g.Yp4gField
 import org.peercast.pecaplay.yp4g.createYp4gService
 import timber.log.Timber
-import kotlin.reflect.jvm.javaType
-
 
 
 class YpTest {

@@ -9,12 +9,14 @@ import org.koin.core.component.inject
 import org.peercast.core.lib.PeerCastRpcClient
 import org.peercast.core.lib.app.BaseClientWorker
 import org.peercast.pecaplay.app.AppRoomDatabase
+import org.peercast.pecaplay.core.io.Square
 import org.peercast.pecaplay.prefs.PecaPlayPreferences
 
 
 class LoadingWorker(c: Context, workerParams: WorkerParameters) :
     BaseClientWorker(c, workerParams), KoinComponent {
 
+    val square by inject<Square>()
     val database by inject<AppRoomDatabase>()
     val appPrefs by inject<PecaPlayPreferences>()
     val eventFlow by inject<LoadingEventFlow>()

@@ -266,7 +266,7 @@ private class NavigationModelImpl(private val c: Context) : INavigationModel, Ko
     private fun parseGenre(channels: List<YpChannel>): List<String> {
         val rS = Regex("[\\s\\-：:]+")
         val tm = TreeMap<String, Int>(String.CASE_INSENSITIVE_ORDER)
-        channels.flatMap { it.yp4g.genre.split(rS) }
+        channels.flatMap { it.genre.split(rS) }
             .filter { it.isNotBlank() }
             .forEach {
                 tm[it] = tm.getOrElse(it) { 0 } + 1
@@ -373,7 +373,7 @@ private class NavigationModelImpl(private val c: Context) : INavigationModel, Ko
                 GID_YP, i + 1,
                 R.drawable.ic_peercast,
                 {
-                    it.yp4g.ypName == yp.name
+                    it.ypName == yp.name
                 })
         }
 
@@ -382,7 +382,7 @@ private class NavigationModelImpl(private val c: Context) : INavigationModel, Ko
                 t, GID_GENRE, i + 1,
                 R.drawable.ic_bookmark_border_36dp,
                 {
-                    it.yp4g.genre.contains(t, true)
+                    it.genre.contains(t, true)
                 })
         }
 

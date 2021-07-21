@@ -19,12 +19,14 @@ import org.koin.android.ext.android.inject
 import org.peercast.pecaplay.R
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.AppTheme
+import org.peercast.pecaplay.core.io.Square
 import org.peercast.pecaplay.databinding.SpeedtestDialogFooterBinding
 
 
 class SpeedTestFragment : AppCompatDialogFragment() {
 
-    private val database: AppRoomDatabase by inject()
+    private val database by inject<AppRoomDatabase>()
+    private val square by inject<Square>()
     private lateinit var adapter: ArrayAdapter<Yp4gSpeedTester>
     private val viewModel = ViewModel()
     private val presenter = Presenter()
@@ -38,7 +40,7 @@ class SpeedTestFragment : AppCompatDialogFragment() {
         lifecycleScope.launch {
             database.yellowPageDao.query()
                 .first()
-                .map(::Yp4gSpeedTester)
+                .map { Yp4gSpeedTester(requireContext(), square.okHttpClient, it) }
                 .let(adapter::addAll)
         }
 
@@ -89,7 +91,7 @@ class SpeedTestFragment : AppCompatDialogFragment() {
             lifecycleScope.launchWhenResumed {
                 viewModel.isStartButtonEnabled.value =
                     tester.loadConfig() && tester.config.uptest.isCheckable
-                viewModel.status.value = tester.getStatus(requireContext())
+                viewModel.status.value = tester.status
             }
         }
 
@@ -100,7 +102,7 @@ class SpeedTestFragment : AppCompatDialogFragment() {
                     //Timber.d("progress=$progress")
                     viewModel.progress.postValue(it)
                 }
-                viewModel.status.value = tester.getStatus(requireContext())
+                viewModel.status.value = tester.status
             }
         }
     }

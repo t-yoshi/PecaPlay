@@ -24,6 +24,7 @@ import kotlin.coroutines.resumeWithException
  * @see SocketTimeoutException
  * @see UnknownHostException
  * */
+@Deprecated("")
 fun IOException.localizedSystemMessage(): String {
     val name = when (this) {
         is FileNotFoundException -> "httpErrorFileNotFound"
@@ -38,7 +39,7 @@ fun IOException.localizedSystemMessage(): String {
     } ?: localizedMessage ?: message ?: toString()
 }
 
-
+@Deprecated("")
 object SquareUtils {
     private const val HTTP_USER_AGENT = "PecaPlay (Linux; U; Android)"
     private const val HTTP_CONNECT_TIMEOUT = 10L
@@ -62,6 +63,7 @@ object SquareUtils {
 
     fun retrofitBuilder(): Retrofit.Builder = Retrofit.Builder().client(httpClient)
 
+    @Deprecated("")
     val MOSHI: Moshi = Moshi.Builder()
         .add(KotlinJsonAdapterFactory()).build()
 

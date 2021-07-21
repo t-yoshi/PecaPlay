@@ -27,6 +27,8 @@ import org.peercast.pecaplay.PecaPlayViewModel
 import org.peercast.pecaplay.R
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.Favorite
+import org.peercast.pecaplay.core.app.chatUrl
+import org.peercast.pecaplay.core.app.statisticsUrl
 import org.peercast.pecaplay.view.MenuableRecyclerView
 import org.peercast.pecaplay.worker.LoadingEvent
 import org.peercast.pecaplay.worker.LoadingEventFlow
@@ -159,10 +161,10 @@ class YpChannelFragment : Fragment() {
         val item = adapter.items[info.position]
         val ch = item.ch
 
-        menu.setHeaderTitle(item.ch.yp4g.name)
+        menu.setHeaderTitle(item.ch.name)
         ContextMenuBuilder(menu).run {
             addNotificationItem(item)
-            addItem(R.string.contact, ch.yp4g.url)
+            addItem(R.string.contact, ch.url)
             addItem(R.string.yp4g_chat, ch.chatUrl(), !ch.isEmptyId)
             addItem(R.string.yp4g_statistics, ch.statisticsUrl(), !ch.isEmptyId)
         }
@@ -272,7 +274,7 @@ class YpChannelFragment : Fragment() {
         }
 
         override fun onItemClick(m: ListItemModel, position: Int) {
-            if (m.ch.isEnabled && !m.isNg) {
+            if (m.ch.isPlayable && !m.isNg) {
                 viewModel.presenter.startPlay(this@YpChannelFragment, m.ch)
             }
         }

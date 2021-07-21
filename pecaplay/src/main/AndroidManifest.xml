@@ -28,14 +28,14 @@
         </activity>
 
         <activity
-            android:name=".prefs.SettingsActivity"
+            android:name="org.peercast.pecaplay.prefs.SettingsActivity"
             android:label="@string/settings_activity"/>
 
         <activity android:name="com.google.android.gms.oss.licenses.OssLicensesActivity" />
         <activity android:name="com.google.android.gms.oss.licenses.OssLicensesMenuActivity" />
 
         <provider
-            android:name=".app.SuggestionProvider"
+            android:name="org.peercast.pecaplay.app.SuggestionProvider"
             android:authorities="org.peercast.pecaplay.app.SuggestionProvider"
             android:exported="false" />
 

@@ -96,8 +96,8 @@ dependencies {
     implementation "androidx.work:work-runtime-ktx:$work_version"
 
 
-    implementation 'com.squareup.retrofit2:retrofit:2.8.1'
-    implementation('com.squareup.retrofit2:converter-simplexml:2.8.1') {
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation('com.squareup.retrofit2:converter-simplexml:2.9.0') {
         exclude module: 'stax'
         exclude module: 'stax-api'
         exclude module: 'xpp3'

@@ -19,7 +19,6 @@ import org.peercast.pecaplay.app.YpHistoryChannel
 import org.peercast.pecaplay.app.YpLiveChannel
 import org.peercast.pecaplay.databinding.ChItemBinding
 import org.peercast.pecaplay.prefs.PecaPlayPreferences
-import org.peercast.pecaplay.yp4g.descriptionOrGenre
 import java.text.DateFormat
 
 val listItemModule = module {
@@ -84,15 +83,15 @@ private class ListItemViewModelImpl(private val c: Context) : BaseListItemViewMo
             model_ = value
 
             val ch = value.ch
-            name = ch.yp4g.name
+            name = ch.name
             listener = when {
                 ch is YpHistoryChannel -> ""
-                else -> ch.yp4g.let {
+                else -> ch.let {
                     c.getString(R.string.ch_listeners_fmt, it.listeners, it.relays, it.type)
                 }
             }
             comment = SpannableStringBuilder().also {
-                it.append(ch.yp4g.comment)
+                it.append(ch.comment)
                 //末尾にnbspを加えてlistener表示と重ならないようにする
                 it.append(
                     "\u00A0".repeat(listener.length),
@@ -100,20 +99,20 @@ private class ListItemViewModelImpl(private val c: Context) : BaseListItemViewMo
                 )
             }
             description = SpannableStringBuilder().also {
-                val playing = if (ch is YpHistoryChannel && !ch.isEnabled)
+                val playing = if (ch is YpHistoryChannel && !ch.isPlayable)
                     "Played:   "
                 else
                     "Playing:  "
                 it.append(playing, SPAN_ITALIC, 0)
-                it.append(ch.yp4g.descriptionOrGenre)
+                it.append("${ch.genre} ${ch.description}")
             }
             age = if (ch is YpHistoryChannel) {
                 DATE_FORMAT.format(ch.lastPlay)
             } else {
-                ch.yp4g.age
+                ch.age
             }
 
-            isEnabled = ch.isEnabled
+            isEnabled = ch.isPlayable
             isAgeVisible = !ch.isEmptyId
             isNewlyVisible = !ch.isEmptyId && ch is YpLiveChannel && ch.numLoaded <= 2
             isNewlyChecked = ch is YpLiveChannel && ch.numLoaded == 1

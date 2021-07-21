@@ -5,8 +5,8 @@ import com.squareup.moshi.Json
 import okhttp3.Request
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
+import org.peercast.pecaplay.core.io.await
 import org.peercast.pecaviewer.util.ISquareHolder
-import org.peercast.pecaviewer.util.runAwait
 import java.io.IOException
 
 data class StampCastStamps(
@@ -91,7 +91,7 @@ private class StampCastPageConnection(
             .header("Cache-Control", "private, must-revalidate, max-stale=5")
             .build()
 
-        return square.okHttpClient.newCall(req).runAwait { res ->
+        return square.okHttpClient.newCall(req).await { res ->
             res.body?.let {
                 listAdapter.fromJson(it.string())
                     ?.stamps?.mapIndexed { i, m ->

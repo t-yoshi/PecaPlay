@@ -5,7 +5,6 @@ import android.view.*
 import android.widget.CheckBox
 import android.widget.LinearLayout
 import androidx.annotation.CallSuper
-import androidx.fragment.app.Fragment
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceViewHolder

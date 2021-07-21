@@ -11,11 +11,10 @@ import org.peercast.core.lib.LibPeerCast
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.YpHistoryChannel
 import org.peercast.pecaplay.app.saveRecentQuery
+import org.peercast.pecaplay.core.app.stream
 import org.peercast.pecaplay.prefs.PecaPlayPreferences
-import org.peercast.pecaviewer.PecaViewerActivity
 import org.peercast.pecaplay.worker.LoadingWorkerManager
 import org.peercast.pecaplay.yp4g.YpChannel
-import org.peercast.pecaplay.yp4g.descriptionOrGenre
 import org.peercast.pecaviewer.PecaViewerIntent
 import timber.log.Timber
 
@@ -56,18 +55,18 @@ class PecaPlayPresenter(
         }
         val streamUrl = ch.stream(pecaPlayPrefs.peerCastUrl)
 
-        val intent = if (pecaPlayPrefs.isViewerEnabled(ch.yp4g.type)) {
-            PecaViewerIntent.create(a, streamUrl, ch.yp4g.name,
-                "${ch.yp4g.descriptionOrGenre} ${ch.yp4g.comment}".trim(), ch.yp4g.url
+        val intent = if (pecaPlayPrefs.isViewerEnabled(ch.type)) {
+            PecaViewerIntent.create(a, streamUrl, ch.name,
+                "${ch.genre} ${ch.description} ${ch.comment}".trim(), ch.url
             )
         } else {
             Intent().also {
                 it.action = Intent.ACTION_VIEW
-                it.setDataAndTypeAndNormalize(streamUrl, "video/${ch.yp4g.type.lowercase()}")
-                it.putExtra(LibPeerCast.EXTRA_CONTACT_URL, ch.yp4g.url.toString())
-                it.putExtra(LibPeerCast.EXTRA_NAME, ch.yp4g.name)
-                it.putExtra(LibPeerCast.EXTRA_DESCRIPTION, ch.yp4g.descriptionOrGenre)
-                it.putExtra(LibPeerCast.EXTRA_COMMENT, ch.yp4g.comment)
+                it.setDataAndTypeAndNormalize(streamUrl, "video/${ch.type.lowercase()}")
+                it.putExtra(LibPeerCast.EXTRA_CONTACT_URL, ch.url.toString())
+                it.putExtra(LibPeerCast.EXTRA_NAME, ch.name)
+                it.putExtra(LibPeerCast.EXTRA_DESCRIPTION, "${ch.genre} ${ch.description}")
+                it.putExtra(LibPeerCast.EXTRA_COMMENT, ch.comment)
             }
         }
 

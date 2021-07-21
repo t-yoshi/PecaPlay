@@ -2,14 +2,20 @@ package org.peercast.pecaplay.yp4g
 
 import android.content.Context
 import androidx.annotation.WorkerThread
+import okhttp3.OkHttpClient
 import org.peercast.pecaplay.R
 import org.peercast.pecaplay.app.YellowPage
 import org.peercast.pecaplay.util.SquareUtils
+import org.peercast.pecaplay.yp4g.net.RandomDataBody
+import org.peercast.pecaplay.yp4g.net.Yp4gService
+import org.peercast.pecaplay.yp4g.net.createYp4gService
 import timber.log.Timber
 import java.io.IOException
 
 
-class Yp4gSpeedTester(val yp: YellowPage) {
+class Yp4gSpeedTester(private val c: Context,
+                      private val client: OkHttpClient,
+                      val yp: YellowPage) {
     var config = NONE_CONFIG
         private set
     private var error = ""
@@ -20,12 +26,7 @@ class Yp4gSpeedTester(val yp: YellowPage) {
             useCache && config !== NONE_CONFIG -> return true
         }
 
-        val service = SquareUtils.retrofitBuilder()
-            .baseUrl(yp.url)
-            .addConverterFactory(SquareUtils.SIMPLE_XML_CONVERTER_FACTORY)
-            .build()
-            .create(Yp4gService::class.java)
-
+        val service = createYp4gService(client, yp)
         return try {
             config = service.getConfig().body() ?: throw IOException("no config exists.")
             Timber.i("loadConfig OK: $config")
@@ -43,10 +44,7 @@ class Yp4gSpeedTester(val yp: YellowPage) {
         Timber.d("startTest $config")
 
         val u = config.uptest_srv.run { "http://$addr:$port/" }
-        val service = SquareUtils.retrofitBuilder()
-            .baseUrl(u)
-            .build()
-            .create(Yp4gService::class.java)
+        val service = createYp4gService(client, u)
 
         val reqBody = RandomDataBody(
             config.uptest_srv.postSize * 1024,
@@ -70,18 +68,19 @@ class Yp4gSpeedTester(val yp: YellowPage) {
         }
     }
 
-    fun getStatus(c: Context): String {
-        if (error != "")
-            return error
+    val status: String
+        get() {
+            if (error != "")
+                return error
 
-        var s = "${config.host.speed}kbps"
-        if (config.host.isOver)
-            s += " over "
-        if (!config.host.isPortOpen) {
-            s += " (${c.getString(R.string.closed_port)})"
+            var s = "${config.host.speed}kbps"
+            if (config.host.isOver)
+                s += " over "
+            if (!config.host.isPortOpen) {
+                s += " (${c.getString(R.string.closed_port)})"
+            }
+            return s
         }
-        return s
-    }
 
     override fun toString() = yp.name
 

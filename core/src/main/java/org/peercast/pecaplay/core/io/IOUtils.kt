@@ -1,4 +1,4 @@
-package org.peercast.pecaplay.io
+package org.peercast.pecaplay.core.io
 
 import android.content.res.Resources
 import java.io.FileNotFoundException

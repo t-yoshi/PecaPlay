@@ -1,10 +1,8 @@
 package org.peercast.pecaplay.prefs
 
-import android.os.Build
 import android.os.Bundle
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.fragment.app.Fragment
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
@@ -60,7 +58,7 @@ class SettingsActivity : AppCompatActivity(),
 
     companion object {
         const val ACTION_FAVORITE_PREFS =
-            "org.peercast.pecaplay.prefs.ACTION_FAVORITE_PREFS"
+            "org.peercast.pecaplay.core.prefs.ACTION_FAVORITE_PREFS"
 
         /**夜間モードが変更された(lollipop only)*/
         const val RESULT_NIGHT_MODE_CHANGED = RESULT_FIRST_USER

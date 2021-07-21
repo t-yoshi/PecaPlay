@@ -4,6 +4,7 @@ package org.peercast.pecaviewer.chat.net
 import okhttp3.CacheControl
 import okhttp3.FormBody
 import okhttp3.Request
+import org.peercast.pecaviewer.chat.net.ShitarabaBoardThreadConnection.Companion.eucjp
 import timber.log.Timber
 import java.io.IOException
 import java.net.URLEncoder
@@ -152,14 +153,14 @@ private class ShitarabaBoardThreadConnection(
             .addEncoded("DIR", info.board.dir)
             .addEncoded("BBS", info.board.bbsNumber)
             .addEncoded("KEY", info.number)
-            .addEncoded("NAME", eucjp(m.name))
-            .addEncoded("MAIL", eucjp(m.mail))
-            .addEncoded("MESSAGE", eucjp(m.body))
-            .addEncoded("SUBMIT", eucjp("書き込む"))
+            .addEncoded("NAME", m.name.eucjp())
+            .addEncoded("MAIL",  m.mail.eucjp())
+            .addEncoded("MESSAGE", m.body.eucjp())
+            .addEncoded("SUBMIT", "書き込む".eucjp())
             .build()
         val req = Request.Builder()
             .url("https://jbbs.shitaraba.net/bbs/write.cgi")
-            .header("Cookie", "name=${eucjp(m.name)}; mail=${eucjp(m.mail)}")
+            .header("Cookie", "name=${m.name.eucjp()}; mail=${m.mail.eucjp()}")
             .header(
                 "Referer",
                 "https://jbbs.shitaraba.net/${info.board.dir}/${info.board.bbsNumber}/"
@@ -171,7 +172,7 @@ private class ShitarabaBoardThreadConnection(
     }
 
     companion object {
-        private fun eucjp(s: String) = URLEncoder.encode(s, "euc-jp")
+        private fun String.eucjp() = URLEncoder.encode(this, "euc-jp")
         private val FORCE_NETWORK_NO_STORE = CacheControl.Builder().noCache().noStore().build()
 
         suspend fun open(

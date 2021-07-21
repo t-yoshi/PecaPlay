@@ -8,13 +8,14 @@ import androidx.core.text.toSpannable
 import okhttp3.Request
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.get
+import org.koin.core.component.inject
+import org.peercast.pecaplay.core.io.Square
+import org.peercast.pecaplay.core.io.await
 import org.peercast.pecaviewer.chat.adapter.PopupSpan.Companion.applyPopupSpanForAnchors
 import org.peercast.pecaviewer.chat.net.BbsUtils.applyUrlSpan
 import org.peercast.pecaviewer.chat.net.BbsUtils.stripHtml
 import org.peercast.pecaviewer.chat.thumbnail.ThumbnailSpan.Companion.applyThumbnailSpan
 import org.peercast.pecaviewer.util.DateUtils
-import org.peercast.pecaviewer.util.ISquareHolder
-import org.peercast.pecaviewer.util.runAwait
 import org.unbescape.html.HtmlEscape
 import timber.log.Timber
 import java.io.IOException
@@ -23,7 +24,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class BbsClient(val defaultCharset: Charset) : KoinComponent {
-    protected val square = get<ISquareHolder>()
+    protected val square by inject<Square>()
 
     suspend fun <T : IThreadInfo> parseSubjectText(
         req: Request, delimiter: String,
@@ -42,7 +43,7 @@ class BbsClient(val defaultCharset: Charset) : KoinComponent {
     }
 
     private suspend fun <T> readStream(req: Request, f: (Sequence<String>) -> T): T {
-        return square.okHttpClient.newCall(req).runAwait { res ->
+        return square.okHttpClient.newCall(req).await { res ->
             if (res.code == 504)
                 throw UnsatisfiableRequestException(res.message)
 
@@ -56,7 +57,7 @@ class BbsClient(val defaultCharset: Charset) : KoinComponent {
     class UnsatisfiableRequestException(msg: String) : IOException(msg)
 
     suspend fun post(req: Request): CharSequence {
-        val ret = square.okHttpClient.newCall(req).runAwait { res ->
+        val ret = square.okHttpClient.newCall(req).await { res ->
             val body = res.body ?: throw IOException("body returned null.")
             val cs = body.contentType()?.charset() ?: defaultCharset
             body.byteStream().reader(cs).readText()

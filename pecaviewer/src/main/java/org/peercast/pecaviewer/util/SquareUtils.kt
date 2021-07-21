@@ -15,11 +15,14 @@ import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
+@Deprecated("")
 interface ISquareHolder {
     val okHttpClient: OkHttpClient
+    @Deprecated("")
     val moshi: Moshi
 }
 
+@Deprecated("")
 class DefaultSquareHolder(private val a: Application) : ISquareHolder {
     private val cacheDir = File(a.filesDir, "okhttp")
 
@@ -66,39 +69,3 @@ class DefaultSquareHolder(private val a: Application) : ISquareHolder {
     }
 }
 
-
-/**Callback#onResponse内でfを実行し、その結果を返す*/
-suspend fun <T> Call.runAwait(@WorkerThread f: (Response) -> T): T {
-    return suspendCancellableCoroutine { continuation ->
-        enqueue(object : Callback {
-            override fun onResponse(call: Call, response: Response) {
-                kotlin.runCatching {
-                    response.use { f(it) }
-                }
-                    .onSuccess<T>(continuation::resume)
-                    .onFailure(::onFailure)
-            }
-
-            private fun onFailure(t: Throwable) {
-                if (continuation.isCancelled)
-                    return
-                continuation.resumeWithException(t)
-            }
-
-            override fun onFailure(call: Call, e: IOException) {
-                onFailure(e)
-            }
-        })
-
-        continuation.invokeOnCancellation {
-            try {
-                cancel()
-            } catch (ex: Throwable) {
-            }
-        }
-    }
-}
-
-suspend fun <T> Call.await(): String {
-    return runAwait { it.body?.string() ?: throw IOException("body is null") }
-}

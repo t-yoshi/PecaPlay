@@ -41,7 +41,7 @@ class PecaPlayApplication : Application() {
         kApp = startKoin {
             //androidLogger(Level.DEBUG)
             androidContext(this@PecaPlayApplication)
-            modules(pecaplayModule, pecaviewerModule, listItemModule)
+            modules(coreModule, pecaplayModule, pecaviewerModule, listItemModule)
         }
     }
 

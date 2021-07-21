@@ -81,10 +81,10 @@ data class Favorite(
             }
 
             booleanArrayOf(
-                flags.isName && reMatches(rePattern.matcher(ch.yp4g.name)),
-                flags.isDescription && reMatches(rePattern.matcher(ch.yp4g.description)),
-                flags.isComment && reMatches(rePattern.matcher(ch.yp4g.comment)),
-                flags.isGenre && reMatches(rePattern.matcher(ch.yp4g.genre))
+                flags.isName && reMatches(rePattern.matcher(ch.name)),
+                flags.isDescription && reMatches(rePattern.matcher(ch.description)),
+                flags.isComment && reMatches(rePattern.matcher(ch.comment)),
+                flags.isGenre && reMatches(rePattern.matcher(ch.genre))
             )
         } else {
             val strMatches: (String) -> Boolean = when (flags.isExactMatch) {
@@ -97,10 +97,10 @@ data class Favorite(
             }
 
             booleanArrayOf(
-                flags.isName && strMatches(ch.yp4g.name),
-                flags.isDescription && strMatches(ch.yp4g.description),
-                flags.isComment && strMatches(ch.yp4g.comment),
-                flags.isGenre && strMatches(ch.yp4g.genre)
+                flags.isName && strMatches(ch.name),
+                flags.isDescription && strMatches(ch.description),
+                flags.isComment && strMatches(ch.comment),
+                flags.isGenre && strMatches(ch.genre)
             )
         }
     }
@@ -113,7 +113,7 @@ data class Favorite(
 
     companion object {
         fun Star(ch: YpChannel): Favorite {
-            return Favorite("[star]${ch.yp4g.name}", ch.yp4g.name, Flags(
+            return Favorite("[star]${ch.name}", ch.name, Flags(
                 isName = true, isExactMatch = true
             ))
         }

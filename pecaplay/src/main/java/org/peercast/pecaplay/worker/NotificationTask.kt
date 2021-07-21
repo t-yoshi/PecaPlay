@@ -18,7 +18,6 @@ import org.peercast.pecaplay.PecaPlayIntent
 import org.peercast.pecaplay.R
 import org.peercast.pecaplay.app.YpLiveChannel
 import org.peercast.pecaplay.yp4g.YpDisplayOrder
-import org.peercast.pecaplay.yp4g.descriptionOrGenre
 import timber.log.Timber
 
 class NotificationTask(private val worker: LoadingWorker) : LoadingWorker.Task() {
@@ -64,11 +63,11 @@ class NotificationTask(private val worker: LoadingWorker) : LoadingWorker.Task()
         }
 
         if (newChannels.isNotEmpty()) {
-            worker.appPrefs.notificationNewlyChannelsId += newChannels.map { it.yp4g.id }
+            worker.appPrefs.notificationNewlyChannelsId += newChannels.map { it.id }
             val ids = worker.appPrefs.notificationNewlyChannelsId
             onNewChannels(
                 channels.filter {
-                    it.yp4g.id in ids
+                    it.id in ids
                 }.sortedWith(YpDisplayOrder.AGE_ASC.comparator)
             )
         }
@@ -87,14 +86,11 @@ class NotificationTask(private val worker: LoadingWorker) : LoadingWorker.Task()
         val inbox = NotificationCompat.InboxStyle()
 
         channels.take(5).forEach { ch ->
-            val name = ch.yp4g.name
-            val desc = ch.yp4g.descriptionOrGenre
-            val comment = ch.yp4g.comment
             val ssb = SpannableStringBuilder().apply {
-                append("$name   $desc $comment")
-                setSpan(StyleSpan(Typeface.BOLD), 0, name.length, 0)
+                append(ch.run { "$name $genre $description $comment" })
+                setSpan(StyleSpan(Typeface.BOLD), 0, ch.name.length, 0)
             }
-            content += " $name"
+            content += " ${ch.name}"
             inbox.addLine(ssb)
         }
 

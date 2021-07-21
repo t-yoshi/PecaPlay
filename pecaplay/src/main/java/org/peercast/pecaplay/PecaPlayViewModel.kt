@@ -34,7 +34,7 @@ class PecaPlayViewModel(
         withContext(Dispatchers.Default) {
             histories.forEach { his ->
                 //現在存在して再生可能か
-                his.isEnabled = channels.any(his::equalsIdName)
+                his.isPlayable = channels.any(his::equalsIdName)
             }
             histories
         }
@@ -120,7 +120,7 @@ class PecaPlayViewModel(
         private val RE_SPACE = """[\s　]+""".toRegex()
 
         private val YpChannel.searchText: String
-            get() = yp4g.run { "$name $comment $descriptionOrGenre" }.normalize()
+            get() = run { "$name $genre $description $comment" }.normalize()
 
     }
 }
