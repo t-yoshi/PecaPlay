@@ -20,7 +20,7 @@ class LoadingWorker(c: Context, workerParams: WorkerParameters) :
 
     abstract class Task(protected val worker: ListenableWorker) {
         /**trueなら次のタスクを実行する*/
-        abstract suspend operator fun invoke(): Boolean
+        abstract suspend fun invoke(): Boolean
     }
 
     override fun getPeerCastUrl(): Uri {
@@ -30,12 +30,13 @@ class LoadingWorker(c: Context, workerParams: WorkerParameters) :
     override suspend fun doWorkOnServiceConnected(client: PeerCastRpcClient): Result {
         eventFlow.value = LoadingEvent.OnStart(id)
         val tasks = listOf(
-            LoadingTask(this),
-            NotificationTask(this)
+            ::DatabaseTruncateTask,
+            ::LoadingTask,
+            ::NotificationTask,
         )
         try {
             for (t in tasks) {
-                if (!t())
+                if (!t(this).invoke())
                     return Result.failure()
             }
         } catch (t: Throwable) {

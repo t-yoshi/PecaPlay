@@ -30,30 +30,6 @@ abstract class AppRoomDatabase : RoomDatabase() {
     abstract val ypChannelDao: YpLiveChannelDao
     abstract val ypHistoryDao: YpHistoryChannelDao
 
-
-    private fun truncate() {
-        runInTransaction {
-            var r = compileStatement(
-                """
-DELETE FROM YpHistoryChannel WHERE rowid NOT IN (
-  SELECT rowid FROM YpHistoryChannel ORDER BY LastPlay DESC LIMIT 100
-)""".trimIndent()
-            ).use {
-                it.executeUpdateDelete()
-            }
-
-            r += compileStatement(
-                """
-DELETE FROM YpLiveChannel
-  WHERE lastLoadedTime < DATETIME('now', '-12 hours', PRINTF('-%d hours', age))
-                """.trimIndent()
-            ).use {
-                it.executeUpdateDelete()
-            }
-            Timber.d("OK: truncate() $r")
-        }
-    }
-
     companion object {
         fun createInstance(a: Application, dbName: String): AppRoomDatabase {
             return Room.databaseBuilder(
@@ -62,11 +38,7 @@ DELETE FROM YpLiveChannel
                 dbName
             )
                 .addMigrations(*MIGRATIONS)
-                .build().also {
-                    AsyncTask.execute {
-                        it.truncate()
-                    }
-                }
+                .build()
         }
     }
 
