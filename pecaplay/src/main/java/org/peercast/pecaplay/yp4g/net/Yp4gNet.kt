@@ -1,5 +1,6 @@
 package org.peercast.pecaplay.yp4g.net
 
+import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
 import org.peercast.pecaplay.app.YellowPage
@@ -11,7 +12,9 @@ import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 
 
-private object Yp4gChannelBinderConverter : Converter<ResponseBody, List<Yp4gChannelBinder>> {
+private class Yp4gChannelBinderConverter(
+    val baseUrl: HttpUrl
+) : Converter<ResponseBody, List<Yp4gChannelBinder>> {
     override fun convert(body: ResponseBody): List<Yp4gChannelBinder> {
         return body.use {
             it.charStream().buffered()
@@ -20,7 +23,7 @@ private object Yp4gChannelBinderConverter : Converter<ResponseBody, List<Yp4gCha
                     try {
                         Yp4gChannelBinder.parse(line)
                     } catch (e: IllegalArgumentException) {
-                        Timber.w(e, "format error: line=$n, ${e.message}")
+                        Timber.w(e, "format error: url=$baseUrl, line=$n ${e.message}")
                         null
                     }
                 }
@@ -28,7 +31,9 @@ private object Yp4gChannelBinderConverter : Converter<ResponseBody, List<Yp4gCha
         }
     }
 
-    private const val MAX_LINE = 1024
+    companion object {
+        private const val MAX_LINE = 1024
+    }
 }
 
 
@@ -37,14 +42,12 @@ private object YpConverterFactory : Converter.Factory() {
         type: Type, annotations: Array<out Annotation>,
         retrofit: Retrofit,
     ): Converter<ResponseBody, *>? {
-        Timber.d(" -> $type, $annotations, $retrofit")
         if (type is ParameterizedType &&
             getRawType(type) === List::class.java &&
             getParameterUpperBound(0, type) === Yp4gChannelBinder::class.java
         ) {
-            return Yp4gChannelBinderConverter
+            return Yp4gChannelBinderConverter(retrofit.baseUrl())
         }
-
         return null
     }
 }

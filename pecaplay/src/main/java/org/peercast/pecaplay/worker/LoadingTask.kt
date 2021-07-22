@@ -1,12 +1,15 @@
 package org.peercast.pecaplay.worker
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import org.peercast.pecaplay.yp4g.Yp4gColumn
 import org.peercast.pecaplay.yp4g.net.Yp4gChannelBinder
 import org.peercast.pecaplay.yp4g.net.createYp4gService
 import timber.log.Timber
 import java.io.IOException
-import java.util.*
 
 class LoadingTask(
     private val worker: LoadingWorker,
@@ -22,36 +25,35 @@ class LoadingTask(
         Timber.d("start loading: %s", yellowPages)
 
         val port = worker.appPrefs.peerCastUrl.port
-        val lines = ArrayList<Yp4gChannelBinder>(256)
-
-        yellowPages.forEach { yp ->
-            try {
-                val res = createYp4gService(
-                    worker.square.okHttpClient, yp
-                ).getIndex("localhost:$port")
-                res.forEach {
-                    it.setYellowPage(yp)
+        val binders = withContext(Dispatchers.IO) {
+            yellowPages.map { yp ->
+                val svc = createYp4gService(worker.square.okHttpClient, yp)
+                async {
+                    try {
+                        svc.getIndex("localhost:$port")
+                            .onEach { it.setYellowPage(yp) }
+                    } catch (e: IOException) {
+                        worker.eventFlow.value =
+                            LoadingEvent.OnException(worker.id, yp, e)
+                        emptyList()
+                    }
                 }
-                lines.addAll(res)
-            } catch (e: IOException) {
-                worker.eventFlow.value =
-                    LoadingEvent.OnException(worker.id, yp, e)
-            }
+            }.awaitAll().flatten()
         }
 
         worker.database.runInTransaction {
             worker.database.compileStatement("UPDATE YpLiveChannel SET isLatest=0").use {
                 it.executeUpdateDelete()
             }
-            if (lines.isNotEmpty()) {
-                storeToYpLiveChannelTable(lines)
+            if (binders.isNotEmpty()) {
+                storeToYpLiveChannelTable(binders)
             }
         }
 
-        return lines.isNotEmpty()
+        return binders.isNotEmpty()
     }
 
-    private fun storeToYpLiveChannelTable(lines: List<Yp4gChannelBinder>) {
+    private fun storeToYpLiveChannelTable(binders: List<Yp4gChannelBinder>) {
         val sql = """
             REPLACE INTO YpLiveChannel (
               name, id, ip, url, genre,
@@ -69,9 +71,9 @@ class LoadingTask(
             )""".trimIndent()
 
         worker.database.compileStatement(sql).use { statement ->
-            lines.forEach { line ->
-                Timber.d("->%s", line)
-                line.bindToStatement(
+            binders.forEach { b ->
+                Timber.d("->%s", b)
+                b.bindToStatement(
                     statement,
                     *Yp4gColumn.values(), Yp4gColumn.Name, Yp4gColumn.Id
                 )
