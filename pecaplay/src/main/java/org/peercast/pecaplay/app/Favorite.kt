@@ -7,6 +7,12 @@ import androidx.room.TypeConverter
 import androidx.room.TypeConverters
 import com.squareup.moshi.JsonClass
 import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
+import org.peercast.core.lib.rpc.ChannelInfo
 import org.peercast.pecaplay.util.SquareUtils
 import org.peercast.pecaplay.yp4g.YpChannel
 import timber.log.Timber
@@ -30,7 +36,7 @@ data class Favorite(
 ) : ManageableEntity(), Parcelable {
 
     @Parcelize
-    @JsonClass(generateAdapter = true)
+    @Serializable
     data class Flags(
         /**Ch名にマッチする*/
         val isName: Boolean = false,
@@ -123,20 +129,23 @@ data class Favorite(
         @TypeConverter
         fun stringToFlags(s: String): Flags {
             return try {
-                FLAGS_ADAPTER.fromJson(s)
-            } catch (e: IOException) {
-                Timber.e(e, "fromJson($e)")
-                null
-            } ?: Flags()
+                format.decodeFromString(s)
+            } catch (e: SerializationException){
+                Flags()
+            }
         }
 
         @TypeConverter
         fun flagsToString(flags: Flags): String {
-            return FLAGS_ADAPTER.toJson(flags)
+            return format.encodeToString(flags)
         }
 
         companion object {
-            private val FLAGS_ADAPTER = SquareUtils.MOSHI.adapter(Flags::class.java)
+            private val format = Json {
+                isLenient = true
+                ignoreUnknownKeys = true
+                coerceInputValues = true
+            }
         }
     }
 }

@@ -44,7 +44,7 @@ dependencies {
 
     api "io.insert-koin:koin-android-ext:$koin_version"
 
-    api 'com.squareup.retrofit2:retrofit:2.8.1'
+    api 'com.squareup.retrofit2:retrofit:2.9.0'
 //    api('com.squareup.retrofit2:converter-simplexml:2.8.1') {
 //        exclude module: 'stax'
 //        exclude module: 'stax-api'
