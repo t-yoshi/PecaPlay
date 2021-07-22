@@ -27,9 +27,13 @@ import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.core.io.localizedSystemMessage
+import org.peercast.pecaplay.navigation.NavigationModel
+import org.peercast.pecaplay.navigation.PecaNaviView
 import org.peercast.pecaplay.prefs.PecaPlayPreferences
 import org.peercast.pecaplay.prefs.SettingsActivity
 import org.peercast.pecaplay.worker.LoadingEvent
@@ -57,7 +61,7 @@ class PecaPlayActivity : AppCompatActivity() {
 
     private lateinit var vToolbar: Toolbar
     private var vDrawerLayout: DrawerLayout? = null
-    private lateinit var vNavigation: NavigationView
+    private lateinit var vNavigation: PecaNaviView
     private lateinit var vAppBarLayout: AppBarLayout
     private lateinit var vYpChannelFragmentContainer: FragmentContainerView
 
@@ -99,8 +103,8 @@ class PecaPlayActivity : AppCompatActivity() {
             })
         }
 
-        PecaNavigationViewExtension(vNavigation, savedInstanceState, lifecycleScope) { item ->
-            Timber.d("onItemClick(${item.tag})")
+
+        vNavigation.onItemClick = { item->
             viewModel.run {
                 displayOrder = when (item.tag) {
                     "history" -> YpDisplayOrder.NONE
@@ -129,6 +133,10 @@ class PecaPlayActivity : AppCompatActivity() {
                 supportActionBar?.setTitle(R.string.app_name)
             }
         }
+        lifecycleScope.launchWhenResumed {
+            vNavigation.model.collect(get(), get())
+        }
+
 
         lifecycleScope.launchWhenResumed {
             viewModel.rpcClient.filterNotNull().onEach { client ->
