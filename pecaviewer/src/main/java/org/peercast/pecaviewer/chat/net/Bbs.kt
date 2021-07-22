@@ -87,7 +87,7 @@ class BbsClient(val defaultCharset: Charset) : KoinComponent {
 
 abstract class BaseBbsBoardInfo : IBoardInfo {
     override fun hashCode(): Int {
-        return javaClass.hashCode() * 31 + url.hashCode()
+        return Objects.hash(javaClass, url)
     }
 
     override fun equals(other: Any?): Boolean {
@@ -121,9 +121,7 @@ abstract class BaseBbsThreadInfo(
     } ?: 0
 
     override fun hashCode(): Int {
-        return javaClass.hashCode() * 31 +
-                board.hashCode() * 13 +
-                number.hashCode()
+        return Objects.hash(javaClass, board, number)
     }
 
     override fun equals(other: Any?): Boolean {
@@ -177,7 +175,7 @@ open class BbsMessage(
     }
 
     override fun hashCode(): Int {
-        return javaClass.hashCode() * 31 + url.hashCode()
+        return Objects.hash(javaClass, url)
     }
 }
 
