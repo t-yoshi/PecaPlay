@@ -8,7 +8,7 @@ import retrofit2.http.*
 interface Yp4gService {
     @GET("index.txt")
     suspend fun getIndex(
-        @Query("host") host: String
+        @Query("host") host: String,
     ): List<Yp4gChannelBinder>
 
     @GET("yp4g.xml")

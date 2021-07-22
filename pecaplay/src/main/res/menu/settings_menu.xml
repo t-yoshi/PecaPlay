@@ -1,14 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-      xmlns:app="http://schemas.android.com/apk/res-auto"
-        >
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-            android:id="@+id/menu_add"
-            android:title="@string/new_item"
-            app:showAsAction="ifRoom"
-            android:icon="@drawable/ic_add_circle_24px"
-            app:iconTint="?android:attr/textColorPrimary"
-            />
+        android:id="@+id/menu_add"
+        android:title="@string/new_item"
+        app:showAsAction="ifRoom"
+        android:icon="@drawable/ic_add_circle_24px"
+        app:iconTint="?android:attr/textColorPrimary" />
 
 </menu>

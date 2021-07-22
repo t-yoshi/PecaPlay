@@ -5,8 +5,6 @@ import org.koin.dsl.module
 import org.peercast.pecaviewer.chat.ChatViewModel
 import org.peercast.pecaviewer.player.PlayerViewModel
 import org.peercast.pecaviewer.service.PlayerServiceEventLiveData
-import org.peercast.pecaviewer.util.DefaultSquareHolder
-import org.peercast.pecaviewer.util.ISquareHolder
 
 val pecaviewerModule = module {
     single { ViewerPreference(get()) }
@@ -14,7 +12,6 @@ val pecaviewerModule = module {
     viewModel { PlayerViewModel(get()) }
     viewModel { ChatViewModel(get()) }
 
-    single<ISquareHolder> { DefaultSquareHolder(get()) }
     single { PlayerServiceEventLiveData() }
 }
 

@@ -12,7 +12,7 @@ import java.util.*
 private class ZeroChannelBoardInfo(
     val baseUrl: String, //ex. http://hibino.ddo.jp/bbs/
     val board: String,   //    peca
-    m: Map<String, String>
+    m: Map<String, String>,
 ) : BaseBbsBoardInfo() {
     override val url: String = "$baseUrl$board/" // http://hibino.ddo.jp/bbs/peca/
     override val title: String = m["BBS_TITLE"] ?: "??"
@@ -21,7 +21,7 @@ private class ZeroChannelBoardInfo(
 
 private class ZeroChannelThreadInfo(
     override val board: ZeroChannelBoardInfo,
-    datPath: String, title: String
+    datPath: String, title: String,
 ) : BaseBbsThreadInfo(datPath, title) {
     override val url =
         "${board.baseUrl}test/read.cgi/${board.board}/${number}/" //http://hibino.ddo.jp/bbs/test/read.cgi/peca/1582120664/
@@ -30,7 +30,7 @@ private class ZeroChannelThreadInfo(
 
 private class ZeroChannelBoardConnection(
     val client: BbsClient,
-    override val info: ZeroChannelBoardInfo
+    override val info: ZeroChannelBoardInfo,
 ) : IBoardConnection {
     override suspend fun loadThreads(): List<ZeroChannelThreadInfo> {
         val req = Request.Builder()
@@ -54,7 +54,7 @@ private class ZeroChannelBoardConnection(
         private suspend fun loadBoardInfo(
             client: BbsClient,
             baseUrl: String,
-            board: String
+            board: String,
         ): ZeroChannelBoardInfo {
             val req = Request.Builder()
                 .url("$baseUrl$board/SETTING.TXT")
@@ -79,7 +79,7 @@ private class ZeroChannelBoardConnection(
 
 private class ZeroChannelBoardThreadConnection(
     private val base: ZeroChannelBoardConnection,
-    override val info: ZeroChannelThreadInfo
+    override val info: ZeroChannelThreadInfo,
 ) : IBoardConnection by base, IBoardThreadConnection, IBoardThreadPoster {
 
     override suspend fun loadMessages(): List<IMessage> {

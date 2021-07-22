@@ -29,14 +29,14 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.peercast.pecaplay.core.io.localizedSystemMessage
 import org.peercast.pecaplay.prefs.PecaPlayPreferences
 import org.peercast.pecaplay.prefs.SettingsActivity
-import org.peercast.pecaplay.util.localizedSystemMessage
-import org.peercast.pecaviewer.PecaViewerActivity
 import org.peercast.pecaplay.worker.LoadingEvent
 import org.peercast.pecaplay.worker.LoadingEventFlow
 import org.peercast.pecaplay.yp4g.SpeedTestFragment
 import org.peercast.pecaplay.yp4g.YpDisplayOrder
+import org.peercast.pecaviewer.PecaViewerActivity
 import retrofit2.HttpException
 import timber.log.Timber
 
@@ -180,7 +180,7 @@ class PecaPlayActivity : AppCompatActivity() {
             }
         }
 
-        if (intent.action == "ACTION_LAUNCH_VIEWER"){
+        if (intent.action == "ACTION_LAUNCH_VIEWER") {
             val i = Intent(intent)
             i.setClass(this, PecaViewerActivity::class.java)
             startActivity(i)

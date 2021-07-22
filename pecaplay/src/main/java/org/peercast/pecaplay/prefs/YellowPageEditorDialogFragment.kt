@@ -52,7 +52,7 @@ class YellowPageEditorDialogFragment : BaseEntityEditDialogFragment<YellowPage>(
                     (isEditMode || (name !in existsNames && url !in existsUrls))
         }
             .onEach {
-               //Timber.d("--> $it")
+                //Timber.d("--> $it")
                 isOkButtonEnabled.value = it
             }.launchIn(lifecycleScope)
     }

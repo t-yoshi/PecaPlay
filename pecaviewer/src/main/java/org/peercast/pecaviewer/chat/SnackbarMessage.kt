@@ -7,5 +7,5 @@ class SnackbarMessage(
     val text: CharSequence,
     @ColorRes val textColor: Int = 0,
     val cancelJob: Job? = null,
-    val cancelText: CharSequence? = null
+    val cancelText: CharSequence? = null,
 )

@@ -21,7 +21,7 @@ class ExampleUnitTest {
     @Test
     fun addition_isCorrect() {
         //assertEquals(4, 2 + 2)
-        assert(listOf(1, "!").equals(listOf(1, "!"))  )
+        assert(listOf(1, "!").equals(listOf(1, "!")))
     }
 
     @Test
@@ -31,7 +31,7 @@ class ExampleUnitTest {
             lateinit var x2: String
         }
 
-        val observer = Observer<CO>{
+        val observer = Observer<CO> {
             println("-> $it")
         }
         val ldb = CombinedLiveDataBuilder2(CO())

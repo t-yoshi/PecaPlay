@@ -12,7 +12,7 @@ import org.peercast.pecaviewer.player.PlayerViewModel
 internal class ViewerViewModel(
     private val a: Application,
     private val playerViewModel: PlayerViewModel,
-    private val chatViewModel: ChatViewModel
+    private val chatViewModel: ChatViewModel,
 ) : AndroidViewModel(a) {
     /**
      * スライディングパネルの状態

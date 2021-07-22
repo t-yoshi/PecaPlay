@@ -19,12 +19,13 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <include layout="@layout/pref_favorite_editor_pane_basic"
-                bind:viewModel="@{viewModel}"
-                />
-            <include layout="@layout/pref_favorite_editor_pane_advanced"
-                bind:viewModel="@{viewModel}"
-                />
+            <include
+                layout="@layout/pref_favorite_editor_pane_basic"
+                bind:viewModel="@{viewModel}" />
+
+            <include
+                layout="@layout/pref_favorite_editor_pane_advanced"
+                bind:viewModel="@{viewModel}" />
 
         </FrameLayout>
     </ScrollView>

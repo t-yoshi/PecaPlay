@@ -42,9 +42,9 @@ class YpTest {
             separator = ", ",
             postfix = ")",
             transform = {
-                when{
-                  it.type.javaType == String::class.java  -> "${it.name}"
-                  else-> "${it.name}.toString()"
+                when {
+                    it.type.javaType == String::class.java -> "${it.name}"
+                    else -> "${it.name}.toString()"
                 }
             }
         )

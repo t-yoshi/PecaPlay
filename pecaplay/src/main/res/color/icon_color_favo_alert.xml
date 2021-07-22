@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:color="#509e9e9e"
-        android:state_checked="false" android:state_enabled="false"/>
-    <item android:color="@color/grey_500"
-        android:state_checked="false"/>
+    <item android:color="#509e9e9e" android:state_checked="false" android:state_enabled="false" />
+    <item android:color="@color/grey_500" android:state_checked="false" />
 
-    <item android:color="@color/colorIconAlarm"
-        android:state_checked="true"/>
-    <item android:color="@color/grey_500"/>
+    <item android:color="@color/colorIconAlarm" android:state_checked="true" />
+    <item android:color="@color/grey_500" />
 </selector>

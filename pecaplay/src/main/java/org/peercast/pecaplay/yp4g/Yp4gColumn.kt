@@ -3,9 +3,10 @@ package org.peercast.pecaplay.yp4g
 import org.unbescape.html.HtmlEscape
 
 enum class Yp4gColumn(
-       val convert: (String) -> Any = Converter.None,
-       /**Long|String*/
-       val type: Class<*> = String::class.java) {
+    val convert: (String) -> Any = Converter.None,
+    /**Long|String*/
+    val type: Class<*> = String::class.java,
+) {
     Name(Converter.UnescapeHtml), // #0
     Id(Converter.ChannelId),
     Ip,

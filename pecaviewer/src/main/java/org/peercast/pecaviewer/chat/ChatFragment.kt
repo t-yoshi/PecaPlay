@@ -22,8 +22,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.*
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
-import org.peercast.pecaviewer.ViewerViewModel
 import org.peercast.pecaviewer.R
+import org.peercast.pecaviewer.ViewerViewModel
 import org.peercast.pecaviewer.chat.adapter.MessageAdapter
 import org.peercast.pecaviewer.chat.adapter.ThreadAdapter
 import org.peercast.pecaviewer.chat.thumbnail.ImageViewerFragment
@@ -64,7 +64,7 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener,
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
-        savedInstanceState: Bundle?
+        savedInstanceState: Bundle?,
     ): View {
         return FragmentChatBinding.inflate(inflater, container, false).also {
             binding = it

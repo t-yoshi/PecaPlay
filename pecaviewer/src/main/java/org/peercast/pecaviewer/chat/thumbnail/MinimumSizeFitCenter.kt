@@ -10,14 +10,14 @@ import kotlin.math.min
 
 class MinimumSizeFitCenter(
     private val minWidth: Int,
-    private val minHeight: Int
+    private val minHeight: Int,
 ) :
     BitmapTransformation() {
     override fun transform(
         pool: BitmapPool,
         toTransform: Bitmap,
         outWidth: Int,
-        outHeight: Int
+        outHeight: Int,
     ): Bitmap {
         //Timber.d(">> ${toTransform.width}, ${toTransform.height}, $outWidth, $outHeight")
         val upScale = min(

@@ -4,7 +4,6 @@ import android.net.Uri
 import androidx.room.Entity
 import androidx.room.Index
 import kotlinx.parcelize.Parcelize
-import org.peercast.pecaplay.yp4g.Yp4gColumn
 import org.peercast.pecaplay.yp4g.YpChannel
 import java.util.*
 

@@ -51,7 +51,7 @@ class ViewAdapter(private val view: ThumbnailView) {
 
     private class ItemViewHolder(
         private val view: ThumbnailView,
-        private val binding: ThumbnailViewItemBinding
+        private val binding: ThumbnailViewItemBinding,
     ) {
         private val viewModel = ItemViewModel()
         private val target = NotAnimatedTarget(binding.icon.layoutParams, viewModel)
@@ -108,7 +108,7 @@ class ViewAdapter(private val view: ThumbnailView) {
     //64dp
     private class NotAnimatedTarget(
         p: ViewGroup.LayoutParams,
-        private val vm: ItemViewModel
+        private val vm: ItemViewModel,
     ) : CustomTarget<Drawable>(p.width, p.height) {
         override fun onLoadFailed(errorDrawable: Drawable?) {
             vm.src.value = errorDrawable

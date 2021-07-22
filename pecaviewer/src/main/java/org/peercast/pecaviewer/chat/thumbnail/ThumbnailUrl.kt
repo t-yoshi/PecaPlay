@@ -9,7 +9,7 @@ sealed class ThumbnailUrl {
 
     data class Default(
         override val imageUrl: String,
-        override val linkUrl: String = ""
+        override val linkUrl: String = "",
     ) : ThumbnailUrl() {
         companion object {
             fun create(u: String): Default {
@@ -24,14 +24,14 @@ sealed class ThumbnailUrl {
     data class YouTube(
         val id: String,
         /**?t=1234*/
-        val query: String = ""
+        val query: String = "",
     ) : ThumbnailUrl() {
         override val imageUrl = "https://i.ytimg.com/vi/$id/default.jpg"
         override val linkUrl = "https://youtu.be/$id$query"
     }
 
     data class NicoVideo(
-        val videoId: String //sm12345
+        val videoId: String, //sm12345
     ) : ThumbnailUrl() {
         override val imageUrl = "https://ext.nicovideo.jp/api/getthumbinfo/$videoId"
         override val linkUrl = "https://nico.ms/$videoId"
@@ -41,7 +41,7 @@ sealed class ThumbnailUrl {
         private fun Regex.findImageUrl(
             s: CharSequence,
             out: MutableMap<IntRange, ThumbnailUrl>,
-            creator: (List<String>) -> ThumbnailUrl
+            creator: (List<String>) -> ThumbnailUrl,
         ) {
             //Timber.d("> $this $s")
             findAll(s).forEach { m ->

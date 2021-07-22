@@ -10,7 +10,7 @@ open class ItemsHolder<T> {
 
     private inner class ItemsHolderCallback(
         val newItems: List<T>,
-        private val oldItems: List<T>
+        private val oldItems: List<T>,
     ) : DiffUtil.Callback() {
         override fun getOldListSize() = oldItems.size
 
@@ -46,7 +46,7 @@ open class ItemsHolder<T> {
     suspend fun asyncUpdate(
         items: List<T>,
         adapter: RecyclerView.Adapter<*>,
-        detectMoves: Boolean = false
+        detectMoves: Boolean = false,
     ) {
         val cb = ItemsHolderCallback(items, callback.newItems)
         val res = withContext(Dispatchers.Default) {

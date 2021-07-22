@@ -4,7 +4,6 @@ package org.peercast.pecaviewer.chat.net
 import okhttp3.CacheControl
 import okhttp3.FormBody
 import okhttp3.Request
-import org.peercast.pecaviewer.chat.net.ShitarabaBoardThreadConnection.Companion.eucjp
 import timber.log.Timber
 import java.io.IOException
 import java.net.URLEncoder
@@ -35,7 +34,7 @@ private class ShitarabaBoardInfo(m: Map<String, String>) : BaseBbsBoardInfo() {
 
 private class ShitarabaThreadInfo(
     override val board: ShitarabaBoardInfo,
-    datPath: String, title: String
+    datPath: String, title: String,
 ) : BaseBbsThreadInfo(datPath, title) {
     override val url =
         "https://jbbs.shitaraba.net/bbs/read.cgi/${board.dir}/${board.bbsNumber}/${number}/"
@@ -52,7 +51,7 @@ private val CC_MAX_STALE_10SEC = CacheControl.Builder()
 
 private class ShitarabaBoardConnection(
     val client: BbsClient,
-    override val info: ShitarabaBoardInfo
+    override val info: ShitarabaBoardInfo,
 ) : IBoardConnection {
     override suspend fun loadThreads(): List<ShitarabaThreadInfo> {
         val req = Request.Builder()
@@ -81,7 +80,7 @@ private class ShitarabaBoardConnection(
         private suspend fun loadBoardInfo(
             client: BbsClient,
             boardDir: String,
-            boardNumber: String
+            boardNumber: String,
         ): ShitarabaBoardInfo {
             val req = Request.Builder()
                 .url("https://jbbs.shitaraba.net/bbs/api/setting.cgi/$boardDir/$boardNumber/")
@@ -107,7 +106,7 @@ private class ShitarabaBoardConnection(
 
 private class ShitarabaBoardThreadConnection(
     private val base: ShitarabaBoardConnection,
-    override val info: ShitarabaThreadInfo
+    override val info: ShitarabaThreadInfo,
 ) : IBoardConnection by base, IBoardThreadConnection, IBoardThreadPoster {
 
     override suspend fun loadMessages(): List<BbsMessage> {
@@ -154,7 +153,7 @@ private class ShitarabaBoardThreadConnection(
             .addEncoded("BBS", info.board.bbsNumber)
             .addEncoded("KEY", info.number)
             .addEncoded("NAME", m.name.eucjp())
-            .addEncoded("MAIL",  m.mail.eucjp())
+            .addEncoded("MAIL", m.mail.eucjp())
             .addEncoded("MESSAGE", m.body.eucjp())
             .addEncoded("SUBMIT", "書き込む".eucjp())
             .build()
@@ -178,7 +177,7 @@ private class ShitarabaBoardThreadConnection(
         suspend fun open(
             dir: String,
             bbsNumber: String,
-            threadNumber: String
+            threadNumber: String,
         ): ShitarabaBoardThreadConnection {
             val base = ShitarabaBoardConnection.open(dir, bbsNumber)
             val threadInfo = base.loadThreads().firstOrNull {

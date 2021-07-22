@@ -70,7 +70,7 @@ class PlayerViewModel(private val a: Application) : AndroidViewModel(a), KoinCom
                 }
 
                 is PlayerLoadStartEvent -> {
-                    ld.value =  a.getString(R.string.start_loading)
+                    ld.value = a.getString(R.string.start_loading)
                 }
             }
         }

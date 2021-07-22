@@ -2,30 +2,28 @@
 <layer-list>
 
     <item>
-        <shape
-            xmlns:android="http://schemas.android.com/apk/res/android"
+        <shape xmlns:android="http://schemas.android.com/apk/res/android"
             android:shape="line">
             <size
                 android:width="48dp"
-                android:height="48dp"/>
+                android:height="48dp" />
             <stroke
                 android:width="4dp"
-                android:color="#ffffff"/>
+                android:color="#ffffff" />
 
         </shape>
 
     </item>
     <item>
         <rotate xmlns:android="http://schemas.android.com/apk/res/android"
-                android:fromDegrees="90"
-                android:toDegrees="90">
-            <shape
-                xmlns:android="http://schemas.android.com/apk/res/android"
+            android:fromDegrees="90"
+            android:toDegrees="90">
+            <shape xmlns:android="http://schemas.android.com/apk/res/android"
                 android:shape="line">
 
                 <stroke
                     android:width="4dp"
-                    android:color="#ffffff"/>
+                    android:color="#ffffff" />
             </shape>
         </rotate>
     </item>

@@ -9,7 +9,6 @@ import android.view.SurfaceView
 import androidx.annotation.RequiresApi
 import kotlinx.coroutines.suspendCancellableCoroutine
 import timber.log.Timber
-import java.lang.RuntimeException
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -18,7 +17,7 @@ import kotlin.coroutines.resumeWithException
  * @throws ScreenShotFailedException 失敗した時
  * */
 @RequiresApi(Build.VERSION_CODES.N)
-suspend fun takeScreenShot(
+internal suspend fun takeScreenShot(
     view: SurfaceView, maxWidthDp: Int,
 ): Bitmap = suspendCancellableCoroutine { cont ->
     val w: Int // DP
@@ -49,7 +48,6 @@ suspend fun takeScreenShot(
 }
 
 class ScreenShotFailedException(val status: Int) :
-    RuntimeException("PixelCopy.request() failed: $status") {
-}
+    RuntimeException("PixelCopy.request() failed: $status")
 
 private val handler = Handler(Looper.getMainLooper())

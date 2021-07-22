@@ -12,10 +12,10 @@ import org.koin.core.context.startKoin
 import org.koin.dsl.module
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.list.listItemModule
-import org.peercast.pecaplay.prefs.PecaPlayPreferences
 import org.peercast.pecaplay.prefs.DefaultPecaPlayPreferences
-import org.peercast.pecaviewer.pecaviewerModule
+import org.peercast.pecaplay.prefs.PecaPlayPreferences
 import org.peercast.pecaplay.worker.LoadingEventFlow
+import org.peercast.pecaviewer.pecaviewerModule
 import timber.log.Timber
 import java.util.*
 

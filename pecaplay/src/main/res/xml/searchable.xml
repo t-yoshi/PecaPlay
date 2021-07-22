@@ -4,4 +4,4 @@
     android:label="@string/app_name"
     android:searchSuggestAuthority="org.peercast.pecaplay.SuggestionProvider"
     android:searchSuggestSelection=" ?"
-    android:searchSuggestThreshold="0"/>
+    android:searchSuggestThreshold="0" />

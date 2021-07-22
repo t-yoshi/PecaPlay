@@ -14,7 +14,6 @@ import org.peercast.pecaplay.prefs.PecaPlayPreferences
 import org.peercast.pecaplay.util.TextUtils.normalize
 import org.peercast.pecaplay.yp4g.YpChannel
 import org.peercast.pecaplay.yp4g.YpDisplayOrder
-import org.peercast.pecaplay.yp4g.descriptionOrGenre
 import kotlin.properties.Delegates
 
 
@@ -110,7 +109,8 @@ class PecaPlayViewModel(
             super.bindService()
             rpcClient.filterNotNull()
                 .onEach { cl ->
-                    pecaPlayPrefs.peerCastUrl = Uri.parse("http://localhost:${cl.rpcEndPoint.port}/")
+                    pecaPlayPrefs.peerCastUrl =
+                        Uri.parse("http://localhost:${cl.rpcEndPoint.port}/")
                 }
                 .launchIn(viewModelScope)
         }

@@ -8,9 +8,9 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import org.peercast.pecaplay.core.io.localizedSystemMessage
 import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.chat.net.*
-import org.peercast.pecaviewer.util.localizedSystemMessage
 import timber.log.Timber
 import java.io.IOException
 import java.util.concurrent.TimeUnit
@@ -205,7 +205,7 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
     fun postSnackMessage(
         text: CharSequence,
         cancelJob: Job? = null,
-        cancelText: CharSequence? = null
+        cancelText: CharSequence? = null,
     ) {
         val m = SnackbarMessage(text, cancelJob = cancelJob, cancelText = cancelText)
         chatViewModel.snackbarMessage.postValue(m)

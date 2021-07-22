@@ -6,14 +6,12 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Bitmap
 import android.net.Uri
-import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import androidx.media.AudioAttributesCompat
 import com.google.android.exoplayer2.*
-import com.google.android.exoplayer2.analytics.AnalyticsListener
 import com.google.android.exoplayer2.audio.AudioAttributes
 import com.google.android.exoplayer2.metadata.Metadata
 import com.google.android.exoplayer2.source.*
@@ -32,7 +30,6 @@ import org.peercast.core.lib.notify.NotifyChannelType
 import org.peercast.core.lib.notify.NotifyMessageType
 import org.peercast.core.lib.rpc.ChannelInfo
 import org.peercast.pecaviewer.ViewerPreference
-import org.peercast.pecaviewer.util.ISquareHolder
 import timber.log.Timber
 import java.io.IOException
 import java.util.*

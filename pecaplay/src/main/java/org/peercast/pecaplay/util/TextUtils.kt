@@ -1,11 +1,9 @@
 package org.peercast.pecaplay.util
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.text.Normalizer
 
 object TextUtils {
-    fun String.normalize() : String {
+    fun String.normalize(): String {
         return Normalizer.normalize(this, Normalizer.Form.NFKC)
             .hiragana().lowercase()
     }

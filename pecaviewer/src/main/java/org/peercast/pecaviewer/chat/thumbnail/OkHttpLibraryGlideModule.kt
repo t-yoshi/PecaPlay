@@ -9,20 +9,24 @@ import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.module.AppGlideModule
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
-import org.peercast.pecaviewer.util.ISquareHolder
+import org.peercast.pecaplay.core.io.Square
 import java.io.InputStream
 
 
 @GlideModule
 @Suppress("unused")
 class OkHttpLibraryGlideModule : AppGlideModule(), KoinComponent { //LibraryGlideModule
-    private val squareHolder by inject<ISquareHolder>()
+    private val square by inject<Square>()
 
     override fun registerComponents(context: Context, glide: Glide, registry: Registry) {
+        val glideOkHttpClient = square.okHttpClient.newBuilder()
+            .addInterceptor(LimitSizeInterceptor())
+            .build()
+
         registry.replace(
             GlideUrl::class.java,
             InputStream::class.java,
-            OkHttpUrlLoader.Factory(squareHolder.okHttpClient)
+            OkHttpUrlLoader.Factory(glideOkHttpClient)
         )
     }
 }

@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     package="org.peercast.pecaplay">
 
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
-    <application
-        android:name=".PecaPlayApplication">
+    <application android:name=".PecaPlayApplication">
         <activity
             android:name=".PecaPlayActivity"
             android:label="@string/app_name"
@@ -29,7 +27,7 @@
 
         <activity
             android:name="org.peercast.pecaplay.prefs.SettingsActivity"
-            android:label="@string/settings_activity"/>
+            android:label="@string/settings_activity" />
 
         <activity android:name="com.google.android.gms.oss.licenses.OssLicensesActivity" />
         <activity android:name="com.google.android.gms.oss.licenses.OssLicensesMenuActivity" />

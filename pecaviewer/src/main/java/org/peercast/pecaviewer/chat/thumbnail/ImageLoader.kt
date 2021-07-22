@@ -15,8 +15,8 @@ import com.bumptech.glide.request.target.Target
 import okhttp3.*
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import org.peercast.pecaplay.core.io.Square
 import org.peercast.pecaviewer.R
-import org.peercast.pecaviewer.util.ISquareHolder
 import timber.log.Timber
 import java.io.IOException
 import java.util.concurrent.TimeUnit
@@ -24,14 +24,14 @@ import java.util.concurrent.TimeUnit
 open class DefaultImageLoader(
     protected val c: Context,
     protected val vm: ItemViewModel,
-    protected val target: Target<Drawable>
+    protected val target: Target<Drawable>,
 ) {
     private val requestListener = object : RequestListener<Drawable> {
         override fun onLoadFailed(
             e: GlideException?,
             model: Any,
             target: Target<Drawable>,
-            isFirstResource: Boolean
+            isFirstResource: Boolean,
         ): Boolean {
             Timber.w(e)
             val eCause = e?.rootCauses?.firstOrNull()
@@ -58,7 +58,7 @@ open class DefaultImageLoader(
             model: Any,
             target: Target<Drawable>,
             dataSource: DataSource,
-            isFirstResource: Boolean
+            isFirstResource: Boolean,
         ): Boolean {
             vm.isAnimation.value = resource is Animatable
             vm.error.value = null
@@ -92,11 +92,11 @@ open class DefaultImageLoader(
 class NicoImageLoader(
     c: Context,
     vm: ItemViewModel,
-    target: Target<Drawable>
+    target: Target<Drawable>,
 ) : DefaultImageLoader(c, vm, target), Callback, KoinComponent {
     private var prevCall: Call? = null
 
-    private val squareHolder by inject<ISquareHolder>()
+    private val square by inject<Square>()
 
     /**
      * @see ThumbnailUrl.NicoVideo
@@ -112,7 +112,7 @@ class NicoImageLoader(
             .cacheControl(MAX_STALE_10DAYS)
             .build()
         prevCall?.cancel()
-        prevCall = squareHolder.okHttpClient.newCall(req).also {
+        prevCall = square.okHttpClient.newCall(req).also {
             it.enqueue(this)
         }
     }

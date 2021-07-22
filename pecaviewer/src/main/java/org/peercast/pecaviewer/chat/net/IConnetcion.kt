@@ -52,7 +52,7 @@ interface IMessage {
 data class PostMessage(
     override val name: String,
     override val mail: String,
-    override val body: String
+    override val body: String,
 ) : IMessage {
     override val threadInfo: IThreadInfo? = null
     override val number: Int = 0

@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <PreferenceCategory
         android:key="pref_category_yellowpage"
-        android:persistent="false" >
-    </PreferenceCategory>
+        android:persistent="false"></PreferenceCategory>
 
 </PreferenceScreen>

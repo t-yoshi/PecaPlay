@@ -7,7 +7,6 @@ import androidx.core.text.set
 import androidx.core.text.toSpannable
 import okhttp3.Request
 import org.koin.core.component.KoinComponent
-import org.koin.core.component.get
 import org.koin.core.component.inject
 import org.peercast.pecaplay.core.io.Square
 import org.peercast.pecaplay.core.io.await
@@ -28,14 +27,14 @@ class BbsClient(val defaultCharset: Charset) : KoinComponent {
 
     suspend fun <T : IThreadInfo> parseSubjectText(
         req: Request, delimiter: String,
-        f: (path: String, title: String) -> T
+        f: (path: String, title: String) -> T,
     ): List<T> {
         return parseText(req, delimiter, 2) { f(it[0], it[1]) }
     }
 
     suspend fun <T : Any> parseText(
         req: Request, delimiter: String, limit: Int,
-        f: (a: List<String>) -> T
+        f: (a: List<String>) -> T,
     ): List<T> {
         return readStream(req) { lines ->
             lines.splitLines(delimiter, limit).map(f).toList()
@@ -68,7 +67,7 @@ class BbsClient(val defaultCharset: Charset) : KoinComponent {
     companion object {
         private fun Sequence<String>.splitLines(
             delimiters: String,
-            limit: Int
+            limit: Int,
         ): Sequence<List<String>> {
             return mapIndexedNotNull { i, line ->
                 line.split(delimiters, limit = limit).let { a ->
@@ -99,7 +98,7 @@ abstract class BaseBbsBoardInfo : IBoardInfo {
 
 
 abstract class BaseBbsThreadInfo(
-    datPath: String, title_: String
+    datPath: String, title_: String,
 ) : IThreadInfo {
 
     final override val title = HtmlEscape.unescapeHtml(
@@ -148,7 +147,7 @@ open class BbsMessage(
     mail: String,
     final override val date: CharSequence,
     body: String,
-    final override val id: CharSequence
+    final override val id: CharSequence,
 ) : IMessage, IBrowsable {
 
     final override val name: CharSequence = name.parseAsHtml()

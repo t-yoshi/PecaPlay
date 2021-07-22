@@ -5,18 +5,13 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.TypeConverter
 import androidx.room.TypeConverters
-import com.squareup.moshi.JsonClass
 import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import org.peercast.core.lib.rpc.ChannelInfo
-import org.peercast.pecaplay.util.SquareUtils
 import org.peercast.pecaplay.yp4g.YpChannel
-import timber.log.Timber
-import java.io.IOException
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -130,7 +125,7 @@ data class Favorite(
         fun stringToFlags(s: String): Flags {
             return try {
                 format.decodeFromString(s)
-            } catch (e: SerializationException){
+            } catch (e: SerializationException) {
                 Flags()
             }
         }

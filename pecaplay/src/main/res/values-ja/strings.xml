@@ -30,7 +30,7 @@
     <string name="yp_cache">(キャッシュ)</string>
     <string name="yp_connect_failed">%sへの接続に失敗:</string>
     <string name="yp_reload">YPを読み込んでいます..  </string>
-     <string name="starred">ブックマーク</string>
+    <string name="starred">ブックマーク</string>
     <string name="new_item">新規</string>
     <string name="delete">削除</string>
     <string name="edit">編集</string>
@@ -81,18 +81,17 @@
     <string name="notification_delete">通知しない</string>
     <string name="notification_sound">通知音</string>
     <string name="notification_new_channels">PecaPlay: %d件の新着</string>
-<!--
-    <string name="notification_sound">サウンド</string>
-    <string name="notification_vibration">バイブレーション</string>
-    <string name="notification_wakeup">スリープ中にも継続</string>
-        <string name="notification_types">通知の動作</string>
--->
+    <!--
+        <string name="notification_sound">サウンド</string>
+        <string name="notification_vibration">バイブレーション</string>
+        <string name="notification_wakeup">スリープ中にも継続</string>
+            <string name="notification_types">通知の動作</string>
+    -->
 
     <string name="closed_port">ポートが開いていません</string>
 
     <string name="disabled">無効</string>
     <string name="enabled">有効</string>
-
 
 
 </resources>

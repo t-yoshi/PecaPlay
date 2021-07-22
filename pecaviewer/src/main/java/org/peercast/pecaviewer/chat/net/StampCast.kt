@@ -1,39 +1,46 @@
 package org.peercast.pecaviewer.chat.net
 
 
-import com.squareup.moshi.Json
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import okhttp3.Request
 import org.koin.core.component.KoinComponent
-import org.koin.core.component.get
+import org.koin.core.component.inject
+import org.peercast.pecaplay.core.io.Square
 import org.peercast.pecaplay.core.io.await
-import org.peercast.pecaviewer.util.ISquareHolder
 import java.io.IOException
 
+@Serializable
 data class StampCastStamps(
-    val stamps: List<StampCastStamp>
+    val stamps: List<StampCastStamp>,
 )
 
+@Serializable
 data class StampCastTag(
     val id: Int,
-    val text: String
+    val text: String,
 )
 
+@Serializable
 data class StampCastStamp(
     val id: Int,
     val name: String,
 
-    @Json(name = "room_id")
+    @SerialName("room_id")
     val roomId: Int,
 
-    //@Json(name = "is_animation")
+    //@SerialName(name = "is_animation")
     //val isAnimation: Boolean,
 
     val tags: List<StampCastTag>,
 
     val thumbnail: String,
 
-    @Json(name = "user_id")
-    val userId: String?
+    @SerialName("user_id")
+    val userId: String?,
 ) {
 
     fun toMessage(threadInfo: IThreadInfo, number: Int): IMessage {
@@ -43,11 +50,11 @@ data class StampCastStamp(
 
 private data class StampCastBoardInfo(
     override val title: String,
-    override val url: String
+    override val url: String,
 ) : IBoardInfo
 
 private data class StampCastThreadInfo(
-    override val board: IBoardInfo, val page: Int
+    override val board: IBoardInfo, val page: Int,
 ) : IThreadInfo {
     override val url = board.url
     override val title = "$page"
@@ -79,26 +86,35 @@ private class StampCastConnection(val id: Int) : IBoardConnection {
 
 private class StampCastPageConnection(
     private val base: StampCastConnection,
-    override val info: StampCastThreadInfo
+    override val info: StampCastThreadInfo,
 ) : IBoardThreadConnection, IBoardConnection by base, KoinComponent {
 
-    override suspend fun loadMessages(): List<IMessage> {
-        val square = get<ISquareHolder>()
-        val listAdapter = square.moshi.adapter(StampCastStamps::class.java)
+    private val square by inject<Square>()
 
+    override suspend fun loadMessages(): List<IMessage> {
         val req = Request.Builder()
             .url("https://stamp.archsted.com/api/v1/rooms/${base.id}/stamps/guest?page=${info.page}&sort=all&tag=")
             .header("Cache-Control", "private, must-revalidate, max-stale=5")
             .build()
 
         return square.okHttpClient.newCall(req).await { res ->
-            res.body?.let {
-                listAdapter.fromJson(it.string())
-                    ?.stamps?.mapIndexed { i, m ->
-                        m.toMessage(info, i + 1)
-                    }
+            val s = res.body?.string() ?: throw IOException("body is null")
+            try {
+                format.decodeFromString<StampCastStamps>(s)
+            } catch (e: SerializationException) {
+                throw IOException(e)
+            }.stamps.mapIndexed { i, m ->
+                m.toMessage(info, i + 1)
             }
-        } ?: throw IOException("body is null")
+        }
+    }
+
+    companion object {
+        private val format = Json {
+            isLenient = true
+            ignoreUnknownKeys = true
+            coerceInputValues = true
+        }
     }
 }
 

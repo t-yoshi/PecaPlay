@@ -31,7 +31,7 @@ class DefaultPecaPlayPreferences(c: Context) : PecaPlayPreferences() {
 
 
     override fun isViewerEnabled(type: String): Boolean {
-        return when (type.lowercase()){
+        return when (type.lowercase()) {
             "flv", "mkv" -> prefs.getBoolean(KEY_PLAYER_ENABLED, true)
             else -> false
         }

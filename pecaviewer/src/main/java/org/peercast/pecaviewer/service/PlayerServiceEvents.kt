@@ -31,14 +31,14 @@ data class PeerCastChannelEvent(
     val name: String,
     val url: String,
     val desc: String,
-    val comment: String
+    val comment: String,
 ) : PlayerServiceEvent() {
 
     constructor(ch: ChannelInfo) : this(ch.name, ch.url, ch.desc, ch.comment)
 }
 
 data class PeerCastNotifyMessageEvent(
-    val types: EnumSet<NotifyMessageType>, val message: String
+    val types: EnumSet<NotifyMessageType>, val message: String,
 ) : PlayerServiceEvent()
 
 data class PlayerBufferingEvent(val percentage: Int = 0) : PlayerServiceEvent()

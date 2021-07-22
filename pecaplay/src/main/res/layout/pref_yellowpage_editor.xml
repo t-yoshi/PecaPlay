@@ -3,6 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <data>
+
         <variable
             name="viewModel"
             type="org.peercast.pecaplay.prefs.YellowPageEditorDialogFragment.ViewModel" />
@@ -35,7 +36,7 @@
 
         <Space
             android:layout_width="match_parent"
-            android:layout_height="15dp"/>
+            android:layout_height="15dp" />
 
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"

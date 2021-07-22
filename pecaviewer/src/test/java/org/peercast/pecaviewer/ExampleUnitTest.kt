@@ -1,14 +1,9 @@
 package org.peercast.pecaviewer
 
-import com.squareup.moshi.Moshi
 import kotlinx.coroutines.runBlocking
-import okhttp3.OkHttpClient
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import org.koin.core.context.startKoin
-import org.koin.dsl.module
 import org.peercast.pecaviewer.chat.net.openBoardConnection
-import org.peercast.pecaviewer.util.ISquareHolder
 import timber.log.Timber
 
 /**
@@ -24,17 +19,17 @@ class ExampleUnitTest {
                 t?.printStackTrace()
             }
         })
-        startKoin {
-            modules(module {
-                single<ISquareHolder> { TestSquareHolder() }
-            })
-        }
+//        startKoin {
+//            modules(module {
+//                single<ISquareHolder> { TestSquareHolder() }
+//            })
+//        }
     }
-
-    private class TestSquareHolder : ISquareHolder {
-        override val okHttpClient: OkHttpClient = OkHttpClient.Builder().build()
-        override val moshi: Moshi = Moshi.Builder().build()
-    }
+//
+//    private class TestSquareHolder : ISquareHolder {
+//        override val okHttpClient: OkHttpClient = OkHttpClient.Builder().build()
+//        override val moshi: Moshi = Moshi.Builder().build()
+//    }
 
     //http://hibino.ddo.jp/bbs/test/read.cgi/peca/1552237443/
     //https://jbbs.shitaraba.net/bbs/rawmode.cgi/game/59608/1552136407/l50

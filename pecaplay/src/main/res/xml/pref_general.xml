@@ -2,24 +2,24 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
     <Preference
-            android:title="@string/pref_header_yellow_page"
-            android:key="pref_header_yellow_page"
-            android:fragment="org.peercast.pecaplay.prefs.YellowPagePrefsFragment"/>
+        android:title="@string/pref_header_yellow_page"
+        android:key="pref_header_yellow_page"
+        android:fragment="org.peercast.pecaplay.prefs.YellowPagePrefsFragment" />
 
     <EditTextPreference
-            android:defaultValue="http://localhost:7144/"
-            android:inputType="textUri"
-            android:key="pref_peercast_server_url"
-            android:maxLines="1"
-            android:selectAllOnFocus="true"
-            android:singleLine="true"
-            android:dialogMessage="http://(host):(port)/"
-            android:title="@string/pref_peercast_url"/>
+        android:defaultValue="http://localhost:7144/"
+        android:inputType="textUri"
+        android:key="pref_peercast_server_url"
+        android:maxLines="1"
+        android:selectAllOnFocus="true"
+        android:singleLine="true"
+        android:dialogMessage="http://(host):(port)/"
+        android:title="@string/pref_peercast_url" />
 
     <SwitchPreference
-            android:defaultValue="false"
-            android:key="pref_ng_hidden"
-            android:title="@string/ng_hidden"/>
+        android:defaultValue="false"
+        android:key="pref_ng_hidden"
+        android:title="@string/ng_hidden" />
 
     <SwitchPreference
         android:defaultValue="true"
@@ -27,23 +27,23 @@
         android:title="@string/pref_header_viewer" />
 
     <Preference
-            android:key="pref_notification_sound"
-            android:title="@string/notification_sound"/>
+        android:key="pref_notification_sound"
+        android:title="@string/notification_sound" />
 
-    <Preference android:selectable="false"/>
+    <Preference android:selectable="false" />
 
     <PreferenceCategory
-            android:key="pref_category_about"
-            android:title="@string/pref_header_about">
+        android:key="pref_category_about"
+        android:title="@string/pref_header_about">
         <Preference
-                android:key="pref_about"
-                android:persistent="false"
-                android:title="@string/app_name"/>
+            android:key="pref_about"
+            android:persistent="false"
+            android:title="@string/app_name" />
 
         <Preference
-                android:key="pref_oss_license"
-                android:persistent="false"
-                android:title="@string/oss_license"/>
+            android:key="pref_oss_license"
+            android:persistent="false"
+            android:title="@string/oss_license" />
     </PreferenceCategory>
 
 </PreferenceScreen>

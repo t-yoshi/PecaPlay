@@ -7,7 +7,7 @@ import org.peercast.pecaviewer.R
 import java.util.*
 import kotlin.math.abs
 
-object DateUtils : KoinComponent {
+internal object DateUtils : KoinComponent {
     private val a by inject<Application>()
 
     private val RE_DATETIME_1 = """(20\d\d)/([01]?\d)/(\d\d).*(\d\d):(\d\d):(\d\d)""".toRegex()
