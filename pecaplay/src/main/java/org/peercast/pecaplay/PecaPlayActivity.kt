@@ -105,7 +105,7 @@ class PecaPlayActivity : AppCompatActivity() {
 
 
         vNavigation.onItemClick = { item->
-            viewModel.run {
+            viewModel.channelQuery {
                 displayOrder = when (item.tag) {
                     "history" -> YpDisplayOrder.NONE
                     "notificated",
@@ -276,7 +276,9 @@ class PecaPlayActivity : AppCompatActivity() {
             R.id.menu_sort_listener_asc,
             -> {
                 val order = YpDisplayOrder.fromOrdinal(item.order)
-                viewModel.displayOrder = order
+                viewModel.channelQuery {
+                    displayOrder = order
+                }
                 pecaPlayPrefs.displayOrder = order
                 item.isChecked = true
             }
@@ -372,7 +374,9 @@ class PecaPlayActivity : AppCompatActivity() {
         }
 
         override fun onQueryTextChange(newText: String): Boolean {
-            viewModel.searchQuery = newText
+            viewModel.channelQuery {
+                searchQuery = newText
+            }
             return true
         }
 

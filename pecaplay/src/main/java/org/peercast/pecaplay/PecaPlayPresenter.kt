@@ -50,8 +50,9 @@ class PecaPlayPresenter(
     fun startPlay(f: Fragment, ch: YpChannel) {
         Timber.i("startPlay(%s)", ch)
 
-        if (viewModel.searchQuery.isNotBlank()) {
-            saveRecentQuery(a, viewModel.searchQuery)
+        val searchQuery = viewModel.channelQuery.searchQuery
+        if (searchQuery.isNotBlank()) {
+            saveRecentQuery(a, searchQuery)
         }
         val streamUrl = ch.stream(pecaPlayPrefs.peerCastUrl)
 

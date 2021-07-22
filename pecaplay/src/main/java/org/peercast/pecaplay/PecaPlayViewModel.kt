@@ -42,59 +42,57 @@ class PecaPlayViewModel(
     /**リスト表示用*/
     val channelsFlow: Flow<List<YpChannel>> = MutableStateFlow(emptyList())
 
-    private var j: Job? = null
 
-    private fun changeSource(src: YpChannelSource) {
-        j?.cancel()
-        val f = when (src) {
-            YpChannelSource.LIVE -> liveChannelFlow
-            YpChannelSource.HISTORY -> historyChannelFlow
+    inner class ChannelQuery {
+        /**配信中or履歴**/
+        var source = YpChannelSource.LIVE
+
+        /**お気に入り/ジャンル等で選別するセレクタ*/
+        var selector : (YpChannel) -> Boolean = { true }
+
+        /**表示する順序*/
+        var displayOrder = pecaPlayPrefs.displayOrder
+
+        /**検索窓から*/
+        var searchQuery = ""
+
+        /**変更後に適用する*/
+        operator fun invoke(action: ChannelQuery.()->Unit){
+            action(this)
+            changeSource(source)
         }
-        j = viewModelScope.launch {
-            f.onEach { channels ->
-                var l = channels.filter(selector)
 
-                if (searchQuery.isNotBlank()) {
-                    val constraints = searchQuery.normalize().split(RE_SPACE)
-                    l = l.filter { ch ->
-                        constraints.all { ch.searchText.contains(it) }
+        private var j: Job? = null
+
+        private fun changeSource(src: YpChannelSource) {
+            j?.cancel()
+            val f = when (src) {
+                YpChannelSource.LIVE -> liveChannelFlow
+                YpChannelSource.HISTORY -> historyChannelFlow
+            }
+            j = viewModelScope.launch {
+                f.onEach { channels ->
+                    var l = channels.filter(selector)
+
+                    if (searchQuery.isNotBlank()) {
+                        val constraints = searchQuery.normalize().split(RE_SPACE)
+                        l = l.filter { ch ->
+                            constraints.all { ch.searchText.contains(it) }
+                        }
+                    }
+
+                    (channelsFlow as MutableStateFlow).value = when (displayOrder) {
+                        YpDisplayOrder.NONE -> l
+                        else -> l.sortedWith(displayOrder.comparator)
                     }
                 }
-
-                (channelsFlow as MutableStateFlow).value = when (displayOrder) {
-                    YpDisplayOrder.NONE -> l
-                    else -> l.sortedWith(displayOrder.comparator)
-                }
+                    .flowOn(Dispatchers.Default)
+                    .collect()
             }
-                .flowOn(Dispatchers.Default)
-                .collect()
         }
     }
 
-
-    /**配信中or履歴**/
-    var source by Delegates.observable(YpChannelSource.LIVE) { _, old, new ->
-        if (old != new)
-            changeSource(new)
-    }
-
-    /**お気に入り/ジャンル等で選別するセレクタ*/
-    var selector by Delegates.observable<(YpChannel) -> Boolean>({ true }) { _, old, new ->
-        if (old != new)
-            changeSource(source)
-    }
-
-    /**表示する順序*/
-    var displayOrder by Delegates.observable(pecaPlayPrefs.displayOrder) { _, old, new ->
-        if (old != new)
-            changeSource(source)
-    }
-
-    /**検索窓から*/
-    var searchQuery by Delegates.observable("") { _, old, new ->
-        if (old != new)
-            changeSource(source)
-    }
+    val channelQuery = ChannelQuery()
 
 
     /**通知アイコン(ベルのマーク)の有効/無効*/

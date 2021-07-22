@@ -49,7 +49,7 @@ class YpChannelFragment : Fragment() {
     //スクロール位置を保存する。
     private val scrollPositions = Bundle()
 
-    private val queryTag: String get() = viewModel.run { "$source#$selector" }
+    private val queryTag: String get() = viewModel.channelQuery.run { "$source#$selector" }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
