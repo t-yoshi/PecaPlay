@@ -2,26 +2,23 @@ package org.peercast.pecaplay.worker
 
 import android.content.Context
 import android.net.Uri
+import androidx.work.ListenableWorker
 import androidx.work.WorkerParameters
-import com.google.firebase.crashlytics.FirebaseCrashlytics
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.peercast.core.lib.PeerCastRpcClient
 import org.peercast.core.lib.app.BaseClientWorker
-import org.peercast.pecaplay.app.AppRoomDatabase
-import org.peercast.pecaplay.core.io.Square
 import org.peercast.pecaplay.prefs.PecaPlayPreferences
+import timber.log.Timber
 
 
 class LoadingWorker(c: Context, workerParams: WorkerParameters) :
     BaseClientWorker(c, workerParams), KoinComponent {
 
-    val square by inject<Square>()
-    val database by inject<AppRoomDatabase>()
-    val appPrefs by inject<PecaPlayPreferences>()
-    val eventFlow by inject<LoadingEventFlow>()
+    private val appPrefs by inject<PecaPlayPreferences>()
+    private val eventFlow by inject<LoadingEventFlow>()
 
-    abstract class Task {
+    abstract class Task(protected val worker: ListenableWorker) {
         /**trueなら次のタスクを実行する*/
         abstract suspend operator fun invoke(): Boolean
     }
@@ -44,7 +41,7 @@ class LoadingWorker(c: Context, workerParams: WorkerParameters) :
         } catch (t: Throwable) {
             //NOTE: 例外が起きても[androidx.work.impl.WorkerWrapper]内で
             //キャッチされるだけ。補足しにくいので注意。
-            FirebaseCrashlytics.getInstance().recordException(t)
+            Timber.e(t, "An exception happened in LoadingWorker.")
             throw t
         } finally {
             eventFlow.value = LoadingEvent.OnFinished(id)

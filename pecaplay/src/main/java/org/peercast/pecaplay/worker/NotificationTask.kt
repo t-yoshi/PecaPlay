@@ -12,15 +12,27 @@ import android.os.Build
 import android.text.SpannableStringBuilder
 import android.text.style.StyleSpan
 import androidx.core.app.NotificationCompat
+import androidx.work.ListenableWorker
 import kotlinx.coroutines.flow.first
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import org.peercast.pecaplay.PecaPlayActivity
 import org.peercast.pecaplay.PecaPlayIntent
 import org.peercast.pecaplay.R
+import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.YpLiveChannel
+import org.peercast.pecaplay.core.io.Square
+import org.peercast.pecaplay.prefs.PecaPlayPreferences
 import org.peercast.pecaplay.yp4g.YpDisplayOrder
 import timber.log.Timber
 
-class NotificationTask(private val worker: LoadingWorker) : LoadingWorker.Task() {
+class NotificationTask(worker: ListenableWorker) : LoadingWorker.Task(worker), KoinComponent {
+
+    private val square by inject<Square>()
+    private val database by inject<AppRoomDatabase>()
+    private val appPrefs by inject<PecaPlayPreferences>()
+    private val eventFlow by inject<LoadingEventFlow>()
+
     private val c = worker.applicationContext
     private val manager = c.getSystemService(
         Context.NOTIFICATION_SERVICE
@@ -47,11 +59,11 @@ class NotificationTask(private val worker: LoadingWorker) : LoadingWorker.Task()
     }
 
     override suspend fun invoke(): Boolean {
-        if (!worker.appPrefs.isNotificationEnabled)
+        if (!appPrefs.isNotificationEnabled)
             return true
 
-        val channels = worker.database.ypChannelDao.query().first()
-        val favorites = worker.database.favoriteDao.query().first()
+        val channels = database.ypChannelDao.query().first()
+        val favorites = database.favoriteDao.query().first()
 
         val favoNotify = favorites.filter { it.flags.isNotification }
         val favoNG = favorites.filter { it.flags.isNG }
@@ -63,8 +75,8 @@ class NotificationTask(private val worker: LoadingWorker) : LoadingWorker.Task()
         }
 
         if (newChannels.isNotEmpty()) {
-            worker.appPrefs.notificationNewlyChannelsId += newChannels.map { it.id }
-            val ids = worker.appPrefs.notificationNewlyChannelsId
+            appPrefs.notificationNewlyChannelsId += newChannels.map { it.id }
+            val ids = appPrefs.notificationNewlyChannelsId
             onNewChannels(
                 channels.filter {
                     it.id in ids
@@ -119,7 +131,7 @@ class NotificationTask(private val worker: LoadingWorker) : LoadingWorker.Task()
             .setGroup("pacaplay")
             .setContentIntent(createActivityIntent())
 
-        worker.appPrefs.notificationSoundUrl.let {
+        appPrefs.notificationSoundUrl.let {
             if (it != Uri.EMPTY)
                 builder.setSound(it)
         }

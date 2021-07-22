@@ -1,39 +1,48 @@
 package org.peercast.pecaplay.worker
 
+import androidx.work.ListenableWorker
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
+import org.peercast.pecaplay.app.AppRoomDatabase
+import org.peercast.pecaplay.core.io.Square
+import org.peercast.pecaplay.prefs.PecaPlayPreferences
 import org.peercast.pecaplay.yp4g.Yp4gColumn
 import org.peercast.pecaplay.yp4g.net.Yp4gChannelBinder
 import org.peercast.pecaplay.yp4g.net.createYp4gService
 import timber.log.Timber
 import java.io.IOException
 
-class LoadingTask(
-    private val worker: LoadingWorker,
-) : LoadingWorker.Task() {
+class LoadingTask(worker: ListenableWorker) : LoadingWorker.Task(worker), KoinComponent {
+
+    private val square by inject<Square>()
+    private val database by inject<AppRoomDatabase>()
+    private val appPrefs by inject<PecaPlayPreferences>()
+    private val eventFlow by inject<LoadingEventFlow>()
 
     override suspend fun invoke(): Boolean {
-        if (worker.database.ypChannelDao.getLastLoadedSince() < 15) {
+        if (database.ypChannelDao.getLastLoadedSince() < 15) {
             return false
         }
 
-        val yellowPages = worker.database.yellowPageDao.query().first()
+        val yellowPages = database.yellowPageDao.query().first()
 
         Timber.d("start loading: %s", yellowPages)
 
-        val port = worker.appPrefs.peerCastUrl.port
+        val port = appPrefs.peerCastUrl.port
         val binders = withContext(Dispatchers.IO) {
             yellowPages.map { yp ->
-                val svc = createYp4gService(worker.square.okHttpClient, yp)
+                val svc = createYp4gService(square.okHttpClient, yp)
                 async {
                     try {
                         svc.getIndex("localhost:$port")
                             .onEach { it.setYellowPage(yp) }
                     } catch (e: IOException) {
-                        worker.eventFlow.value =
+                        eventFlow.value =
                             LoadingEvent.OnException(worker.id, yp, e)
                         emptyList()
                     }
@@ -41,8 +50,8 @@ class LoadingTask(
             }.awaitAll().flatten()
         }
 
-        worker.database.runInTransaction {
-            worker.database.compileStatement("UPDATE YpLiveChannel SET isLatest=0").use {
+        database.runInTransaction {
+            database.compileStatement("UPDATE YpLiveChannel SET isLatest=0").use {
                 it.executeUpdateDelete()
             }
             if (binders.isNotEmpty()) {
@@ -70,7 +79,7 @@ class LoadingTask(
               IFNULL((SELECT numLoaded+1 FROM YpLiveChannel WHERE name=? AND id=?), 1) -->numLoaded
             )""".trimIndent()
 
-        worker.database.compileStatement(sql).use { statement ->
+        database.compileStatement(sql).use { statement ->
             binders.forEach { b ->
                 Timber.d("->%s", b)
                 b.bindToStatement(
