@@ -6,11 +6,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.withContext
-import org.peercast.pecaplay.R
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.Favorite
 import org.peercast.pecaplay.app.YellowPage
-import org.peercast.pecaplay.app.YpLiveChannel
 import org.peercast.pecaplay.prefs.PecaPlayPreferences
 import org.peercast.pecaplay.yp4g.YpChannel
 import timber.log.Timber
@@ -69,97 +67,42 @@ class NavigationModel(private val c: Context) {
 
         var topOrder = 0
 
-        items += NavigationItem(
-            c.getString(R.string.navigate_all),
-            GID_TOP, topOrder++,
-            R.drawable.ic_home_36dp,
-            { true }, TAG_HOME
-        )
+        items += NavigationHomeItem(c, topOrder++)
 
-        items += NavigationItem(
-            c.getString(R.string.navigate_newer),
-            GID_TOP, topOrder++,
-            R.drawable.ic_new_releases_36dp,
-            { ch ->
-                !ch.isEmptyId && ch is YpLiveChannel && (ch.numLoaded <= 2)
-            }//ch.ageAsMinutes < 15 ||
-        )
+        items += NavigationNewItem(c, topOrder++)
 
         val stars = favorites.filter { it.isStar && !it.flags.isNG }
-        items += NavigationItem(
-            c.getString(R.string.navigate_favorite),
-            GID_FAVORITE, topOrder++,
-            R.drawable.ic_star_36dp,
-            { ch ->
-                stars.any { it.matches(ch) }
-            })
+        items += NavigationStarredItem(c, stars, topOrder++)
 
         val favoNotify = favorites.filter { it.flags.isNotification && !it.flags.isNG }
         if (appPrefs.isNotificationEnabled) {
-            items += NavigationItem(
-                c.getString(R.string.notificated),
-                GID_FAVORITE, topOrder++,
-                R.drawable.ic_notifications_36dp,
-                { ch ->
-                    favoNotify.any {
-                        //ch is YpIndex && ch.numLoaded < 3 &&
-                        it.matches(ch)
-                    }
-                },
-                TAG_NOTIFICATED
-            )
+            items += NavigationNotifiedItem(c, favoNotify, topOrder++)
         }
 
         val favoTaggable = favorites.filter { !it.isStar && !it.flags.isNG }
-        favoTaggable.forEachIndexed { i, favo ->
-            items += NavigationItem(
-                favo.name,
-                GID_FAVORITE, i + 10,
-                R.drawable.ic_bookmark_36dp,
-                { ch ->
-                    favo.matches(ch)
-                })
+        favoTaggable.forEachIndexed { i, f ->
+            items += NavigationFavoriteItem(c, f, i + 10)
         }
 
-
-        items += NavigationItem(
-            c.getString(R.string.navigate_history),
-            GID_HISTORY, topOrder++,
-            R.drawable.ic_history_36dp,
-            { true },
-            TAG_HISTORY
-        )
+        items += NavigationHistoryItem(c, topOrder++)
 
         yellowPages.forEachIndexed { i, yp ->
-            items += NavigationItem(
-                yp.name,
-                GID_YP, i + 1,
-                R.drawable.ic_peercast,
-                {
-                    it.ypName == yp.name
-                })
+            items += NavigationYpItem(c, yp, i + 1)
         }
 
-        parseGenre(channels).take(6).mapIndexed { i, t ->
-            items += NavigationItem(
-                t, GID_GENRE, i + 1,
-                R.drawable.ic_bookmark_border_36dp,
-                {
-                    it.genre.contains(t, true)
-                })
+        parseGenre(channels).take(6).mapIndexed { i, g ->
+            items += NavigationGenreItem(c, g, i + 1)
         }
-
-        val badgeInvisibleItems = listOf(TAG_HOME, TAG_HISTORY)
 
         withContext(Dispatchers.Default) {
-            items.filter { it.tag !in badgeInvisibleItems }.forEach {
-                val n = channels.count(it.selector)
-                val m = channels.filter { !it.isEmptyId }.count(it.selector)
-                it.badge = when {
+            items.filterIsInstance<BadgeableNavigationItem>().forEach { item ->
+                val n = channels.count(item.selector)
+                val m = channels.filter { !it.isEmptyId }.count(item.selector)
+                item.badge = when {
                     n > 99 -> "99+"
                     n > 0 -> "$m"
                     else -> {
-                        it.isVisible = false
+                        item.isVisible = false
                         ""
                     }
                 }
@@ -169,17 +112,4 @@ class NavigationModel(private val c: Context) {
         return items
     }
 
-    companion object {
-        //グループ
-        const val GID_TOP = Menu.FIRST + 0
-        const val GID_FAVORITE = Menu.FIRST + 1
-        const val GID_HISTORY = Menu.FIRST + 2
-        const val GID_YP = Menu.FIRST + 3
-        const val GID_GENRE = Menu.FIRST + 4
-
-        const val TAG_HOME = "home"
-        const val TAG_NEWLY = "newly"
-        const val TAG_NOTIFICATED = "notificated"
-        const val TAG_HISTORY = "history"
-    }
 }

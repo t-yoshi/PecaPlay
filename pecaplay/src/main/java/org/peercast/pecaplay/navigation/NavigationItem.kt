@@ -2,8 +2,10 @@ package org.peercast.pecaplay.navigation
 
 import androidx.annotation.DrawableRes
 import org.peercast.pecaplay.yp4g.YpChannelSelector
+import java.util.*
 
-class NavigationItem(
+
+abstract class NavigationItem(
 
     val title: CharSequence,
 
@@ -14,20 +16,35 @@ class NavigationItem(
     val order: Int,
 
     @DrawableRes val icon: Int,
-
-    val selector: YpChannelSelector,
-
-    tag_: String? = null,
 ) {
-    /**非表示の場合、プリファレンスのキー*/
-    val tag = tag_ ?: "$title groupId=$groupId"
 
-    /**バッジ用のテキスト*/
-    var badge: String = ""
+    /**非表示設定のキー*/
+    abstract val key: String
+
+    abstract val selector: YpChannelSelector
+
 
     var isVisible = true
 
-    val itemId = groupId * 31 + title.hashCode()
+    val itemId get() = hashCode()
 
-    override fun toString(): String = tag
+    override fun hashCode() = Objects.hash(groupId, title)
+
+    override fun equals(other: Any?): Boolean {
+        return other is NavigationItem &&
+                other.javaClass == javaClass &&
+                other.key == key
+    }
+
+    override fun toString() = key
+}
+
+abstract class BadgeableNavigationItem(title: CharSequence, groupId: Int, order: Int, icon: Int) :
+    NavigationItem(title,
+        groupId,
+        order,
+        icon) {
+
+    /**バッジ用のテキスト*/
+    var badge: String = ""
 }

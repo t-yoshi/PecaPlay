@@ -20,7 +20,6 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.FragmentContainerView
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.appbar.AppBarLayout
-import com.google.android.material.navigation.NavigationView
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filterIsInstance
@@ -30,9 +29,10 @@ import kotlinx.coroutines.launch
 import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.core.io.localizedSystemMessage
-import org.peercast.pecaplay.navigation.NavigationModel
+import org.peercast.pecaplay.navigation.NavigationHistoryItem
+import org.peercast.pecaplay.navigation.NavigationNewItem
+import org.peercast.pecaplay.navigation.NavigationNotifiedItem
 import org.peercast.pecaplay.navigation.PecaNaviView
 import org.peercast.pecaplay.prefs.PecaPlayPreferences
 import org.peercast.pecaplay.prefs.SettingsActivity
@@ -104,12 +104,12 @@ class PecaPlayActivity : AppCompatActivity() {
         }
 
 
-        vNavigation.onItemClick = { item->
+        vNavigation.onItemClick = { item ->
             viewModel.channelQuery {
-                displayOrder = when (item.tag) {
-                    "history" -> YpDisplayOrder.NONE
-                    "notificated",
-                    "newly",
+                displayOrder = when (item) {
+                    is NavigationHistoryItem -> YpDisplayOrder.NONE
+                    is NavigationNotifiedItem,
+                    is NavigationNewItem,
                     -> {
                         removeNotification()
                         YpDisplayOrder.AGE_ASC
@@ -117,8 +117,8 @@ class PecaPlayActivity : AppCompatActivity() {
                     else -> pecaPlayPrefs.displayOrder
                 }
                 selector = item.selector
-                source = when (item.tag) {
-                    "history" -> YpChannelSource.HISTORY
+                source = when (item) {
+                    is NavigationHistoryItem -> YpChannelSource.HISTORY
                     else -> YpChannelSource.LIVE
                 }
             }
@@ -133,6 +133,7 @@ class PecaPlayActivity : AppCompatActivity() {
                 supportActionBar?.setTitle(R.string.app_name)
             }
         }
+
         lifecycleScope.launchWhenResumed {
             vNavigation.model.collect(get(), get())
         }
@@ -183,9 +184,7 @@ class PecaPlayActivity : AppCompatActivity() {
 
         if (intent.hasExtra(PecaPlayIntent.EXTRA_IS_NOTIFICATED)) {
             removeNotification()
-            lifecycleScope.launchWhenResumed {
-                vNavigation.extension?.navigate("notificated")
-            }
+            vNavigation.willNavigate { it is NavigationNotifiedItem }
         }
 
         if (intent.action == "ACTION_LAUNCH_VIEWER") {
@@ -221,7 +220,6 @@ class PecaPlayActivity : AppCompatActivity() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        vNavigation.extension?.onSaveInstanceState(outState)
         outState.putLong(STATE_LAST_LOADED_ER_TIME, lastLoadedET)
     }
 
@@ -319,14 +317,8 @@ class PecaPlayActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        vNavigation.extension?.let {
-            if (it.isEditMode) {
-                it.isEditMode = false
-                return
-            }
-            if (it.backToHome())
-                return
-        }
+        if (vNavigation.onBackPressed())
+            return
 
         vDrawerLayout?.let { v ->
             if (v.isDrawerOpen(Gravity.LEFT)) {
