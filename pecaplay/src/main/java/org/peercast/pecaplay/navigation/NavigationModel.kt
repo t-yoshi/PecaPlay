@@ -14,13 +14,18 @@ import org.peercast.pecaplay.yp4g.YpChannel
 import timber.log.Timber
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.properties.Delegates
 
 class NavigationModel(private val c: Context) {
 
     var onChanged = {}
 
-    var items = emptyList<NavigationItem>()
-        private set
+    var items by Delegates.observable(emptyList<NavigationItem>()) { _, old, new->
+        if (old != new)
+            onChanged()
+    }
+
+    val repository = NavigationRepository(this)
 
     private fun parseGenre(channels: List<YpChannel>): List<String> {
         val rS = Regex("[\\s\\-：:]+")
@@ -37,31 +42,11 @@ class NavigationModel(private val c: Context) {
         return g
     }
 
-    suspend fun collect(appPrefs: PecaPlayPreferences, database: AppRoomDatabase) {
-        combine(
-            database.yellowPageDao.query(),
-            database.favoriteDao.query(),
-            database.ypChannelDao.query(),
-        )
-        {
-                yellowPages: List<YellowPage>,
-                favorites: List<Favorite>,
-                channels: List<YpChannel>,
-            ->
-            updateItems(yellowPages, favorites, channels, appPrefs)
-        }
-            .collect {
-                items = it
-                onChanged()
-            }
-    }
-
-    private suspend fun updateItems(
+    suspend fun updateItems(
         yellowPages: List<YellowPage>,
         favorites: List<Favorite>,
         channels: List<YpChannel>,
-        appPrefs: PecaPlayPreferences,
-    ): List<NavigationItem> {
+    ) {
         Timber.d("onUpdate()")
         val items = ArrayList<NavigationItem>(30)
 
@@ -75,7 +60,7 @@ class NavigationModel(private val c: Context) {
         items += NavigationStarredItem(c, stars, topOrder++)
 
         val favoNotify = favorites.filter { it.flags.isNotification && !it.flags.isNG }
-        if (appPrefs.isNotificationEnabled) {
+        if (repository.prefs.isNotificationEnabled) {
             items += NavigationNotifiedItem(c, favoNotify, topOrder++)
         }
 
@@ -109,7 +94,7 @@ class NavigationModel(private val c: Context) {
             }
         }
 
-        return items
+        this.items = items
     }
 
 }

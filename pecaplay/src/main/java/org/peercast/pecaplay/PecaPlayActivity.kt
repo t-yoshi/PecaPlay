@@ -141,7 +141,6 @@ class PecaPlayActivity : AppCompatActivity() {
                 val s = getString(R.string.peercast_has_started, client.rpcEndPoint.port)
                 Snackbar.make(vYpChannelFragmentContainer, s, Snackbar.LENGTH_LONG).show()
             }.collect()
-
         }
 
         lifecycleScope.launchWhenResumed {
@@ -177,8 +176,6 @@ class PecaPlayActivity : AppCompatActivity() {
         viewModel.bindService()
     }
 
-    private var jobNaviModel: Job? = null
-
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
 
@@ -187,10 +184,7 @@ class PecaPlayActivity : AppCompatActivity() {
             vNavigation.willNavigate { it is NavigationNotifiedItem }
         }
 
-        jobNaviModel?.cancel()
-        jobNaviModel = lifecycleScope.launchWhenResumed {
-            vNavigation.model.collect(get(), get())
-        }
+        vNavigation.model.repository.collectIn(lifecycleScope)
 
         if (intent.action == "ACTION_LAUNCH_VIEWER") {
             val i = Intent(intent)
