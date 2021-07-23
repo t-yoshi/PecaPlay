@@ -1,21 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="?attr/selectableItemBackground"
-    android:paddingBottom="6sp"
-    android:paddingLeft="3sp"
-    android:paddingRight="3sp"
-    android:paddingTop="6sp">
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto">
 
-    <TextView
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginRight="10dp"
-        android:alpha="0.6"
-        android:gravity="right|top"
-        android:text="@string/favorite_ng"
-        android:textStyle="italic"
-        android:visibility="visible" />
+        android:clickable="false"
+        android:focusable="false"
+        card_view:cardElevation="2sp"
+        card_view:cardUseCompatPadding="true">
 
-</FrameLayout>
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="?attr/selectableItemBackground"
+            android:paddingLeft="3sp"
+            android:paddingTop="6sp"
+            android:paddingRight="3sp"
+            android:paddingBottom="6sp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="10dp"
+                android:alpha="0.6"
+                android:gravity="right|top"
+                android:text="@string/favorite_ng"
+                android:textStyle="italic"
+                android:visibility="visible" />
+
+        </FrameLayout>
+
+    </com.google.android.material.card.MaterialCardView>
+
+    <data>
+
+        <import type="android.view.View" />
+
+        <import type="android.widget.CheckBox" />
+
+        <variable
+            name="viewModel"
+            type="org.peercast.pecaplay.chanlist.ListItemViewModel" />
+
+        <variable
+            name="itemEventListener"
+            type="org.peercast.pecaplay.chanlist.ListItemEventListener" />
+    </data>
+
+</layout>

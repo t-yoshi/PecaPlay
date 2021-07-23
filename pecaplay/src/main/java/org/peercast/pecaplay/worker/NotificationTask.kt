@@ -20,17 +20,15 @@ import org.peercast.pecaplay.PecaPlayActivity
 import org.peercast.pecaplay.R
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.YpLiveChannel
-import org.peercast.pecaplay.core.io.Square
+import org.peercast.pecaplay.core.app.PecaPlayIntent
 import org.peercast.pecaplay.prefs.PecaPlayPreferences
 import org.peercast.pecaplay.yp4g.YpDisplayOrder
 import timber.log.Timber
 
 class NotificationTask(worker: ListenableWorker) : LoadingWorker.Task(worker), KoinComponent {
 
-    private val square by inject<Square>()
     private val database by inject<AppRoomDatabase>()
     private val appPrefs by inject<PecaPlayPreferences>()
-    private val eventFlow by inject<LoadingEventFlow>()
 
     private val c = worker.applicationContext
     private val manager = c.getSystemService(
@@ -49,7 +47,7 @@ class NotificationTask(worker: ListenableWorker) : LoadingWorker.Task(worker), K
     private fun createActivityIntent(): PendingIntent {
         val i = Intent().also {
             it.setClass(c, PecaPlayActivity::class.java)
-            it.putExtra(PecaPlayActivity.EX_IS_NOTIFIED, true)
+            it.action = PecaPlayIntent.ACTION_VIEW_NOTIFIED
         }
         return PendingIntent.getActivity(
             c, 0, i,

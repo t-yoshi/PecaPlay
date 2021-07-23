@@ -27,6 +27,7 @@ class NavigationModel(private val c: Context) {
         if (old != new)
             onChanged()
     }
+        private set
 
     val repository = NavigationRepository(this)
 
@@ -85,19 +86,18 @@ class NavigationModel(private val c: Context) {
         withContext(Dispatchers.Default) {
             items.filterIsInstance<BadgeableNavigationItem>().map { item ->
                 async {
-                    val n = channels.count(item.selector)
-                    val m = channels.filter { !it.isEmptyId }.count(item.selector)
+                    val n = channels.filter { !it.isEmptyId && item.selector(it) }.count()
                     item.badge = when {
                         n > 99 -> "99+"
-                        n > 0 -> "$m"
+                        n > 0 -> "$n"
                         else -> {
                             item.isVisible = false
                             ""
                         }
                     }
                 }
-            }.awaitAll()
-        }
+            }
+        }.awaitAll()
 
         this.items = items
     }

@@ -15,7 +15,7 @@ import org.peercast.pecaplay.core.app.stream
 import org.peercast.pecaplay.prefs.PecaPlayPreferences
 import org.peercast.pecaplay.worker.LoadingWorkerManager
 import org.peercast.pecaplay.yp4g.YpChannel
-import org.peercast.pecaviewer.PecaViewerIntent
+import org.peercast.pecaplay.core.app.PecaViewerIntent
 import timber.log.Timber
 
 
@@ -50,16 +50,14 @@ class PecaPlayPresenter(
     fun startPlay(f: Fragment, ch: YpChannel) {
         Timber.i("startPlay(%s)", ch)
 
-        val searchQuery = viewModel.channelQuery.searchQuery
+        val searchQuery = viewModel.channelFilter.params.searchQuery
         if (searchQuery.isNotBlank()) {
             saveRecentQuery(a, searchQuery)
         }
         val streamUrl = ch.stream(pecaPlayPrefs.peerCastUrl)
 
         val intent = if (pecaPlayPrefs.isViewerEnabled(ch.type)) {
-            PecaViewerIntent.create(a, streamUrl, ch.name,
-                "${ch.genre} ${ch.description} ${ch.comment}".trim(), ch.url
-            )
+            PecaViewerIntent.create(streamUrl, ch)
         } else {
             Intent().also {
                 it.action = Intent.ACTION_VIEW

@@ -11,7 +11,9 @@ import android.graphics.BitmapFactory
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
-import org.peercast.pecaviewer.PecaViewerIntent
+import org.peercast.pecaplay.core.app.PecaPlayIntent
+import org.peercast.pecaplay.core.app.PecaViewerIntent
+import org.peercast.pecaplay.core.app.Yp4gChannel
 import org.peercast.pecaviewer.R
 import kotlin.properties.Delegates
 
@@ -35,8 +37,8 @@ class NotificationHelper(private val service: PlayerService) {
 
     var thumbnail by updateNotifyWhenChanged<Bitmap>(launcherIcon)
 
-    //PecaViewerを起動したインテント。タスクバーから復帰するとき用
-    lateinit var viewerIntent: Intent
+    //タスクバーから復帰するためのインテント
+    lateinit var resumeIntent: Intent
 
     private var isForeground = false
 
@@ -75,12 +77,9 @@ class NotificationHelper(private val service: PlayerService) {
 
     //PecaPlay経由で復帰する
     private fun buildPecaPlayPendingIntent(): PendingIntent {
-        val intent = Intent(viewerIntent).also {
-            it.action = PecaViewerIntent.ACTION_LAUNCH_VIEWER
-            it.setClassName(
-                "org.peercast.pecaplay",
-                "org.peercast.pecaplay.PecaPlayActivity"
-            )
+        val intent = Intent(resumeIntent).also {
+            it.action = PecaPlayIntent.ACTION_LAUNCH_VIEWER
+            it.component = PecaPlayIntent.ComponentPlayActivity
         }
         return PendingIntent.getActivity(
             service,
@@ -120,14 +119,15 @@ class NotificationHelper(private val service: PlayerService) {
             .setCancelButtonIntent(stopAction.actionIntent)
             //.setShowActionsInCompactView(0)
             .setShowCancelButton(true)
+        val ch = resumeIntent.getParcelableExtra<Yp4gChannel>(PecaViewerIntent.EX_YP4G_CHANNEL)
 
         return builder
             .setContentIntent(buildPecaPlayPendingIntent())
             .setContentTitle("PecaPlayViewer")
             .setSmallIcon(R.drawable.ic_play_circle_outline_black_24dp)
             .setLargeIcon(service.thumbnail)
-            .setContentTitle(viewerIntent.getCharSequenceExtra(PecaViewerIntent.EX_TITLE))
-            .setContentText(viewerIntent.getCharSequenceExtra(PecaViewerIntent.EX_COMMENT))
+            .setContentTitle(ch?.name)
+            .setContentText(ch?.run { "$genre $description $comment".trim() })
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .setDeleteIntent(stopAction.actionIntent)
             .setAutoCancel(true)

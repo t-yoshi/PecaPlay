@@ -11,7 +11,6 @@ import org.koin.core.KoinApplication
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
 import org.peercast.pecaplay.app.AppRoomDatabase
-import org.peercast.pecaplay.list.listItemModule
 import org.peercast.pecaplay.prefs.DefaultPecaPlayPreferences
 import org.peercast.pecaplay.prefs.PecaPlayPreferences
 import org.peercast.pecaplay.worker.LoadingEventFlow
@@ -40,7 +39,7 @@ class PecaPlayApplication : Application() {
         kApp = startKoin {
             //androidLogger(Level.DEBUG)
             androidContext(this@PecaPlayApplication)
-            modules(coreModule, pecaplayModule, pecaviewerModule, listItemModule)
+            modules(coreModule, pecaplayModule, pecaviewerModule)
         }
     }
 

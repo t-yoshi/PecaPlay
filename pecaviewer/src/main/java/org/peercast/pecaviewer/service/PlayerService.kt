@@ -29,6 +29,8 @@ import org.peercast.core.lib.PeerCastController
 import org.peercast.core.lib.notify.NotifyChannelType
 import org.peercast.core.lib.notify.NotifyMessageType
 import org.peercast.core.lib.rpc.ChannelInfo
+import org.peercast.pecaplay.core.app.PecaPlayIntent
+import org.peercast.pecaplay.core.app.Yp4gChannel
 import org.peercast.pecaviewer.ViewerPreference
 import timber.log.Timber
 import java.io.IOException
@@ -263,9 +265,8 @@ class PlayerService : LifecycleService() {
         })
     }
 
-    fun prepareFromUri(intent: Intent) {
-        val u = requireNotNull(intent.data)
-        notificationHelper.viewerIntent = intent
+    fun prepareFromUri(u: Uri, ch: Yp4gChannel) {
+        notificationHelper.resumeIntent = PecaPlayIntent.createLaunchViewer(u, ch)
 
         if (playingUrl == u)
             return

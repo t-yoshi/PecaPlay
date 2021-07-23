@@ -1,7 +1,7 @@
 package org.peercast.pecaplay.navigation
 
 import androidx.annotation.DrawableRes
-import org.peercast.pecaplay.yp4g.YpChannelSelector
+import org.peercast.pecaplay.chanlist.filter.YpChannelPredicate
 import java.util.*
 
 
@@ -21,7 +21,7 @@ abstract class NavigationItem(
     /**非表示設定のキー*/
     abstract val key: String
 
-    abstract val selector: YpChannelSelector
+    abstract val selector: YpChannelPredicate
 
 
     var isVisible = true

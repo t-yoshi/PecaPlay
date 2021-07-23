@@ -3,18 +3,11 @@ package org.peercast.pecaplay
 import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.peercast.core.lib.app.BaseClientViewModel
 import org.peercast.pecaplay.app.AppRoomDatabase
+import org.peercast.pecaplay.chanlist.filter.ChannelFilter
 import org.peercast.pecaplay.prefs.PecaPlayPreferences
-import org.peercast.pecaplay.util.TextUtils.normalize
-import org.peercast.pecaplay.yp4g.YpChannel
-import org.peercast.pecaplay.yp4g.YpDisplayOrder
-import timber.log.Timber
 
 
 class PecaPlayViewModel(
@@ -24,76 +17,8 @@ class PecaPlayViewModel(
 ) : BaseClientViewModel(a) {
     val presenter = PecaPlayPresenter(this, pecaPlayPrefs, database)
 
-    private val liveChannelFlow = database.ypChannelDao.query()
-
-    private val historyChannelFlow = combine(
-        database.ypChannelDao.query(),
-        database.ypHistoryDao.query()
-    ) { channels, histories ->
-        withContext(Dispatchers.Default) {
-            histories.forEach { his ->
-                //現在存在して再生可能か
-                his.isPlayable = channels.any(his::equalsIdName)
-            }
-            histories
-        }
-    }
-
     /**リスト表示用*/
-    val channelsFlow: Flow<List<YpChannel>> = MutableStateFlow(emptyList())
-
-
-    inner class ChannelQuery {
-        /**配信中or履歴**/
-        var source = YpChannelSource.LIVE
-
-        /**お気に入り/ジャンル等で選別するセレクタ*/
-        var selector: (YpChannel) -> Boolean = { true }
-
-        /**表示する順序*/
-        var displayOrder = pecaPlayPrefs.displayOrder
-
-        /**検索窓から*/
-        var searchQuery = ""
-
-        /**変更後に適用する*/
-        operator fun invoke(action: ChannelQuery.() -> Unit) {
-            action(this)
-            changeSource(source)
-        }
-
-        private var j: Job? = null
-
-        private fun changeSource(src: YpChannelSource) {
-            j?.cancel()
-            val f = when (src) {
-                YpChannelSource.LIVE -> liveChannelFlow
-                YpChannelSource.HISTORY -> historyChannelFlow
-            }
-            j = viewModelScope.launch {
-                f.onEach { channels ->
-                    var l = channels.filter(selector)
-
-                    if (searchQuery.isNotBlank()) {
-                        val constraints = searchQuery.normalize().split(RE_SPACE)
-                        l = l.filter { ch ->
-                            constraints.all { ch.searchText.contains(it) }
-                        }
-                    }
-
-                    (channelsFlow as MutableStateFlow).value = when (displayOrder) {
-                        YpDisplayOrder.NONE -> l
-                        else -> l.sortedWith(displayOrder.comparator)
-                    }
-                }
-                    .flowOn(Dispatchers.Default)
-                    .collect()
-            }
-        }
-    }
-
-    val channelQuery = ChannelQuery()
-
+    val channelFilter = ChannelFilter(viewModelScope, database, pecaPlayPrefs)
 
     /**通知アイコン(ベルのマーク)の有効/無効*/
     val existsNotification = database.favoriteDao.query().map { favorites ->
@@ -112,13 +37,5 @@ class PecaPlayViewModel(
                 }
                 .launchIn(viewModelScope)
         }
-    }
-
-    companion object {
-        private val RE_SPACE = """[\s　]+""".toRegex()
-
-        private val YpChannel.searchText: String
-            get() = run { "$name $genre $description $comment" }.normalize()
-
     }
 }

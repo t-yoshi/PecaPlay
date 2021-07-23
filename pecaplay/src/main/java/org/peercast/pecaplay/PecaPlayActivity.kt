@@ -21,15 +21,15 @@ import androidx.fragment.app.FragmentContainerView
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.peercast.pecaplay.chanlist.filter.YpChannelSource
+import org.peercast.pecaplay.core.app.PecaPlayIntent
 import org.peercast.pecaplay.core.io.localizedSystemMessage
 import org.peercast.pecaplay.navigation.*
 import org.peercast.pecaplay.prefs.PecaPlayPreferences
@@ -103,7 +103,7 @@ class PecaPlayActivity : AppCompatActivity() {
 
 
         vNavigation.onItemClick = { item ->
-            viewModel.channelQuery {
+            viewModel.channelFilter.apply {
                 displayOrder = when (item) {
                     is NavigationHistoryItem -> YpDisplayOrder.NONE
                     is NavigationNotifiedItem,
@@ -116,7 +116,7 @@ class PecaPlayActivity : AppCompatActivity() {
                 }
                 selector = item.selector
                 source = when (item) {
-                    is NavigationHistoryItem -> YpChannelSource.HISTORY
+                    is NavigationHistoryItem -> YpChannelSource.LIVE
                     else -> YpChannelSource.LIVE
                 }
             }
@@ -134,7 +134,7 @@ class PecaPlayActivity : AppCompatActivity() {
 
         lifecycleScope.launchWhenResumed {
             viewModel.rpcClient.filterNotNull().onEach { client ->
-                Timber.d("--> service connected!")
+                //Timber.d("--> service connected!")
                 val s = getString(R.string.peercast_has_started, client.rpcEndPoint.port)
                 Snackbar.make(vYpChannelFragmentContainer, s, Snackbar.LENGTH_LONG).show()
             }.collect()
@@ -176,19 +176,20 @@ class PecaPlayActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
 
-        if (intent.hasExtra(EX_IS_NOTIFIED)) {
-            removeNotification()
-            vNavigation.willNavigate { it is NavigationNotifiedItem }
+        Timber.d("intent=$intent")
+        when (intent.action){
+            PecaPlayIntent.ACTION_LAUNCH_VIEWER -> {
+                val i = Intent(intent)
+                i.setClass(this, PecaViewerActivity::class.java)
+                startActivity(i)
+            }
+            PecaPlayIntent.ACTION_VIEW_NOTIFIED -> {
+                removeNotification()
+                vNavigation.willNavigate { it is NavigationNotifiedItem }
+            }
         }
-        //vNavigation.willNavigate { it is NavigationNotifiedItem }
 
         vNavigation.model.repository.collectIn(lifecycleScope)
-
-        if (intent.action == "ACTION_LAUNCH_VIEWER") {
-            val i = Intent(intent)
-            i.setClass(this, PecaViewerActivity::class.java)
-            startActivity(i)
-        }
     }
 
     private fun removeNotification() {
@@ -271,7 +272,7 @@ class PecaPlayActivity : AppCompatActivity() {
             R.id.menu_sort_listener_asc,
             -> {
                 val order = YpDisplayOrder.fromOrdinal(item.order)
-                viewModel.channelQuery {
+                viewModel.channelFilter.apply {
                     displayOrder = order
                 }
                 pecaPlayPrefs.displayOrder = order
@@ -363,7 +364,7 @@ class PecaPlayActivity : AppCompatActivity() {
         }
 
         override fun onQueryTextChange(newText: String): Boolean {
-            viewModel.channelQuery {
+            viewModel.channelFilter.apply {
                 searchQuery = newText
             }
             return true

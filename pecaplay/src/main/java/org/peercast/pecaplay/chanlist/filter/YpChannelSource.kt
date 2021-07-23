@@ -1,10 +1,10 @@
-package org.peercast.pecaplay
+package org.peercast.pecaplay.chanlist.filter
 
 /**ソースの選択*/
 enum class YpChannelSource {
     /**配信中*/
     LIVE,
 
-    /**再生履歴*/
+    /**履歴*/
     HISTORY
 }

@@ -1,9 +1,8 @@
-package org.peercast.pecaplay.list
+package org.peercast.pecaplay.chanlist
 
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.os.Parcelable
 import android.view.ContextMenu
 import android.view.LayoutInflater
 import android.view.View
@@ -17,8 +16,6 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
@@ -40,26 +37,22 @@ class YpChannelFragment : Fragment() {
     private val favoriteDao
         get() = get<AppRoomDatabase>().favoriteDao
     private val viewModel by sharedViewModel<PecaPlayViewModel>()
-    private val adapter = ListAdapter()
+    private lateinit var listAdapter: ChannelListAdapter
+    //スクロール位置を保存する。
+    private lateinit var scrollPositionSaver: ScrollPositionSaver
 
     private lateinit var vRecycler: RecyclerView
     private lateinit var vSwipeRefresh: SwipeRefreshLayout
     private val loadingEvent by inject<LoadingEventFlow>()
 
-    //スクロール位置を保存する。
-    private val scrollPositions = Bundle()
-
-    private val queryTag: String get() = viewModel.channelQuery.run { "$source#$selector" }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        savedInstanceState?.getBundle(STATE_SCROLL_POSITIONS)?.let {
-            scrollPositions.putAll(it)
-        }
+        listAdapter = ChannelListAdapter(get(), listItemEventListener)
 
-        combine(
-            viewModel.channelsFlow,
+        val viewModelsFlow = combine(
+            viewModel.channelFilter.filteredChannel,
             favoriteDao.query()
         ) { channels, favorites ->
             val (favNg, favo) = favorites.partition { it.flags.isNG }
@@ -67,28 +60,31 @@ class YpChannelFragment : Fragment() {
                 val star = favo.firstOrNull { it.isStar && it.matches(ch) }
                 val isNg = star == null && favNg.any { it.matches(ch) }
                 val isNotification = favo.filter { it.flags.isNotification }.any { it.matches(ch) }
-                ListItemModel(ch, star, isNg, isNotification)
+                ListItemViewModel(requireContext(), ch, star, isNg, isNotification)
             }
-        }.onEach {
-            adapter.items = it
-            //Timber.d("-> $it")
-            adapter.notifyDataSetChanged()
-            restoreScrollPosition()
-        }.launchIn(lifecycleScope)
+        }
 
         lifecycleScope.launchWhenResumed {
-            loadingEvent.onEach { ev ->
+            viewModelsFlow.collect {
+                listAdapter.items = it
+                //Timber.d("-> $it")
+                scrollPositionSaver.restoreScrollPosition()
+            }
+        }
+
+        lifecycleScope.launchWhenResumed {
+            loadingEvent.collect { ev ->
                 //Timber.d("ev=$ev")
                 when (ev) {
                     is LoadingEvent.OnStart -> {
                         vSwipeRefresh.isRefreshing = true
-                        scrollPositions.clear()
+                        scrollPositionSaver.clear()
                     }
                     else -> {
                         vSwipeRefresh.isRefreshing = false
                     }
                 }
-            }.collect()
+            }
         }
     }
 
@@ -104,22 +100,14 @@ class YpChannelFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         vRecycler = view.findViewById(R.id.vRecycler)
         vSwipeRefresh = view.findViewById(R.id.vSwipeRefresh)
+        scrollPositionSaver = ScrollPositionSaver(savedInstanceState, vRecycler)
 
         registerForContextMenu(vRecycler)
 
-        vRecycler.let { v ->
-            v.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                }
-
-                override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                    if (newState == RecyclerView.SCROLL_STATE_IDLE && isResumed)
-                        storeScrollPosition()
-                }
-            })
-            v.layoutManager = LinearLayoutManager(v.context)
-            v.adapter = adapter
-            (v.itemAnimator as DefaultItemAnimator?)?.let { a ->
+        with(vRecycler){
+            layoutManager = LinearLayoutManager(context)
+            adapter = listAdapter
+            (itemAnimator as DefaultItemAnimator?)?.let { a ->
                 a.moveDuration = 0
                 a.changeDuration = 10
                 a.addDuration = 0
@@ -133,24 +121,6 @@ class YpChannelFragment : Fragment() {
         }
     }
 
-    //スクロール位置の保存
-    private fun storeScrollPosition() {
-        scrollPositions.putParcelable(
-            queryTag,
-            vRecycler.layoutManager?.onSaveInstanceState()
-        )
-    }
-
-    //スクロール位置の再現
-    private fun restoreScrollPosition() {
-        if (adapter.itemCount == 0)
-            return
-        scrollPositions.getParcelable<Parcelable>(queryTag)?.let {
-            vRecycler.layoutManager?.onRestoreInstanceState(it)
-        } ?: run {
-            vRecycler.layoutManager?.scrollToPosition(0)
-        }
-    }
 
     override fun onCreateContextMenu(
         menu: ContextMenu,
@@ -158,7 +128,7 @@ class YpChannelFragment : Fragment() {
         menuInfo: ContextMenu.ContextMenuInfo?,
     ) {
         val info = menuInfo as MenuableRecyclerView.ContextMenuInfo? ?: return
-        val item = adapter.items[info.position]
+        val item = listAdapter.items[info.position]
         val ch = item.ch
 
         menu.setHeaderTitle(item.ch.name)
@@ -173,11 +143,11 @@ class YpChannelFragment : Fragment() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putBundle(STATE_SCROLL_POSITIONS, scrollPositions)
+        scrollPositionSaver.onSaveInstanceState(outState)
     }
 
     private inner class ContextMenuBuilder(val menu: ContextMenu) {
-        fun addNotificationItem(item: ListItemModel) {
+        fun addNotificationItem(item: ListItemViewModel) {
             val star = item.star
             if (star == null) {
                 menu.add(R.string.notification_add).isEnabled = false
@@ -220,49 +190,8 @@ class YpChannelFragment : Fragment() {
     }
 
 
-    private inner class ListAdapter : RecyclerView.Adapter<BaseListItemViewHolder>() {
-        private val holderFactory: IListItemViewHolderFactory by inject()
-
-        init {
-            setHasStableIds(true)
-        }
-
-        var items = emptyList<ListItemModel>()
-
-        inline fun updateItem(position: Int, updated: (ListItemModel) -> ListItemModel) {
-            items = ArrayList(items).also {
-                it[position] = updated(it[position])
-            }
-            notifyItemChanged(position)
-        }
-
-        override fun getItemId(position: Int): Long = items[position].hashCode() + 0L
-
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BaseListItemViewHolder {
-            return holderFactory.createViewHolder(parent, viewType).also {
-                it.setItemEventListener(listItemEventListener)
-            }
-        }
-
-        override fun onBindViewHolder(holder: BaseListItemViewHolder, position: Int) {
-            holder.viewModel.let {
-                it.model = items[position]
-                it.notifyChange()
-            }
-            holder.executePendingBindings()
-        }
-
-        override fun getItemCount(): Int {
-            return items.size
-        }
-
-        override fun getItemViewType(position: Int): Int {
-            return holderFactory.getViewType(items[position])
-        }
-    }
-
-    private val listItemEventListener = object : IListItemEventListener {
-        override fun onStarClicked(m: ListItemModel, isChecked: Boolean) {
+    private val listItemEventListener = object : ListItemEventListener {
+        override fun onStarClicked(m: ListItemViewModel, isChecked: Boolean, position: Int) {
             Timber.d("onStarClicked(%s, %s)", m, isChecked)
             lifecycleScope.launch {
                 m.star?.let {
@@ -273,19 +202,17 @@ class YpChannelFragment : Fragment() {
             }
         }
 
-        override fun onItemClick(m: ListItemModel, position: Int) {
+        override fun onItemClick(m: ListItemViewModel, position: Int) {
             if (m.ch.isPlayable && !m.isNg) {
                 viewModel.presenter.startPlay(this@YpChannelFragment, m.ch)
             }
         }
 
-        override fun onItemLongClick(m: ListItemModel, position: Int): Boolean {
+        override fun onItemLongClick(m: ListItemViewModel, position: Int): Boolean {
             if (m.isNg) {
                 //対象NGを一時的に解除
-                adapter.updateItem(position) {
-                    it.copy(isNg = false)
-                }
-                adapter.notifyItemChanged(position)
+                m.isNg = false
+                listAdapter.notifyItemChanged(position)
                 return true
             }
             return false

@@ -24,6 +24,8 @@ import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
+import org.peercast.pecaplay.core.app.PecaViewerIntent
+import org.peercast.pecaplay.core.app.Yp4gChannel
 import org.peercast.pecaviewer.chat.ChatViewModel
 import org.peercast.pecaviewer.chat.PostMessageDialogFragment
 import org.peercast.pecaviewer.databinding.ActivityMainBinding
@@ -71,27 +73,33 @@ class PecaViewerActivity : AppCompatActivity(),
 
         playerViewModel.isFullScreenMode.let { ld ->
             ld.value = requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-            ld.observe(this, Observer {
+            ld.observe(this) {
                 appPreference.isFullScreenMode = it
                 requestedOrientation = when (it) {
                     true -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
                     else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
                 }
-            })
+            }
         }
 
+        val streamUrl = checkNotNull(intent.data)
+        val channel = checkNotNull(
+            intent.getParcelableExtra(PecaViewerIntent.EX_YP4G_CHANNEL) as? Yp4gChannel
+        )
+
         onServiceConnect = {
-            it.prepareFromUri(intent)
+            it.prepareFromUri(streamUrl, channel)
             if (savedInstanceState?.getBoolean(STATE_PLAYING) != false) {
                 Timber.d(" -> play")
                 it.play()
             }
         }
 
+        binding.toolbar.title.text = channel.name
+        binding.toolbar.text1.text = channel.run { "$genre $description $comment".trim() }
+
         lifecycleScope.launch {
-            intent.getStringExtra(PecaViewerIntent.EX_CONTACT)?.let {
-                chatViewModel.presenter.loadUrl(it)
-            }
+                chatViewModel.presenter.loadUrl(channel.url.toString())
         }
 
         registerReceiver(receiver, IntentFilter(NotificationHelper.ACTION_STOP))
@@ -149,8 +157,6 @@ class PecaViewerActivity : AppCompatActivity(),
             }
         }
 
-        binding.toolbar.title.text = intent.getCharSequenceExtra(PecaViewerIntent.EX_TITLE)
-        binding.toolbar.text1.text = intent.getCharSequenceExtra(PecaViewerIntent.EX_COMMENT)
     }
 
     override fun onUserLeaveHint() {
