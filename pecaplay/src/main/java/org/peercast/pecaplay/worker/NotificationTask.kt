@@ -17,7 +17,6 @@ import kotlinx.coroutines.flow.first
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.peercast.pecaplay.PecaPlayActivity
-import org.peercast.pecaplay.PecaPlayIntent
 import org.peercast.pecaplay.R
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.YpLiveChannel
@@ -50,7 +49,7 @@ class NotificationTask(worker: ListenableWorker) : LoadingWorker.Task(worker), K
     private fun createActivityIntent(): PendingIntent {
         val i = Intent(Intent.ACTION_VIEW).also {
             it.setClass(c, PecaPlayActivity::class.java)
-            it.putExtra(PecaPlayIntent.EXTRA_IS_NOTIFICATED, true)
+            it.putExtra(PecaPlayActivity.EX_IS_NOTIFIED, true)
         }
         return PendingIntent.getActivity(
             c, 0, i,

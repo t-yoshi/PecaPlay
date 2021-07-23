@@ -21,6 +21,7 @@ import androidx.fragment.app.FragmentContainerView
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.filterNotNull
@@ -135,17 +136,15 @@ class PecaPlayActivity : AppCompatActivity() {
         }
 
         lifecycleScope.launchWhenResumed {
-            vNavigation.model.collect(get(), get())
-        }
-
-
-        lifecycleScope.launchWhenResumed {
             viewModel.rpcClient.filterNotNull().onEach { client ->
-                Timber.i("--> service connected!")
+                Timber.d("--> service connected!")
                 val s = getString(R.string.peercast_has_started, client.rpcEndPoint.port)
                 Snackbar.make(vYpChannelFragmentContainer, s, Snackbar.LENGTH_LONG).show()
             }.collect()
 
+        }
+
+        lifecycleScope.launchWhenResumed {
             loadingEvent.filterIsInstance<LoadingEvent.OnException>().collect { ev ->
                 val s = when (ev.e) {
                     is HttpException -> ev.e.response()?.message()
@@ -158,11 +157,10 @@ class PecaPlayActivity : AppCompatActivity() {
                     Snackbar.LENGTH_LONG
                 ).show()
             }
+        }
 
+        lifecycleScope.launchWhenResumed {
             viewModel.existsNotification.collect {
-//                if (!it) {
-//                    viewModel.presenter.startLoading()
-//                }
                 invalidateOptionsMenu()
             }
         }
@@ -179,12 +177,19 @@ class PecaPlayActivity : AppCompatActivity() {
         viewModel.bindService()
     }
 
+    private var jobNaviModel: Job? = null
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
 
-        if (intent.hasExtra(PecaPlayIntent.EXTRA_IS_NOTIFICATED)) {
+        if (intent.hasExtra(EX_IS_NOTIFIED)) {
             removeNotification()
             vNavigation.willNavigate { it is NavigationNotifiedItem }
+        }
+
+        jobNaviModel?.cancel()
+        jobNaviModel = lifecycleScope.launchWhenResumed {
+            vNavigation.model.collect(get(), get())
         }
 
         if (intent.action == "ACTION_LAUNCH_VIEWER") {
@@ -390,6 +395,9 @@ class PecaPlayActivity : AppCompatActivity() {
 
     companion object {
         private const val STATE_LAST_LOADED_ER_TIME = "lastLoadedERTime"
+
+        /**通知済みの新着を表示する*/
+        const val EX_IS_NOTIFIED = "notified"
     }
 }
 

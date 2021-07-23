@@ -14,7 +14,7 @@ import org.peercast.pecaplay.prefs.PecaPlayPreferences
 import org.peercast.pecaplay.util.TextUtils.normalize
 import org.peercast.pecaplay.yp4g.YpChannel
 import org.peercast.pecaplay.yp4g.YpDisplayOrder
-import kotlin.properties.Delegates
+import timber.log.Timber
 
 
 class PecaPlayViewModel(
@@ -48,7 +48,7 @@ class PecaPlayViewModel(
         var source = YpChannelSource.LIVE
 
         /**お気に入り/ジャンル等で選別するセレクタ*/
-        var selector : (YpChannel) -> Boolean = { true }
+        var selector: (YpChannel) -> Boolean = { true }
 
         /**表示する順序*/
         var displayOrder = pecaPlayPrefs.displayOrder
@@ -57,7 +57,7 @@ class PecaPlayViewModel(
         var searchQuery = ""
 
         /**変更後に適用する*/
-        operator fun invoke(action: ChannelQuery.()->Unit){
+        operator fun invoke(action: ChannelQuery.() -> Unit) {
             action(this)
             changeSource(source)
         }
@@ -96,10 +96,10 @@ class PecaPlayViewModel(
 
 
     /**通知アイコン(ベルのマーク)の有効/無効*/
-    val existsNotification =
-        database.favoriteDao.query().map { favorites ->
-            favorites.firstOrNull { it.flags.run { !isNG && isNotification } } != null
-        }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+    val existsNotification = database.favoriteDao.query().map { favorites ->
+        favorites.firstOrNull { it.flags.run { !isNG && isNotification } } != null
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
 
     override fun bindService() {
         val u = pecaPlayPrefs.peerCastUrl
