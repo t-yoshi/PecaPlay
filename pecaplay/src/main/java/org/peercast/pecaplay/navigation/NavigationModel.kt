@@ -3,6 +3,8 @@ package org.peercast.pecaplay.navigation
 import android.content.Context
 import android.view.Menu
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.withContext
@@ -14,6 +16,7 @@ import org.peercast.pecaplay.yp4g.YpChannel
 import timber.log.Timber
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.coroutines.coroutineContext
 import kotlin.properties.Delegates
 
 class NavigationModel(private val c: Context) {
@@ -80,18 +83,20 @@ class NavigationModel(private val c: Context) {
         }
 
         withContext(Dispatchers.Default) {
-            items.filterIsInstance<BadgeableNavigationItem>().forEach { item ->
-                val n = channels.count(item.selector)
-                val m = channels.filter { !it.isEmptyId }.count(item.selector)
-                item.badge = when {
-                    n > 99 -> "99+"
-                    n > 0 -> "$m"
-                    else -> {
-                        item.isVisible = false
-                        ""
+            items.filterIsInstance<BadgeableNavigationItem>().map { item ->
+                async {
+                    val n = channels.count(item.selector)
+                    val m = channels.filter { !it.isEmptyId }.count(item.selector)
+                    item.badge = when {
+                        n > 99 -> "99+"
+                        n > 0 -> "$m"
+                        else -> {
+                            item.isVisible = false
+                            ""
+                        }
                     }
                 }
-            }
+            }.awaitAll()
         }
 
         this.items = items

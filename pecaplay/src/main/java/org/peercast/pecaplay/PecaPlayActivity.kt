@@ -31,10 +31,7 @@ import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.peercast.pecaplay.core.io.localizedSystemMessage
-import org.peercast.pecaplay.navigation.NavigationHistoryItem
-import org.peercast.pecaplay.navigation.NavigationNewItem
-import org.peercast.pecaplay.navigation.NavigationNotifiedItem
-import org.peercast.pecaplay.navigation.PecaNaviView
+import org.peercast.pecaplay.navigation.*
 import org.peercast.pecaplay.prefs.PecaPlayPreferences
 import org.peercast.pecaplay.prefs.SettingsActivity
 import org.peercast.pecaplay.worker.LoadingEvent
@@ -183,6 +180,7 @@ class PecaPlayActivity : AppCompatActivity() {
             removeNotification()
             vNavigation.willNavigate { it is NavigationNotifiedItem }
         }
+        //vNavigation.willNavigate { it is NavigationNotifiedItem }
 
         vNavigation.model.repository.collectIn(lifecycleScope)
 
