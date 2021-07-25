@@ -11,7 +11,6 @@ import org.peercast.pecaplay.prefs.PecaPlayPreferences
 
 class NavigationRepository(private val model: NavigationModel) : KoinComponent {
 
-    val prefs by inject<PecaPlayPreferences>()
     private val database by inject<AppRoomDatabase>()
 
     private var j: Job? = null

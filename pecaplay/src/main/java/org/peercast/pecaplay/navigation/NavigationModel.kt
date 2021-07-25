@@ -5,15 +5,18 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 import org.peercast.pecaplay.app.Favorite
 import org.peercast.pecaplay.app.YellowPage
+import org.peercast.pecaplay.prefs.PecaPlayPreferences
 import org.peercast.pecaplay.yp4g.YpChannel
 import timber.log.Timber
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.properties.Delegates
 
-class NavigationModel(private val c: Context) {
+class NavigationModel(private val c: Context) : KoinComponent {
 
     var onChanged = {}
 
@@ -24,6 +27,7 @@ class NavigationModel(private val c: Context) {
         private set
 
     val repository = NavigationRepository(this)
+    private val prefs by inject<PecaPlayPreferences>()
 
     init {
         items = createNavigationItems(emptyList(), emptyList(), emptyList())
@@ -61,7 +65,7 @@ class NavigationModel(private val c: Context) {
         items += NavigationStarredItem(c, stars, topOrder++)
 
         val favoNotify = favorites.filter { it.flags.isNotification && !it.flags.isNG }
-        if (repository.prefs.isNotificationEnabled) {
+        if (prefs.isNotificationEnabled) {
             items += NavigationNotifiedItem(c, favoNotify, topOrder++)
         }
 
