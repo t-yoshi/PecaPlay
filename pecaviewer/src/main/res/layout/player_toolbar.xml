@@ -27,23 +27,11 @@
             android:layout_gravity="bottom"
             android:paddingTop="3dp"
             android:paddingBottom="3dp"
-            android:paddingLeft="3dp"
+            android:paddingLeft="8dp"
             android:focusable="true"
             android:clickable="true"
             peca:visibleAnimate="@{!safeUnbox(playerViewModel.isFullScreenMode) || safeUnbox(playerViewModel.isControlsViewVisible) || safeUnbox(appViewModel.slidingPanelState==1)}"
             android:paddingRight="@dimen/player_toolbar_padding_right">
-
-        <ImageView
-                android:layout_height="match_parent"
-                android:layout_width="wrap_content"
-                android:id="@+id/vNavigation"
-                android:padding="5dp"
-                android:clickable="true"
-                android:focusable="true"
-                android:layout_alignParentLeft="true"
-                android:layout_gravity="center_vertical"
-                android:src="@drawable/ic_expand_more_white_24dp"
-                android:contentDescription="@null"/>
 
         <TextView
                 android:id="@android:id/title"
@@ -55,9 +43,9 @@
                 android:singleLine="true"
                 android:ellipsize="end"
                 android:layout_alignParentTop="true"
+                android:layout_alignParentLeft="true"
                 android:layout_alignParentRight="true"
                 android:layout_above="@android:id/text1"
-                android:layout_toRightOf="@id/vNavigation"
                 android:textColor="@color/green_700" />
 
         <TextView

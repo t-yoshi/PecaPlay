@@ -144,20 +144,6 @@ class PecaViewerActivity : AppCompatActivity(),
             }
             binding.vSlidingUpPanel.anchorPoint = anchorPercentage / 100f
         }.launchIn(lifecycleScope)
-
-        //昇降ボタン
-        binding.toolbar.vNavigation.setOnClickListener {
-            binding.vSlidingUpPanel.run {
-                panelState = when {
-                    anchorPoint < 1f -> SlidingUpPanelLayout.PanelState.ANCHORED
-                    panelState == SlidingUpPanelLayout.PanelState.EXPANDED -> {
-                        SlidingUpPanelLayout.PanelState.COLLAPSED
-                    }
-                    else -> SlidingUpPanelLayout.PanelState.EXPANDED
-                }
-            }
-        }
-
     }
 
     override fun onUserLeaveHint() {
@@ -229,19 +215,7 @@ class PecaViewerActivity : AppCompatActivity(),
                 else -> {
                 }
             }
-            when (newState) {
-                //プレーヤー前面
-                SlidingUpPanelLayout.PanelState.EXPANDED -> {
-                    binding.toolbar.vNavigation.setImageResource(R.drawable.ic_expand_less_white_24dp)
-                }
-                //チャット前面
-                SlidingUpPanelLayout.PanelState.COLLAPSED -> {
-                    binding.toolbar.vNavigation.setImageResource(R.drawable.ic_expand_more_white_24dp)
-                }
-                else -> {
-                    binding.toolbar.vNavigation.setImageDrawable(null)
-                }
-            }
+
             if (newState in listOf(
                     SlidingUpPanelLayout.PanelState.EXPANDED,
                     SlidingUpPanelLayout.PanelState.COLLAPSED,
