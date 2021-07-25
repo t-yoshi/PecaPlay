@@ -21,10 +21,7 @@ import androidx.fragment.app.FragmentContainerView
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -132,26 +129,10 @@ class PecaPlayActivity : AppCompatActivity() {
         }
 
         lifecycleScope.launchWhenResumed {
-            viewModel.rpcClient.filterNotNull().onEach { client ->
-                //Timber.d("--> service connected!")
-                val s = getString(R.string.peercast_has_started, client.rpcEndPoint.port)
-                Snackbar.make(vYpChannelFragmentContainer, s, Snackbar.LENGTH_LONG).show()
+            viewModel.message.filter { it.isNotEmpty() }.onEach {
+                Snackbar.make(vYpChannelFragmentContainer, it, Snackbar.LENGTH_LONG).show()
+                viewModel.message.value = ""
             }.collect()
-        }
-
-        lifecycleScope.launchWhenResumed {
-            loadingEvent.filterIsInstance<LoadingEvent.OnException>().collect { ev ->
-                val s = when (ev.e) {
-                    is HttpException -> ev.e.response()?.message()
-                        ?: ev.e.localizedSystemMessage()
-                    else -> ev.e.localizedSystemMessage()
-                }
-                Snackbar.make(
-                    vYpChannelFragmentContainer,
-                    HtmlCompat.fromHtml("<font color=red>${ev.yp.name}: $s", 0),
-                    Snackbar.LENGTH_LONG
-                ).show()
-            }
         }
 
         lifecycleScope.launchWhenResumed {
