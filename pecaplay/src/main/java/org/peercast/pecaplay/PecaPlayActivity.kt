@@ -178,14 +178,9 @@ class PecaPlayActivity : AppCompatActivity() {
 
         Timber.d("intent=$intent")
         when (intent.action){
-            PecaPlayIntent.ACTION_LAUNCH_VIEWER -> {
-                val i = Intent(intent)
-                i.setClass(this, PecaViewerActivity::class.java)
-                startActivity(i)
-            }
             PecaPlayIntent.ACTION_VIEW_NOTIFIED -> {
                 removeNotification()
-                vNavigation.willNavigate { it is NavigationNotifiedItem }
+                vNavigation.navigate { it is NavigationNotifiedItem }
             }
         }
 

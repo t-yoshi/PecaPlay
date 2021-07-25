@@ -37,7 +37,7 @@ class NotificationHelper(private val service: PlayerService) {
 
     var thumbnail by updateNotifyWhenChanged<Bitmap>(launcherIcon)
 
-    //タスクバーから復帰するためのインテント
+    /**タスクバーから復帰するためのインテント*/
     lateinit var resumeIntent: Intent
 
     private var isForeground = false
@@ -75,16 +75,12 @@ class NotificationHelper(private val service: PlayerService) {
         )
     }
 
-    //PecaPlay経由で復帰する
-    private fun buildPecaPlayPendingIntent(): PendingIntent {
-        val intent = Intent(resumeIntent).also {
-            it.action = PecaPlayIntent.ACTION_LAUNCH_VIEWER
-            it.component = PecaPlayIntent.ComponentPlayActivity
-        }
+    //タスクバーから復帰する
+    private fun buildPendingIntent(): PendingIntent {
         return PendingIntent.getActivity(
             service,
             0,
-            intent,
+            resumeIntent,
             PendingIntent.FLAG_UPDATE_CURRENT
         )
     }
@@ -122,7 +118,7 @@ class NotificationHelper(private val service: PlayerService) {
         val ch = resumeIntent.getParcelableExtra<Yp4gChannel>(PecaViewerIntent.EX_YP4G_CHANNEL)
 
         return builder
-            .setContentIntent(buildPecaPlayPendingIntent())
+            .setContentIntent(buildPendingIntent())
             .setContentTitle("PecaPlayViewer")
             .setSmallIcon(R.drawable.ic_play_circle_outline_black_24dp)
             .setLargeIcon(service.thumbnail)

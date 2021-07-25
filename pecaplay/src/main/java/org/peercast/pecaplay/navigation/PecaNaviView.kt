@@ -11,7 +11,6 @@ import androidx.core.content.edit
 import com.google.android.material.navigation.NavigationView
 import kotlinx.parcelize.Parcelize
 import org.peercast.pecaplay.R
-import timber.log.Timber
 
 class PecaNaviView : NavigationView {
     constructor(context: Context) : super(context)
@@ -26,12 +25,6 @@ class PecaNaviView : NavigationView {
 
     var onItemClick: (NavigationItem) -> Unit = {}
 
-    //再生成後に選択するアイテム
-    private var willBeSelectedItem: (NavigationItem) -> Boolean = {
-        //起動時: HOMEを選択する
-        it is NavigationHomeItem
-    }
-
     //非表示アイテム
     private val prefs = context.getSharedPreferences(
         "navigation_v5", Context.MODE_PRIVATE
@@ -43,14 +36,13 @@ class PecaNaviView : NavigationView {
 
     init {
         model.onChanged = ::rebuildMenuAndReselect
+        rebuildMenu()
+
+        setCheckedItem(model.items[0].itemId)
     }
 
     private fun selectNavigationItem(item: NavigationItem) {
         setCheckedItem(item.itemId)
-        //再生成後に元のアイテムを選択しなおす
-        willBeSelectedItem = {
-            it == item
-        }
         onItemClick(item)
     }
 
@@ -60,7 +52,8 @@ class PecaNaviView : NavigationView {
             item.groupId * 0xff + item.order, item.title
         )
         mi.setIcon(item.icon)
-        mi.isVisible = isEditMode || (item.isVisible && item.key !in prefs)
+        mi.isVisible = isEditMode || item.key !in prefs
+        //mi.isEnabled = isEditMode || item.isEnabled
 
         if (isEditMode) {
             mi.isEnabled = false
@@ -144,11 +137,11 @@ class PecaNaviView : NavigationView {
 
     //メニュー再生成と再選択
     private fun rebuildMenuAndReselect() {
+        val checkedId = checkedItem?.itemId ?: 0
         rebuildMenu()
-        model.items.firstOrNull(willBeSelectedItem)?.let {
-            Timber.d("setCheckedItem(${it.itemId})")
-            selectNavigationItem(it)
-        }
+        model.items.firstOrNull {
+            it.itemId == checkedId
+        }?.let(::selectNavigationItem)
     }
 
     private fun inflateNormalAction(mi: MenuItem, it: BadgeableNavigationItem) {
@@ -160,19 +153,17 @@ class PecaNaviView : NavigationView {
         v.text = it.badge
     }
 
-    /**次のメニュー生成直後に選択するアイテム*/
-    fun willNavigate(predicate: (NavigationItem) -> Boolean) {
-        willBeSelectedItem = predicate
+    /**選択するアイテム*/
+    fun navigate(predicate: (NavigationItem) -> Boolean) {
+        model.items.firstOrNull(predicate)?.let(::selectNavigationItem)
     }
 
     override fun onRestoreInstanceState(savedState: Parcelable) {
         val state = savedState as State
         super.onRestoreInstanceState(state.parent)
         isEditMode = state.isEditMode
-        if (state.checkedItemId != null) {
-            willBeSelectedItem = {
-                it.itemId == state.checkedItemId
-            }
+        state.checkedItemId?.let {
+            setCheckedItem(it)
         }
     }
 

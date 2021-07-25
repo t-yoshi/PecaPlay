@@ -9,6 +9,7 @@ import android.os.IBinder
 import android.view.*
 import android.widget.ImageView
 import androidx.appcompat.widget.ActionMenuView
+import androidx.core.app.NavUtils
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.google.android.exoplayer2.ui.PlayerView
@@ -73,7 +74,7 @@ class PlayerFragment : Fragment(), ServiceConnection {
         }
 
         vQuit.setOnClickListener {
-            activity?.finish()
+            NavUtils.navigateUpFromSameTask(requireActivity())
         }
         vFullScreen.setOnClickListener(::onFullScreenClicked)
         view.setOnTouchListener(DoubleTabDetector(view, ::onFullScreenClicked))

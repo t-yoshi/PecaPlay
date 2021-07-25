@@ -30,6 +30,7 @@ import org.peercast.core.lib.notify.NotifyChannelType
 import org.peercast.core.lib.notify.NotifyMessageType
 import org.peercast.core.lib.rpc.ChannelInfo
 import org.peercast.pecaplay.core.app.PecaPlayIntent
+import org.peercast.pecaplay.core.app.PecaViewerIntent
 import org.peercast.pecaplay.core.app.Yp4gChannel
 import org.peercast.pecaviewer.ViewerPreference
 import timber.log.Timber
@@ -266,7 +267,7 @@ class PlayerService : LifecycleService() {
     }
 
     fun prepareFromUri(u: Uri, ch: Yp4gChannel) {
-        notificationHelper.resumeIntent = PecaPlayIntent.createLaunchViewer(u, ch)
+        notificationHelper.resumeIntent = PecaViewerIntent.create(u, ch)
 
         if (playingUrl == u)
             return

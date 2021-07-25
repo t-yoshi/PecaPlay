@@ -1,35 +1,33 @@
 package org.peercast.pecaplay.navigation
 
 import android.content.Context
-import android.view.Menu
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.withContext
-import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.Favorite
 import org.peercast.pecaplay.app.YellowPage
-import org.peercast.pecaplay.prefs.PecaPlayPreferences
 import org.peercast.pecaplay.yp4g.YpChannel
 import timber.log.Timber
 import java.util.*
 import kotlin.collections.ArrayList
-import kotlin.coroutines.coroutineContext
 import kotlin.properties.Delegates
 
 class NavigationModel(private val c: Context) {
 
     var onChanged = {}
 
-    var items by Delegates.observable(emptyList<NavigationItem>()) { _, old, new->
+    var items by Delegates.observable(emptyList<NavigationItem>()) { _, old, new ->
         if (old != new)
             onChanged()
     }
         private set
 
     val repository = NavigationRepository(this)
+
+    init {
+        items = createNavigationItems(emptyList(), emptyList(), emptyList())
+    }
 
     private fun parseGenre(channels: List<YpChannel>): List<String> {
         val rS = Regex("[\\s\\-：:]+")
@@ -46,12 +44,11 @@ class NavigationModel(private val c: Context) {
         return g
     }
 
-    suspend fun updateItems(
+    private fun createNavigationItems(
         yellowPages: List<YellowPage>,
         favorites: List<Favorite>,
         channels: List<YpChannel>,
-    ) {
-        Timber.d("onUpdate()")
+    ): ArrayList<NavigationItem> {
         val items = ArrayList<NavigationItem>(30)
 
         var topOrder = 0
@@ -83,18 +80,26 @@ class NavigationModel(private val c: Context) {
             items += NavigationGenreItem(c, g, i + 1)
         }
 
+        return items
+    }
+
+    suspend fun updateItems(
+        yellowPages: List<YellowPage>,
+        favorites: List<Favorite>,
+        channels: List<YpChannel>,
+    ) {
+        Timber.d("onUpdate()")
+        val items = createNavigationItems(yellowPages, favorites, channels)
+
         withContext(Dispatchers.Default) {
             items.filterIsInstance<BadgeableNavigationItem>().map { item ->
                 async {
                     val n = channels.filter { !it.isEmptyId && item.selector(it) }.count()
                     item.badge = when {
                         n > 99 -> "99+"
-                        n > 0 -> "$n"
-                        else -> {
-                            item.isVisible = false
-                            ""
-                        }
+                        else -> "$n"
                     }
+                    item.isEnabled = n > 0
                 }
             }
         }.awaitAll()

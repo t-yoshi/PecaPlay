@@ -24,7 +24,7 @@ abstract class NavigationItem(
     abstract val selector: YpChannelPredicate
 
 
-    var isVisible = true
+    var isEnabled = true
 
     val itemId get() = hashCode()
 
@@ -47,4 +47,13 @@ abstract class BadgeableNavigationItem(title: CharSequence, groupId: Int, order:
 
     /**バッジ用のテキスト*/
     var badge: String = ""
+
+    override fun hashCode() = super.hashCode() * 31 + badge.hashCode()
+
+    override fun equals(other: Any?): Boolean {
+        return other is BadgeableNavigationItem &&
+                other.javaClass == javaClass &&
+                other.badge == badge
+    }
+
 }
