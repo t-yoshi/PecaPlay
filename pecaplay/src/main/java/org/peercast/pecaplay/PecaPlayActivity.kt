@@ -116,7 +116,7 @@ class PecaPlayActivity : AppCompatActivity() {
                 }
                 selector = item.selector
                 source = when (item) {
-                    is NavigationHistoryItem -> YpChannelSource.LIVE
+                    is NavigationHistoryItem -> YpChannelSource.HISTORY
                     else -> YpChannelSource.LIVE
                 }
             }
