@@ -11,11 +11,11 @@ import org.peercast.core.lib.LibPeerCast
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.YpHistoryChannel
 import org.peercast.pecaplay.app.saveRecentQuery
+import org.peercast.pecaplay.core.app.PecaViewerIntent
 import org.peercast.pecaplay.core.app.stream
 import org.peercast.pecaplay.prefs.PecaPlayPreferences
 import org.peercast.pecaplay.worker.LoadingWorkerManager
 import org.peercast.pecaplay.yp4g.YpChannel
-import org.peercast.pecaplay.core.app.PecaViewerIntent
 import timber.log.Timber
 
 
@@ -76,10 +76,13 @@ class PecaPlayPresenter(
                 database.ypHistoryDao.addHistory(YpHistoryChannel(ch))
             }
         } catch (e: RuntimeException) {
-            val s = if (e is ActivityNotFoundException) {
-                "Plaese install player app."
-            } else {
-                e.localizedMessage
+            val s = when (e) {
+                is SecurityException,
+                is ActivityNotFoundException,
+                -> {
+                    a.getString(R.string.please_install_player_app, ch.type)
+                }
+                else -> throw e
             }
             Toast.makeText(a, s, Toast.LENGTH_LONG).show()
         }

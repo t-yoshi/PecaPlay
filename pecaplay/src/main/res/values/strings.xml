@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="settings_activity">Settings</string>
-    <string name="application_not_installed">Application not installed. [%s]</string>
+    <string name="please_install_player_app">Please install a player which support %s format.</string>
     <string name="yp_loading">Loading…</string>
     <string name="yp_cache">(Cache)</string>
     <string name="yp_connect_failed">%s connect failed:</string>

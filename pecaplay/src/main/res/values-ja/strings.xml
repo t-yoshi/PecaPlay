@@ -25,7 +25,7 @@
     <string name="speed_test">帯域テスト</string>
     <string name="peercast_has_started">PeerCast動作中 (port=%d)</string>
     <string name="settings_activity">設定</string>
-    <string name="application_not_installed">%s を開くアプリがインストールされていません。</string>
+    <string name="please_install_player_app">%sを再生するためのアプリをインストールしてください。</string>
     <string name="yp_loading">読み込み中</string>
     <string name="yp_cache">(キャッシュ)</string>
     <string name="yp_connect_failed">%sへの接続に失敗:</string>
