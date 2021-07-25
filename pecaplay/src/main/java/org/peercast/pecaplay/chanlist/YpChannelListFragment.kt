@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
 import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
-import org.peercast.pecaplay.PecaPlayViewModel
+import org.peercast.pecaplay.AppViewModel
 import org.peercast.pecaplay.R
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.Favorite
@@ -36,7 +36,7 @@ class YpChannelFragment : Fragment() {
 
     private val favoriteDao
         get() = get<AppRoomDatabase>().favoriteDao
-    private val viewModel by sharedViewModel<PecaPlayViewModel>()
+    private val viewModel by sharedViewModel<AppViewModel>()
     private lateinit var listAdapter: ChannelListAdapter
     //スクロール位置を保存する。
     private lateinit var scrollPositionSaver: ScrollPositionSaver

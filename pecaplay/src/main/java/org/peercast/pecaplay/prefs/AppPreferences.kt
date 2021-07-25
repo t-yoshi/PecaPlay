@@ -4,7 +4,7 @@ package org.peercast.pecaplay.prefs
 import android.net.Uri
 import org.peercast.pecaplay.yp4g.YpDisplayOrder
 
-abstract class PecaPlayPreferences {
+abstract class AppPreferences {
 
     /**動作しているPeerCast。localhostまたは192.168.x.x*/
     abstract var peerCastUrl: Uri

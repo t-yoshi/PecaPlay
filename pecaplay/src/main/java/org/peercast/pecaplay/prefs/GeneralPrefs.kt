@@ -19,7 +19,7 @@ import org.peercast.pecaplay.app.AppRoomDatabase
 import java.util.*
 
 class GeneralPrefsFragment : PreferenceFragmentCompat() {
-    private val appPrefs: PecaPlayPreferences by inject()
+    private val appPrefs: AppPreferences by inject()
     private val appDatabase: AppRoomDatabase by inject()
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
@@ -29,7 +29,7 @@ class GeneralPrefsFragment : PreferenceFragmentCompat() {
     override fun onResume() {
         super.onResume()
 
-        with(findPreference<EditTextPreference>(DefaultPecaPlayPreferences.KEY_PEERCAST_SERVER_URL) as EditTextPreference) {
+        with(findPreference<EditTextPreference>(DefaultAppPreferences.KEY_PEERCAST_SERVER_URL) as EditTextPreference) {
             setOnPreferenceChangeListener { _, newValue ->
                 val ok = newValue == "" || Uri.parse(newValue as String).run {
                     scheme == "http" &&

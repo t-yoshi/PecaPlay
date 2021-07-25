@@ -2,11 +2,11 @@ package org.peercast.pecaplay.chanlist
 
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import org.peercast.pecaplay.prefs.PecaPlayPreferences
+import org.peercast.pecaplay.prefs.AppPreferences
 import kotlin.properties.Delegates
 
 class ChannelListAdapter(
-    private val prefs: PecaPlayPreferences,
+    private val prefs: AppPreferences,
     private val eventListener: ListItemEventListener,
 ) : RecyclerView.Adapter<ListItemViewHolder>() {
 

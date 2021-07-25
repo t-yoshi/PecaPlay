@@ -9,7 +9,7 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.peercast.pecaplay.app.Favorite
 import org.peercast.pecaplay.app.YellowPage
-import org.peercast.pecaplay.prefs.PecaPlayPreferences
+import org.peercast.pecaplay.prefs.AppPreferences
 import org.peercast.pecaplay.yp4g.YpChannel
 import timber.log.Timber
 import java.util.*
@@ -27,7 +27,7 @@ class NavigationModel(private val c: Context) : KoinComponent {
         private set
 
     val repository = NavigationRepository(this)
-    private val prefs by inject<PecaPlayPreferences>()
+    private val prefs by inject<AppPreferences>()
 
     init {
         items = createNavigationItems(emptyList(), emptyList(), emptyList())

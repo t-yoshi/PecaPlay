@@ -21,14 +21,14 @@ import org.peercast.pecaplay.R
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.YpLiveChannel
 import org.peercast.pecaplay.core.app.PecaPlayIntent
-import org.peercast.pecaplay.prefs.PecaPlayPreferences
+import org.peercast.pecaplay.prefs.AppPreferences
 import org.peercast.pecaplay.yp4g.YpDisplayOrder
 import timber.log.Timber
 
 class NotificationTask(worker: ListenableWorker) : LoadingWorker.Task(worker), KoinComponent {
 
     private val database by inject<AppRoomDatabase>()
-    private val appPrefs by inject<PecaPlayPreferences>()
+    private val appPrefs by inject<AppPreferences>()
 
     private val c = worker.applicationContext
     private val manager = c.getSystemService(

@@ -3,16 +3,15 @@ package org.peercast.pecaplay.chanlist.filter
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.peercast.pecaplay.app.AppRoomDatabase
-import org.peercast.pecaplay.prefs.PecaPlayPreferences
+import org.peercast.pecaplay.prefs.AppPreferences
 import org.peercast.pecaplay.util.TextUtils.normalize
 import org.peercast.pecaplay.yp4g.YpChannel
 import org.peercast.pecaplay.yp4g.YpDisplayOrder
-import timber.log.Timber
 
 class ChannelFilter(
     private val scope: CoroutineScope,
     private val db: AppRoomDatabase,
-    private val prefs: PecaPlayPreferences,
+    private val prefs: AppPreferences,
 ) {
     var params : FilterParams = MutableFilterParams(
          YpChannelSource.LIVE, YpChannelPredicates.TRUE, prefs.displayOrder, ""

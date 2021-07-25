@@ -6,7 +6,7 @@ import androidx.core.content.edit
 import androidx.preference.PreferenceManager
 import org.peercast.pecaplay.yp4g.YpDisplayOrder
 
-class DefaultPecaPlayPreferences(c: Context) : PecaPlayPreferences() {
+class DefaultAppPreferences(c: Context) : AppPreferences() {
     private val prefs = PreferenceManager.getDefaultSharedPreferences(c)
 
     override var peerCastUrl: Uri

@@ -10,7 +10,7 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.core.io.Square
-import org.peercast.pecaplay.prefs.PecaPlayPreferences
+import org.peercast.pecaplay.prefs.AppPreferences
 import org.peercast.pecaplay.yp4g.Yp4gColumn
 import org.peercast.pecaplay.yp4g.net.Yp4gChannelBinder
 import org.peercast.pecaplay.yp4g.net.createYp4gService
@@ -21,7 +21,7 @@ class LoadingTask(worker: ListenableWorker) : LoadingWorker.Task(worker), KoinCo
 
     private val square by inject<Square>()
     private val database by inject<AppRoomDatabase>()
-    private val appPrefs by inject<PecaPlayPreferences>()
+    private val appPrefs by inject<AppPreferences>()
     private val eventFlow by inject<LoadingEventFlow>()
 
     override suspend fun invoke(): Boolean {

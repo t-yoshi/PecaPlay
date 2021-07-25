@@ -32,13 +32,12 @@ import org.peercast.pecaplay.chanlist.filter.YpChannelSource
 import org.peercast.pecaplay.core.app.PecaPlayIntent
 import org.peercast.pecaplay.core.io.localizedSystemMessage
 import org.peercast.pecaplay.navigation.*
-import org.peercast.pecaplay.prefs.PecaPlayPreferences
+import org.peercast.pecaplay.prefs.AppPreferences
 import org.peercast.pecaplay.prefs.SettingsActivity
 import org.peercast.pecaplay.worker.LoadingEvent
 import org.peercast.pecaplay.worker.LoadingEventFlow
 import org.peercast.pecaplay.yp4g.SpeedTestFragment
 import org.peercast.pecaplay.yp4g.YpDisplayOrder
-import org.peercast.pecaviewer.PecaViewerActivity
 import retrofit2.HttpException
 import timber.log.Timber
 
@@ -51,8 +50,8 @@ import timber.log.Timber
  * */
 class PecaPlayActivity : AppCompatActivity() {
 
-    private val pecaPlayPrefs: PecaPlayPreferences by inject()
-    private val viewModel: PecaPlayViewModel by viewModel()
+    private val appPrefs: AppPreferences by inject()
+    private val viewModel: AppViewModel by viewModel()
     private val loadingEvent by inject<LoadingEventFlow>()
     private var drawerToggle: ActionBarDrawerToggle? = null //縦長時のみ
     private var lastLoadedET = 0L
@@ -112,7 +111,7 @@ class PecaPlayActivity : AppCompatActivity() {
                         removeNotification()
                         YpDisplayOrder.AGE_ASC
                     }
-                    else -> pecaPlayPrefs.displayOrder
+                    else -> appPrefs.displayOrder
                 }
                 selector = item.selector
                 source = when (item) {
@@ -188,7 +187,7 @@ class PecaPlayActivity : AppCompatActivity() {
     }
 
     private fun removeNotification() {
-        pecaPlayPrefs.notificationNewlyChannelsId = emptyList()
+        appPrefs.notificationNewlyChannelsId = emptyList()
         val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.cancelAll()
     }
@@ -221,7 +220,7 @@ class PecaPlayActivity : AppCompatActivity() {
 
         menu.findItem(R.id.menu_notification).let {
             it.isEnabled = viewModel.existsNotification.value
-            val b = pecaPlayPrefs.isNotificationEnabled
+            val b = appPrefs.isNotificationEnabled
             it.setIcon(
                 when (b) {
                     true -> R.drawable.ic_notifications_active_24dp
@@ -252,7 +251,7 @@ class PecaPlayActivity : AppCompatActivity() {
                 //item.isChecked = !item.isChecked
                 val enabled = !item.isChecked
                 //viewModel.isNotificationIconEnabled.value = enabled
-                pecaPlayPrefs.isNotificationEnabled = enabled
+                appPrefs.isNotificationEnabled = enabled
                 if (enabled)
                     viewModel.presenter.startLoading()
                 else
@@ -270,7 +269,7 @@ class PecaPlayActivity : AppCompatActivity() {
                 viewModel.channelFilter.apply {
                     displayOrder = order
                 }
-                pecaPlayPrefs.displayOrder = order
+                appPrefs.displayOrder = order
                 item.isChecked = true
             }
 
@@ -329,7 +328,7 @@ class PecaPlayActivity : AppCompatActivity() {
         override fun onCreateActionView(): View? = null
 
         override fun onPrepareSubMenu(menu: SubMenu) {
-            val ordinal = pecaPlayPrefs.displayOrder.ordinal
+            val ordinal = appPrefs.displayOrder.ordinal
             (0 until menu.size()).map {
                 menu.getItem(it).apply {
                     isCheckable = false

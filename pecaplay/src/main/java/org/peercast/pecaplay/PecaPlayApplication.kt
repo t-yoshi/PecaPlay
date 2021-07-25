@@ -11,8 +11,8 @@ import org.koin.core.KoinApplication
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
 import org.peercast.pecaplay.app.AppRoomDatabase
-import org.peercast.pecaplay.prefs.DefaultPecaPlayPreferences
-import org.peercast.pecaplay.prefs.PecaPlayPreferences
+import org.peercast.pecaplay.prefs.DefaultAppPreferences
+import org.peercast.pecaplay.prefs.AppPreferences
 import org.peercast.pecaplay.worker.LoadingEventFlow
 import org.peercast.pecaviewer.pecaviewerModule
 import timber.log.Timber
@@ -20,15 +20,15 @@ import java.util.*
 
 @Suppress("unused")
 class PecaPlayApplication : Application() {
-    private val pecaPlayPrefs: PecaPlayPreferences by inject()
+    private val appPrefs: AppPreferences by inject()
 
     private lateinit var kApp: KoinApplication
 
     private val pecaplayModule = module {
         single { AppRoomDatabase.createInstance(get(), "pecaplay-5") }
-        single<PecaPlayPreferences> { DefaultPecaPlayPreferences(get()) }
+        single<AppPreferences> { DefaultAppPreferences(get()) }
         single { LoadingEventFlow() }
-        viewModel { PecaPlayViewModel(get(), get(), get()) }
+        viewModel { AppViewModel(get(), get(), get()) }
     }
 
     override fun onCreate() {

@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.combine
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.peercast.pecaplay.app.AppRoomDatabase
-import org.peercast.pecaplay.prefs.PecaPlayPreferences
 
 class NavigationRepository(private val model: NavigationModel) : KoinComponent {
 

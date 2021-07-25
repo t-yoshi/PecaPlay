@@ -8,14 +8,14 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.peercast.core.lib.PeerCastRpcClient
 import org.peercast.core.lib.app.BaseClientWorker
-import org.peercast.pecaplay.prefs.PecaPlayPreferences
+import org.peercast.pecaplay.prefs.AppPreferences
 import timber.log.Timber
 
 
 class LoadingWorker(c: Context, workerParams: WorkerParameters) :
     BaseClientWorker(c, workerParams), KoinComponent {
 
-    private val appPrefs by inject<PecaPlayPreferences>()
+    private val appPrefs by inject<AppPreferences>()
     private val eventFlow by inject<LoadingEventFlow>()
 
     abstract class Task(protected val worker: ListenableWorker) {

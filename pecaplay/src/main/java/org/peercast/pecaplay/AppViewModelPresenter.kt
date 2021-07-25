@@ -13,15 +13,15 @@ import org.peercast.pecaplay.app.YpHistoryChannel
 import org.peercast.pecaplay.app.saveRecentQuery
 import org.peercast.pecaplay.core.app.PecaViewerIntent
 import org.peercast.pecaplay.core.app.stream
-import org.peercast.pecaplay.prefs.PecaPlayPreferences
+import org.peercast.pecaplay.prefs.AppPreferences
 import org.peercast.pecaplay.worker.LoadingWorkerManager
 import org.peercast.pecaplay.yp4g.YpChannel
 import timber.log.Timber
 
 
-class PecaPlayPresenter(
-    private val viewModel: PecaPlayViewModel,
-    private val pecaPlayPrefs: PecaPlayPreferences,
+class AppViewModelPresenter(
+    private val viewModel: AppViewModel,
+    private val appPrefs: AppPreferences,
     private val database: AppRoomDatabase,
 ) {
     private val a = viewModel.getApplication<Application>()
@@ -31,7 +31,7 @@ class PecaPlayPresenter(
     fun startLoading() {
         stopLoading()
 
-        if (pecaPlayPrefs.isNotificationEnabled) {
+        if (appPrefs.isNotificationEnabled) {
             //15分毎にYP読み込みを行う
             workerManager.enqueuePeriodic()
         } else {
@@ -54,9 +54,9 @@ class PecaPlayPresenter(
         if (searchQuery.isNotBlank()) {
             saveRecentQuery(a, searchQuery)
         }
-        val streamUrl = ch.stream(pecaPlayPrefs.peerCastUrl)
+        val streamUrl = ch.stream(appPrefs.peerCastUrl)
 
-        val intent = if (pecaPlayPrefs.isViewerEnabled(ch.type)) {
+        val intent = if (appPrefs.isViewerEnabled(ch.type)) {
             PecaViewerIntent.create(streamUrl, ch)
         } else {
             Intent().also {
