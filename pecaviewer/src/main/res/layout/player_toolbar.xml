@@ -55,7 +55,7 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentBottom="true"
                 android:textAppearance="?android:attr/textAppearanceSmall"
-                android:layout_toRightOf="@id/vNavigation"
+                android:layout_alignParentLeft="true"
                 android:textColor="@color/green_800"
                 android:layout_toLeftOf="@android:id/text2" />
 
