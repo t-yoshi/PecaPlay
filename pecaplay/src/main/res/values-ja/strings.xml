@@ -76,7 +76,7 @@
     <string name="viewer_not_installed">インストールされていません</string>
     <string name="debug_mode">デバッグモード</string>
     <string name="notification">通知</string>
-    <string name="notificated">通知済み</string>
+    <string name="notified">通知済み</string>
     <string name="notification_add">通知する</string>
     <string name="notification_delete">通知しない</string>
     <string name="notification_sound">通知音</string>

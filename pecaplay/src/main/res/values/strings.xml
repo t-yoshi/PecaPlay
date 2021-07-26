@@ -105,7 +105,7 @@
 
     <!--Notification-->
     <string name="notification">Notification</string>
-    <string name="notificated">Notificated</string>
+    <string name="notified">Notified</string>
     <string name="notification_add">Add Notification</string>
     <string name="notification_delete">Remove Notification</string>
     <string name="notification_sound">Notification Sound</string>

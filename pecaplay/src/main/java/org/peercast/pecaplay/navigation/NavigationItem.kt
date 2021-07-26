@@ -24,7 +24,7 @@ abstract class NavigationItem(
     abstract val selector: YpChannelPredicate
 
 
-    var isEnabled = true
+    var isVisible = true
 
     val itemId get() = hashCode()
 

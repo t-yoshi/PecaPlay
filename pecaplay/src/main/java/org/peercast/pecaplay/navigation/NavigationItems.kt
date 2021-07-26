@@ -59,7 +59,7 @@ class NavigationFavoriteItem(c: Context, favo: Favorite, groupOrder: Int) : Badg
 }
 
 class NavigationNotifiedItem(c: Context, favoNotify: List<Favorite>, groupOrder: Int) : BadgeableNavigationItem(
-    c.getString(R.string.notificated),
+    c.getString(R.string.notified),
     GID_FAVORITE, groupOrder,
     R.drawable.ic_notifications_36dp){
     override val selector: YpChannelPredicate = { ch->

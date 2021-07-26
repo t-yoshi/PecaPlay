@@ -13,29 +13,33 @@ import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
-import androidx.core.text.HtmlCompat
 import androidx.core.view.ActionProvider
+import androidx.core.view.GravityCompat
 import androidx.core.view.MenuItemCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.FragmentContainerView
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.peercast.pecaplay.chanlist.filter.YpChannelSource
 import org.peercast.pecaplay.core.app.PecaPlayIntent
-import org.peercast.pecaplay.core.io.localizedSystemMessage
-import org.peercast.pecaplay.navigation.*
+import org.peercast.pecaplay.navigation.NavigationHistoryItem
+import org.peercast.pecaplay.navigation.NavigationNewItem
+import org.peercast.pecaplay.navigation.NavigationNotifiedItem
+import org.peercast.pecaplay.navigation.PecaNaviView
 import org.peercast.pecaplay.prefs.AppPreferences
 import org.peercast.pecaplay.prefs.SettingsActivity
 import org.peercast.pecaplay.worker.LoadingEvent
 import org.peercast.pecaplay.worker.LoadingEventFlow
 import org.peercast.pecaplay.yp4g.SpeedTestFragment
 import org.peercast.pecaplay.yp4g.YpDisplayOrder
-import retrofit2.HttpException
 import timber.log.Timber
 
 /*
@@ -95,6 +99,7 @@ class PecaPlayActivity : AppCompatActivity() {
                 )
                 vNavigation.layoutParams = p
             })
+            drawer.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START)
         }
 
 
@@ -157,7 +162,7 @@ class PecaPlayActivity : AppCompatActivity() {
         super.onNewIntent(intent)
 
         Timber.d("intent=$intent")
-        when (intent.action){
+        when (intent.action) {
             PecaPlayIntent.ACTION_VIEW_NOTIFIED -> {
                 removeNotification()
                 vNavigation.navigate { it is NavigationNotifiedItem }
@@ -294,7 +299,7 @@ class PecaPlayActivity : AppCompatActivity() {
             return
 
         vDrawerLayout?.let { v ->
-            if (v.isDrawerOpen(Gravity.LEFT)) {
+            if (v.isDrawerOpen(GravityCompat.START)) {
                 v.closeDrawers()
                 return
             }

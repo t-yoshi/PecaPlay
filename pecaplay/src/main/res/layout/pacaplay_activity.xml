@@ -40,7 +40,8 @@
         android:paddingTop="35dp"
         app:headerLayout="@null"
         app:itemIconTint="@color/navigation_item"
-        app:itemTextColor="@color/navigation_item" />
+        app:itemTextColor="@color/navigation_item"
+        app:itemBackground="@android:color/transparent"/>
     <!---->
 
 </androidx.drawerlayout.widget.DrawerLayout>

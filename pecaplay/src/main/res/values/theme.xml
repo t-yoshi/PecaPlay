@@ -3,5 +3,6 @@
 
     <color name="colorIconAlarm">@color/yellow_800</color>
     <bool name="landscape_mode">false</bool>
+    <color name="navigation_background_land">@color/design_default_color_background</color>
 
 </resources>

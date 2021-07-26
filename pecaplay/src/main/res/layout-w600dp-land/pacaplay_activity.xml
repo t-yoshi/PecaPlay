@@ -32,6 +32,7 @@
         android:layout_height="match_parent"
         android:layout_gravity="start"
         android:layout_marginTop="3dp"
+        android:background="@color/navigation_background_land"
         app:itemBackground="@android:color/transparent"
         app:itemIconTint="@color/navigation_item"
         app:itemTextColor="@color/navigation_item"

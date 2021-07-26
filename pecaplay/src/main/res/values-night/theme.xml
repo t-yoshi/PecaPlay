@@ -1,13 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="BaseAppTheme.Override">
-        <item name="actionBarStyle">@style/Widget.MaterialComponents.ActionBar.Solid</item>
-        <item name="colorPrimary">@color/grey_900</item>
-    </style>
-
-    <style name="PecaPlayTheme.PopupOverlay" parent="ThemeOverlay.MaterialComponents.Dark" />
-
     <color name="colorIconAlarm">@color/yellow_700</color>
+    <color name="navigation_background_land">#1a1a1a</color>
+    <!--windowBackground(dark) is #121212 HSV(0,0,7) -->
 
 </resources>

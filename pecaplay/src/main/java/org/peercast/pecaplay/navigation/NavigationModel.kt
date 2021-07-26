@@ -103,7 +103,7 @@ class NavigationModel(private val c: Context) : KoinComponent {
                         n > 99 -> "99+"
                         else -> "$n"
                     }
-                    item.isEnabled = n > 0
+                    item.isVisible = n > 0 || item is NavigationNotifiedItem
                 }
             }
         }.awaitAll()

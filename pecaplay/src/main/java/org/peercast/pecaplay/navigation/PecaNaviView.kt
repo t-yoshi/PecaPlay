@@ -8,6 +8,7 @@ import android.view.MenuItem
 import android.widget.CheckBox
 import android.widget.TextView
 import androidx.core.content.edit
+import androidx.core.view.forEach
 import com.google.android.material.navigation.NavigationView
 import kotlinx.parcelize.Parcelize
 import org.peercast.pecaplay.R
@@ -43,6 +44,10 @@ class PecaNaviView : NavigationView {
 
     private fun selectNavigationItem(item: NavigationItem) {
         setCheckedItem(item.itemId)
+
+        menu.forEach { (it.actionView as? TextView)?.isSelected = false   }
+        (menu.findItem(item.itemId)?.actionView as? TextView)?.isSelected = true
+
         onItemClick(item)
     }
 
@@ -52,7 +57,7 @@ class PecaNaviView : NavigationView {
             item.groupId * 0xff + item.order, item.title
         )
         mi.setIcon(item.icon)
-        mi.isVisible = isEditMode || item.key !in prefs
+        mi.isVisible = isEditMode || (item.isVisible && item.key !in prefs)
         //mi.isEnabled = isEditMode || item.isEnabled
 
         if (isEditMode) {
@@ -65,7 +70,7 @@ class PecaNaviView : NavigationView {
                 true
             }
             if (item is BadgeableNavigationItem)
-                inflateNormalAction(mi, item)
+                inflateBadge(mi, item)
         }
     }
 
@@ -144,7 +149,7 @@ class PecaNaviView : NavigationView {
         }?.let(::selectNavigationItem)
     }
 
-    private fun inflateNormalAction(mi: MenuItem, it: BadgeableNavigationItem) {
+    private fun inflateBadge(mi: MenuItem, it: BadgeableNavigationItem) {
         val v = inflater.inflate(
             R.layout.navigation_action_view_badge,
             this, false
