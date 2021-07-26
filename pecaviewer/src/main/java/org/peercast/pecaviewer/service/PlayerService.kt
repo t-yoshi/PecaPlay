@@ -15,6 +15,7 @@ import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.audio.AudioAttributes
+import com.google.android.exoplayer2.ext.okhttp.OkHttpDataSource
 import com.google.android.exoplayer2.source.*
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
@@ -30,6 +31,7 @@ import org.peercast.core.lib.PeerCastController
 import org.peercast.core.lib.notify.NotifyMessageType
 import org.peercast.pecaplay.core.app.PecaViewerIntent
 import org.peercast.pecaplay.core.app.Yp4gChannel
+import org.peercast.pecaplay.core.io.Square
 import org.peercast.pecaviewer.ViewerPreference
 import timber.log.Timber
 import java.io.IOException
@@ -43,6 +45,7 @@ class PlayerService : LifecycleService() {
     private lateinit var notificationHelper: NotificationHelper
     private var peerCastController: PeerCastController? = null
 
+    private val square by inject<Square>()
     private val appPrefs by inject<ViewerPreference>()
     private val eventLiveData by inject<PlayerServiceEventLiveData>()
     var playingUrl: Uri = Uri.EMPTY
@@ -231,7 +234,7 @@ class PlayerService : LifecycleService() {
     }
 
     private val progressiveFactory = ProgressiveMediaSource.Factory(
-        DefaultHttpDataSource.Factory()
+        OkHttpDataSource.Factory(square.okHttpClient)
     ).also { f ->
         f.setLoadErrorHandlingPolicy(object : DefaultLoadErrorHandlingPolicy() {
             override fun getMinimumLoadableRetryCount(dataType: Int): Int {
