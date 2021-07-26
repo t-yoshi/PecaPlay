@@ -27,16 +27,6 @@ class PlayerServiceEventLiveData : MutableLiveData<PlayerServiceEvent>() {
 sealed class PlayerServiceEvent
 
 
-data class PeerCastChannelEvent(
-    val name: String,
-    val url: String,
-    val desc: String,
-    val comment: String,
-) : PlayerServiceEvent() {
-
-    constructor(ch: ChannelInfo) : this(ch.name, ch.url, ch.desc, ch.comment)
-}
-
 data class PeerCastNotifyMessageEvent(
     val types: EnumSet<NotifyMessageType>, val message: String,
 ) : PlayerServiceEvent()

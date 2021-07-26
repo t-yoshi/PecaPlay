@@ -10,31 +10,30 @@ import android.os.Handler
 import android.os.Looper
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
-import androidx.media.AudioAttributesCompat
-import com.google.android.exoplayer2.*
+import com.google.android.exoplayer2.C
+import com.google.android.exoplayer2.MediaItem
+import com.google.android.exoplayer2.Player
+import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.audio.AudioAttributes
-import com.google.android.exoplayer2.metadata.Metadata
 import com.google.android.exoplayer2.source.*
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
 import com.google.android.exoplayer2.upstream.DefaultLoadErrorHandlingPolicy
+import com.google.android.exoplayer2.upstream.HttpDataSource
 import com.google.android.exoplayer2.upstream.LoadErrorHandlingPolicy
-import com.google.android.exoplayer2.video.VideoSize
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.peercast.core.lib.PeerCastController
-import org.peercast.core.lib.notify.NotifyChannelType
 import org.peercast.core.lib.notify.NotifyMessageType
-import org.peercast.core.lib.rpc.ChannelInfo
-import org.peercast.pecaplay.core.app.PecaPlayIntent
 import org.peercast.pecaplay.core.app.PecaViewerIntent
 import org.peercast.pecaplay.core.app.Yp4gChannel
 import org.peercast.pecaviewer.ViewerPreference
 import timber.log.Timber
 import java.io.IOException
+import java.net.SocketTimeoutException
 import java.util.*
 
 
@@ -92,17 +91,17 @@ class PlayerService : LifecycleService() {
     }
 
     private val playerListener = object : Player.Listener {
-        override fun onMetadata(metadata: Metadata) {
-            Timber.d("metadata -> $metadata")
-        }
-
-        override fun onTimelineChanged(timeline: Timeline, reason: Int) {
-            Timber.d("onTimelineChanged -> $timeline : $reason")
-        }
-
-        override fun onPlayerError(error: ExoPlaybackException) {
-            Timber.e(error, "onPlayerError -> $error")
-        }
+//        override fun onMetadata(metadata: Metadata) {
+//            Timber.d("metadata -> $metadata")
+//        }
+//
+//        override fun onTimelineChanged(timeline: Timeline, reason: Int) {
+//            Timber.d("onTimelineChanged -> $timeline : $reason")
+//        }
+//
+//        override fun onPlayerError(error: ExoPlaybackException) {
+//            Timber.e(error, "onPlayerError -> $error")
+//        }
 
         private var jobBuffering: Job? = null
 
@@ -127,19 +126,19 @@ class PlayerService : LifecycleService() {
                 -> {
                     notificationHelper.stopForeground()
                 }
+                else -> {
+                }
             }
 
-            //notificationHelper.isPlaying = player.isPlaying
-
-            Timber.d("state -> $state")
+            //Timber.d("state -> $state")
         }
 
-        override fun onEvents(player: Player, events: Player.Events) {
-            val s = (0 until events.size()).map {
-                events[it]
-            }.joinToString()
-            Timber.d("events -> $s")
-        }
+//        override fun onEvents(player: Player, events: Player.Events) {
+//            val s = (0 until events.size()).map {
+//                events[it]
+//            }.joinToString()
+//            Timber.d("events -> $s")
+//        }
 
         override fun onSurfaceSizeChanged(width: Int, height: Int) {
             Timber.d("onSurfaceSizeChanged -> $width, $height")
@@ -150,17 +149,17 @@ class PlayerService : LifecycleService() {
             }
         }
 
-        override fun onVideoSizeChanged(videoSize: VideoSize) {
-            Timber.d("onVideoSizeChanged -> $videoSize")
-        }
-
-        override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
-            Timber.d("mediaMetadata -> $mediaMetadata")
-        }
-
-        override fun onStaticMetadataChanged(metadataList: MutableList<Metadata>) {
-            Timber.d("metadataList -> $metadataList")
-        }
+//        override fun onVideoSizeChanged(videoSize: VideoSize) {
+//            Timber.d("onVideoSizeChanged -> $videoSize")
+//        }
+//
+//        override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
+//            Timber.d("mediaMetadata -> $mediaMetadata")
+//        }
+//
+//        override fun onStaticMetadataChanged(metadataList: MutableList<Metadata>) {
+//            Timber.d("metadataList -> $metadataList")
+//        }
 
         override fun onIsPlayingChanged(isPlaying: Boolean) {
             notificationHelper.isPlaying = isPlaying
@@ -214,20 +213,6 @@ class PlayerService : LifecycleService() {
         override fun onDisconnectService() {
         }
 
-        override fun onNotifyChannel(
-            type: NotifyChannelType,
-            channelId: String,
-            channelInfo: ChannelInfo,
-        ) {
-            Timber.d("onNotifyChannel: $type $channelId $channelInfo")
-            if (playingUrl.path?.contains(channelId) == true) {
-                val ev = PeerCastChannelEvent(channelInfo)
-                //接続中に空白だけが来ても無視
-                if ("${ev.name}${ev.desc}${ev.comment}".isNotBlank())
-                    eventLiveData.value = ev
-            }
-        }
-
         override fun onNotifyMessage(types: EnumSet<NotifyMessageType>, message: String) {
             Timber.d("onNotifyMessage: $types $message")
             eventLiveData.value = PeerCastNotifyMessageEvent(types, message)
@@ -247,21 +232,25 @@ class PlayerService : LifecycleService() {
 
     private val progressiveFactory = ProgressiveMediaSource.Factory(
         DefaultHttpDataSource.Factory()
-    ).also {
-        it.setLoadErrorHandlingPolicy(object : DefaultLoadErrorHandlingPolicy() {
-            override fun getRetryDelayMsFor(loadErrorInfo: LoadErrorHandlingPolicy.LoadErrorInfo): Long {
-                return super.getRetryDelayMsFor(loadErrorInfo)
-                return 3_000
-            }
-
+    ).also { f ->
+        f.setLoadErrorHandlingPolicy(object : DefaultLoadErrorHandlingPolicy() {
             override fun getMinimumLoadableRetryCount(dataType: Int): Int {
-                return super.getMinimumLoadableRetryCount(dataType)
                 return 8
             }
 
-            override fun getBlacklistDurationMsFor(loadErrorInfo: LoadErrorHandlingPolicy.LoadErrorInfo): Long {
-                return super.getBlacklistDurationMsFor(loadErrorInfo)
-                return 0
+            override fun getRetryDelayMsFor(loadErrorInfo: LoadErrorHandlingPolicy.LoadErrorInfo): Long {
+                Timber.d("-> ${loadErrorInfo.exception} @${loadErrorInfo.errorCount}")
+
+                //PeerCastがまだ起動されていない
+                val isTimeout = loadErrorInfo.exception.let { e ->
+                    e is HttpDataSource.HttpDataSourceException &&
+                            e.cause is SocketTimeoutException
+                }
+                return if (isTimeout) {
+                    3000L
+                } else {
+                    super.getRetryDelayMsFor(loadErrorInfo)
+                }
             }
         })
     }
@@ -312,8 +301,8 @@ class PlayerService : LifecycleService() {
 
     companion object {
         private val AA_MEDIA_MOVIE = AudioAttributes.Builder()
-            .setUsage(AudioAttributesCompat.USAGE_MEDIA)
-            .setContentType(AudioAttributesCompat.CONTENT_TYPE_MOVIE)
+            .setUsage(C.USAGE_MEDIA)
+            .setContentType(C.CONTENT_TYPE_MOVIE)
             .build()
     }
 }
