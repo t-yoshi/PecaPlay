@@ -30,12 +30,7 @@ class NotificationHelper(private val service: PlayerService) {
 
     var isPlaying by updateNotifyWhenChanged(true)
 
-    private val launcherIcon: Bitmap = BitmapFactory.decodeResource(
-        service.resources,
-        R.drawable.ic_launcher
-    )
-
-    var thumbnail by updateNotifyWhenChanged<Bitmap>(launcherIcon)
+    var thumbnail by updateNotifyWhenChanged<Bitmap?>(null)
 
     /**タスクバーから復帰するためのインテント*/
     lateinit var resumeIntent: Intent
@@ -93,7 +88,7 @@ class NotificationHelper(private val service: PlayerService) {
 
     fun stopForeground() {
         isForeground = false
-        thumbnail = launcherIcon
+        thumbnail = null
         service.stopForeground(true)
         service.stopSelf()
     }

@@ -11,9 +11,16 @@
             android:windowSoftInputMode="adjustPan"
             android:supportsPictureInPicture="false"
             android:launchMode="singleTop"
-            android:taskAffinity="org.peercast.pecaplay"
             android:parentActivityName="org.peercast.pecaplay.PecaPlayActivity"
-            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"/>
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"
+        />
+        <!--
+
+            android:autoRemoveFromRecents="true"
+            android:excludeFromRecents="true"
+            android:allowTaskReparenting="true"
+        -->
+
 
         <service
             android:name="org.peercast.pecaviewer.service.PlayerService"

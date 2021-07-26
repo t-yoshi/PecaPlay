@@ -15,7 +15,6 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.doOnLayout
 import androidx.core.view.updatePadding
-import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,7 +47,7 @@ class PecaViewerActivity : AppCompatActivity(),
             chatViewModel
         )
     }
-    private val appPreference by inject<ViewerPreference>()
+    private val viewerPrefs by inject<ViewerPreference>()
     private var onServiceConnect: (PlayerService) -> Unit = {}
     private var service: PlayerService? = null
     private val isLandscapeMode = MutableStateFlow(false)
@@ -57,7 +56,7 @@ class PecaViewerActivity : AppCompatActivity(),
         super.onCreate(savedInstanceState)
         isLandscapeMode.value = resources.configuration.isLandscapeMode
 
-        requestedOrientation = when (appPreference.isFullScreenMode) {
+        requestedOrientation = when (viewerPrefs.isFullScreenMode) {
             true -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
             else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         }
@@ -75,7 +74,7 @@ class PecaViewerActivity : AppCompatActivity(),
         playerViewModel.isFullScreenMode.let { ld ->
             ld.value = requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
             ld.observe(this) {
-                appPreference.isFullScreenMode = it
+                viewerPrefs.isFullScreenMode = it
                 requestedOrientation = when (it) {
                     true -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
                     else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
@@ -140,23 +139,29 @@ class PecaViewerActivity : AppCompatActivity(),
             } else {
                 anchorPercentage =
                     resources.getInteger(R.integer.sliding_up_panel_anchor_point_port)
-                initPanelState(appPreference.initPanelState)
+                initPanelState(viewerPrefs.initPanelState)
             }
             binding.vSlidingUpPanel.anchorPoint = anchorPercentage / 100f
         }.launchIn(lifecycleScope)
     }
 
     override fun onUserLeaveHint() {
-        //TODO: pip mode
+        //TODO pip mode
         if (false &&
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+            viewerPrefs.isBackgroundPlaying &&
+            service?.isPlaying == true &&
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
             packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)
         ) {
             Timber.d("-> onUserLeaveHint()")
-            val params = PictureInPictureParams.Builder()
-                //.setActions()
-                .build()
-            enterPictureInPictureMode(params)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                val params = PictureInPictureParams.Builder()
+                    //.setActions()
+                    .build()
+                enterPictureInPictureMode(params)
+            } else {
+                enterPictureInPictureMode()
+            }
         }
     }
 
@@ -224,7 +229,7 @@ class PecaViewerActivity : AppCompatActivity(),
             ) {
                 appViewModel.slidingPanelState.value = newState.ordinal
                 if (!isLandscapeMode.value)
-                    appPreference.initPanelState = newState
+                    viewerPrefs.initPanelState = newState
             }
         }
     }

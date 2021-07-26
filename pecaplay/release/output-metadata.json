@@ -10,8 +10,8 @@
     {
       "type": "SINGLE",
       "filters": [],
-      "versionCode": 7990000,
-      "versionName": "7.99.0-0",
+      "versionCode": 7999900,
+      "versionName": "8.0.0-rc1",
       "outputFile": "pecaplay-release.apk"
     }
   ]

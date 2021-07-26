@@ -48,7 +48,7 @@ class PlayerService : LifecycleService() {
     var playingUrl: Uri = Uri.EMPTY
         private set
 
-    var thumbnail: Bitmap
+    var thumbnail: Bitmap?
         set(value) {
             notificationHelper.thumbnail = value
         }
