@@ -197,6 +197,11 @@ class PecaPlayActivity : AppCompatActivity() {
         //前回の読み込みからN分以上経過している場合は読み込む
         if (lastLoadedET == 0L || lastLoadedET < SystemClock.elapsedRealtime() - 5 * 60_000)
             viewModel.presenter.startLoading()
+
+        //縦長、resume時にツールバーを表示する
+        if (drawerToggle != null) {
+            vAppBarLayout.setExpanded(true)
+        }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
