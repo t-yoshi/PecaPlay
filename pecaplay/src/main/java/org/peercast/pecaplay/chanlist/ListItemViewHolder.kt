@@ -38,7 +38,8 @@ abstract class ListItemViewHolder private constructor(
                                 vm, !vm.isStarChecked, bindingAdapterPosition)
                         }
                         binding.root.setOnClickListener {
-                            eventListener.onItemClick(checkNotNull(binding.viewModel), bindingAdapterPosition)
+                            eventListener.onItemClick(checkNotNull(binding.viewModel),
+                                bindingAdapterPosition)
                         }
                         binding.root.setOnLongClickListener {
                             eventListener.onItemLongClick(

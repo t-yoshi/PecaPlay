@@ -13,8 +13,8 @@ class ChannelFilter(
     private val db: AppRoomDatabase,
     private val prefs: AppPreferences,
 ) {
-    var params : FilterParams = MutableFilterParams(
-         YpChannelSource.LIVE, YpChannelPredicates.TRUE, prefs.displayOrder, ""
+    var params: FilterParams = MutableFilterParams(
+        YpChannelSource.LIVE, YpChannelPredicates.TRUE, prefs.displayOrder, ""
     )
         private set
 

@@ -37,10 +37,11 @@ class NavigationNewItem(c: Context, groupOrder: Int) : BadgeableNavigationItem(
 }
 
 
-class NavigationStarredItem(c: Context, stars: List<Favorite>, groupOrder: Int) : BadgeableNavigationItem(
-    c.getString(R.string.navigate_favorite),
-    GID_FAVORITE, groupOrder,
-    R.drawable.ic_star_36dp) {
+class NavigationStarredItem(c: Context, stars: List<Favorite>, groupOrder: Int) :
+    BadgeableNavigationItem(
+        c.getString(R.string.navigate_favorite),
+        GID_FAVORITE, groupOrder,
+        R.drawable.ic_star_36dp) {
     override val selector: YpChannelPredicate = { ch ->
         stars.any { it.matches(ch) }
     }
@@ -58,11 +59,12 @@ class NavigationFavoriteItem(c: Context, favo: Favorite, groupOrder: Int) : Badg
     override val key = "favorite (${favo.name})"
 }
 
-class NavigationNotifiedItem(c: Context, favoNotify: List<Favorite>, groupOrder: Int) : BadgeableNavigationItem(
-    c.getString(R.string.notified),
-    GID_FAVORITE, groupOrder,
-    R.drawable.ic_notifications_36dp){
-    override val selector: YpChannelPredicate = { ch->
+class NavigationNotifiedItem(c: Context, favoNotify: List<Favorite>, groupOrder: Int) :
+    BadgeableNavigationItem(
+        c.getString(R.string.notified),
+        GID_FAVORITE, groupOrder,
+        R.drawable.ic_notifications_36dp) {
+    override val selector: YpChannelPredicate = { ch ->
         favoNotify.any {
             //ch is YpIndex && ch.numLoaded < 3 &&
             it.matches(ch)

@@ -11,8 +11,8 @@ import org.koin.core.KoinApplication
 import org.koin.core.context.startKoin
 import org.koin.dsl.module
 import org.peercast.pecaplay.app.AppRoomDatabase
-import org.peercast.pecaplay.prefs.DefaultAppPreferences
 import org.peercast.pecaplay.prefs.AppPreferences
+import org.peercast.pecaplay.prefs.DefaultAppPreferences
 import org.peercast.pecaplay.worker.LoadingEventFlow
 import org.peercast.pecaviewer.pecaviewerModule
 import timber.log.Timber

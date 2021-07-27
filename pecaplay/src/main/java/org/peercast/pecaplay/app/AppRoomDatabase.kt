@@ -1,7 +1,6 @@
 package org.peercast.pecaplay.app
 
 import android.app.Application
-import android.os.AsyncTask
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -12,7 +11,6 @@ import org.peercast.pecaplay.app.dao.FavoriteDao
 import org.peercast.pecaplay.app.dao.YellowPageDao
 import org.peercast.pecaplay.app.dao.YpHistoryChannelDao
 import org.peercast.pecaplay.app.dao.YpLiveChannelDao
-import timber.log.Timber
 
 
 @Database(

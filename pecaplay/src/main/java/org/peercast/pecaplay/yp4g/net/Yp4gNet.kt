@@ -13,7 +13,7 @@ import java.lang.reflect.Type
 
 
 private class Yp4gChannelBinderConverter(
-    val baseUrl: HttpUrl
+    val baseUrl: HttpUrl,
 ) : Converter<ResponseBody, List<Yp4gChannelBinder>> {
     override fun convert(body: ResponseBody): List<Yp4gChannelBinder> {
         return body.use {

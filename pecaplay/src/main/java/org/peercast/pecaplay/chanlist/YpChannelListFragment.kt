@@ -38,6 +38,7 @@ class YpChannelFragment : Fragment() {
         get() = get<AppRoomDatabase>().favoriteDao
     private val viewModel by sharedViewModel<AppViewModel>()
     private lateinit var listAdapter: ChannelListAdapter
+
     //スクロール位置を保存する。
     private lateinit var scrollPositionSaver: ScrollPositionSaver
 
@@ -104,7 +105,7 @@ class YpChannelFragment : Fragment() {
 
         registerForContextMenu(vRecycler)
 
-        with(vRecycler){
+        with(vRecycler) {
             layoutManager = LinearLayoutManager(context)
             adapter = listAdapter
             (itemAnimator as DefaultItemAnimator?)?.let { a ->

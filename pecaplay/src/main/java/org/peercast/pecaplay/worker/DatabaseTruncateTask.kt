@@ -4,7 +4,6 @@ import androidx.work.ListenableWorker
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.peercast.pecaplay.app.AppRoomDatabase
-import timber.log.Timber
 
 class DatabaseTruncateTask(worker: ListenableWorker) : LoadingWorker.Task(worker), KoinComponent {
 

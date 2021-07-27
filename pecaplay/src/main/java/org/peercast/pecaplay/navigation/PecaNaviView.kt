@@ -45,7 +45,7 @@ class PecaNaviView : NavigationView {
     private fun selectNavigationItem(item: NavigationItem) {
         setCheckedItem(item.itemId)
 
-        menu.forEach { (it.actionView as? TextView)?.isSelected = false   }
+        menu.forEach { (it.actionView as? TextView)?.isSelected = false }
         (menu.findItem(item.itemId)?.actionView as? TextView)?.isSelected = true
 
         onItemClick(item)
