@@ -65,15 +65,13 @@
             android:layout_marginTop="2dp">
 
             <CheckBox
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_gravity="center_vertical"
-                android:layout_marginRight="32dp"
+                android:layout_marginRight="15dp"
                 android:button="@drawable/selector_notifications_24px"
                 android:checked="@={viewModel.flagNotification}"
                 android:enabled="@{!viewModel.flagNG}"
-                android:padding="3dp"
-                android:tint="@color/teal_500"
                 app:buttonTint="@color/icon_color_favo_alert" />
 
             <CheckBox
