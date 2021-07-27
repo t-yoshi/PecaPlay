@@ -18,9 +18,7 @@ import com.google.android.exoplayer2.audio.AudioAttributes
 import com.google.android.exoplayer2.ext.okhttp.OkHttpDataSource
 import com.google.android.exoplayer2.source.*
 import com.google.android.exoplayer2.ui.PlayerView
-import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
 import com.google.android.exoplayer2.upstream.DefaultLoadErrorHandlingPolicy
-import com.google.android.exoplayer2.upstream.HttpDataSource
 import com.google.android.exoplayer2.upstream.LoadErrorHandlingPolicy
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -32,6 +30,7 @@ import org.peercast.core.lib.notify.NotifyMessageType
 import org.peercast.pecaplay.core.app.PecaViewerIntent
 import org.peercast.pecaplay.core.app.Yp4gChannel
 import org.peercast.pecaplay.core.io.Square
+import org.peercast.pecaplay.core.io.selfAndCauses
 import org.peercast.pecaviewer.ViewerPreference
 import timber.log.Timber
 import java.io.IOException
@@ -246,8 +245,8 @@ class PlayerService : LifecycleService() {
 
                 //PeerCastがまだ起動されていない
                 val isTimeout = loadErrorInfo.exception.let { e ->
-                    e is HttpDataSource.HttpDataSourceException &&
-                            e.cause is SocketTimeoutException
+                    //e is HttpDataSource.HttpDataSourceException &&
+                    e.selfAndCauses().any { it is SocketTimeoutException }
                 }
                 return if (isTimeout) {
                     3000L

@@ -25,3 +25,7 @@ fun IOException.localizedSystemMessage(): String {
         res.getString(id)
     } ?: localizedMessage ?: message ?: toString()
 }
+
+fun Throwable.selfAndCauses() : List<Throwable> {
+    return generateSequence(this) { it.cause }.distinct().toList()
+}
