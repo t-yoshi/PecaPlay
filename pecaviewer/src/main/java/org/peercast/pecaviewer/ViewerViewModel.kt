@@ -42,12 +42,13 @@ internal class ViewerViewModel(
     val isPostDialogButtonFullVisible: MutableLiveData<Boolean> =
         MediatorLiveData<Boolean>().also { ld ->
             val onVisible = Observer<Any> {
-                ld.value = true
+                if (it != false)
+                    ld.value = true
             }
             //これらのイベントが発生したとき、引っ込んでいたFABを再表示する
-            ld.addSource(playerViewModel.isFullScreenMode, onVisible)
-            ld.addSource(playerViewModel.isControlsViewVisible, onVisible)
-            ld.addSource(slidingPanelState, onVisible)
+            ld.addSource(playerViewModel.isFullScreenMode, onVisible) // trueのとき
+            ld.addSource(playerViewModel.isControlsViewVisible, onVisible) // trueのとき
+            ld.addSource(slidingPanelState, onVisible) //すべてのイベント
 
             val onHide = Observer<Any> {
                 if (a.resources.getBoolean(R.bool.isNarrowScreen))

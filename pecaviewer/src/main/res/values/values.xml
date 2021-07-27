@@ -6,5 +6,5 @@
     <dimen name="min_popup_image_height">250dp</dimen>
 
     <!--狭いスマホ画面で引っ込めた書き込みボタンの再表示-->
-    <integer name="post_button_show_after_sec">8</integer>
+    <integer name="post_button_show_after_sec">60</integer>
 </resources>
