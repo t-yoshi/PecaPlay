@@ -7,11 +7,9 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
-import org.peercast.pecaplay.core.app.PecaPlayIntent
 import org.peercast.pecaplay.core.app.PecaViewerIntent
 import org.peercast.pecaplay.core.app.Yp4gChannel
 import org.peercast.pecaviewer.R
@@ -81,16 +79,20 @@ class NotificationHelper(private val service: PlayerService) {
     }
 
     fun startForeground() {
-        isForeground = true
-        service.startForeground(ID, buildNotification())
-        service.startService(Intent(service, service.javaClass))
+        if (!isForeground) {
+            isForeground = true
+            service.startForeground(ID, buildNotification())
+            service.startService(Intent(service, service.javaClass))
+        }
     }
 
     fun stopForeground() {
-        isForeground = false
-        thumbnail = null
-        service.stopForeground(true)
-        service.stopSelf()
+        if (isForeground) {
+            isForeground = false
+            thumbnail = null
+            service.stopForeground(true)
+            service.stopSelf()
+        }
     }
 
     private fun buildNotification(): Notification {
