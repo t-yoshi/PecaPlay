@@ -47,7 +47,7 @@ internal class ViewerViewModel(
             }
             //これらのイベントが発生したとき、引っ込んでいたFABを再表示する
             ld.addSource(playerViewModel.isFullScreenMode, onVisible) // trueのとき
-            ld.addSource(playerViewModel.isControlsViewVisible, onVisible) // trueのとき
+            //ld.addSource(playerViewModel.isControlsViewVisible, onVisible) // trueのとき
             ld.addSource(slidingPanelState, onVisible) //すべてのイベント
 
             val onHide = Observer<Any> {
