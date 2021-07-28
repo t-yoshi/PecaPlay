@@ -225,6 +225,21 @@ class PlayerService : LifecycleService() {
             PlayerLoadErrorEvent(loadEventInfo.uri, error).emit()
         }
 
+        override fun onBandwidthEstimate(
+            eventTime: AnalyticsListener.EventTime,
+            totalLoadTimeMs: Int,
+            totalBytesLoaded: Long,
+            bitrateEstimate: Long
+        ) {
+
+            Timber.d("onBandwidthEstimate -> $totalLoadTimeMs $bitrateEstimate")
+        }
+
+        override fun onTimelineChanged(eventTime: AnalyticsListener.EventTime, reason: Int) {
+
+            Timber.d("onTimelineChanged -> ${reason}")
+        }
+
 
     }
 
@@ -271,12 +286,7 @@ class PlayerService : LifecycleService() {
     }
 
     private val progressiveFactory = ProgressiveMediaSource.Factory(
-        OkHttpDataSource.Factory(square.okHttpClient.newBuilder()
-            //ピアキャス接続に時間がかかるので長めに
-            .connectTimeout(5, TimeUnit.SECONDS)
-            .readTimeout(15, TimeUnit.SECONDS)
-            .writeTimeout(15, TimeUnit.SECONDS)
-            .build())
+        OkHttpDataSource.Factory(square.okHttpClient)
     ).also { f ->
         f.setLoadErrorHandlingPolicy(object : DefaultLoadErrorHandlingPolicy() {
             override fun getMinimumLoadableRetryCount(dataType: Int): Int {
@@ -288,29 +298,12 @@ class PlayerService : LifecycleService() {
                 val e = loadErrorInfo.exception
                 if (
                     e is HttpDataSource.InvalidResponseCodeException &&
-                    e.responseCode in listOf(404, )
+                    e.responseCode == 404
                 ) {
                    return C.TIME_UNSET
                 }
-
-                return 5_000//super.getRetryDelayMsFor(loadErrorInfo)
+                return 5_000
             }
-
-//            override fun getRetryDelayMsFor(loadErrorInfo: LoadErrorHandlingPolicy.LoadErrorInfo): Long {
-//                //PeerCastがまだ起動されていない
-//                val isTimeout = loadErrorInfo.exception.let { e ->
-//                    //e is HttpDataSource.HttpDataSourceException &&
-//                    e.selfAndCauses().any { it is SocketTimeoutException }
-//                }
-//                val r = if (isTimeout) {
-//                    3000L
-//                } else {
-//                    super.getRetryDelayMsFor(loadErrorInfo)
-//                }
-//
-//                Timber.d("-> getRetryDelayMsFor $r, ${loadErrorInfo.exception} @${loadErrorInfo.errorCount}")
-//                return r
-//            }
         })
     }
 

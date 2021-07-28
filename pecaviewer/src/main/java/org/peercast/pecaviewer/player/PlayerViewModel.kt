@@ -20,27 +20,8 @@ class PlayerViewModel(private val a: Application) : AndroidViewModel(a), KoinCom
 
     val isFullScreenMode = MutableLiveData(false)
 
-
-    /**ステータス。配信時間など*/
-    val channelStatus: LiveData<CharSequence> = MediatorLiveData<CharSequence>().also { ld ->
-        ld.addSource(eventFlow.asLiveData()) { ev ->
-            when (ev) {
-//                is MediaPlayerEvent -> {
-//                    when (ev.ev.type) {
-////                        MediaPlayer.Event.TimeChanged -> {
-////                            val t = ev.ev.timeChanged / 1000
-////                            ld.value =
-////                                "%d:%02d:%02d".format(t / 60 / 60, t / 60 % 60, t % 60)
-////                        }
-//                    }
-//                }
-            }
-        }
-    }
-
-    /**警告メッセージ。エラー、バッファ発生など*/
+    /**警告メッセージ。エラー、バッファ発生など。数秒後に消える。*/
     val channelWarning: LiveData<CharSequence> = MediatorLiveData<CharSequence>().also { ld ->
-        //赤文字の警告は数秒後に消え、緑のステータス表示に戻る
         var j: Job? = null
         ld.observeForever {
             if (it.isNotEmpty()) {

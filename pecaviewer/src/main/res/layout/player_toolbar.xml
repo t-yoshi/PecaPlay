@@ -65,7 +65,7 @@
                 android:layout_height="wrap_content"
                 android:textColor="@{TextUtils.isEmpty(playerViewModel.channelWarning) ? @color/green_800 : @color/deep_orange_500 }"
                 android:singleLine="true"
-                android:text="@{TextUtils.isEmpty(playerViewModel.channelWarning) ? playerViewModel.channelStatus : playerViewModel.channelWarning}"
+                android:text="@{playerViewModel.channelWarning}"
                 android:textAppearance="?android:attr/textAppearanceSmall"
                 android:layout_alignBaseline="@android:id/text1"
                 android:layout_alignParentRight="true"
