@@ -1,28 +1,18 @@
 package org.peercast.pecaviewer.service
 
 import android.net.Uri
-import androidx.lifecycle.MutableLiveData
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import org.peercast.core.lib.notify.NotifyMessageType
-import org.peercast.core.lib.rpc.ChannelInfo
 import java.io.IOException
 import java.util.*
 
-
-class PlayerServiceEventLiveData : MutableLiveData<PlayerServiceEvent>() {
-
-    /**
-     * MutableLiveData#postValueはディスパッチ直前の値だけが送信されるので
-     * データが失われることがある。本来はイベント用ではない?
-     * */
-    @Deprecated("")
-    override fun postValue(value: PlayerServiceEvent?) {
-        super.postValue(value)
-    }
-}
+class PlayerServiceEventFlow : MutableSharedFlow<PlayerServiceEvent>
+by MutableSharedFlow(1, 0, BufferOverflow.DROP_OLDEST)
 
 
 /**
- * PecaViewerServiceで発行するイベント
+ * PlayerServiceで発行するイベント
  * */
 sealed class PlayerServiceEvent
 

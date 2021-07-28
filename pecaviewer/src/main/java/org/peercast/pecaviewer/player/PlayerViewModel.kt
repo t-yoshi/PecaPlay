@@ -13,7 +13,7 @@ import org.peercast.pecaviewer.service.*
 
 class PlayerViewModel(private val a: Application) : AndroidViewModel(a), KoinComponent {
     //サービスからのイベントを元に表示する
-    private val eventLiveData by inject<PlayerServiceEventLiveData>()
+    private val eventFlow by inject<PlayerServiceEventFlow>()
 
     /**コントロールボタンの表示。タッチして数秒後に消える*/
     val isControlsViewVisible = MutableLiveData(false)
@@ -23,7 +23,7 @@ class PlayerViewModel(private val a: Application) : AndroidViewModel(a), KoinCom
 
     /**ステータス。配信時間など*/
     val channelStatus: LiveData<CharSequence> = MediatorLiveData<CharSequence>().also { ld ->
-        ld.addSource(eventLiveData) { ev ->
+        ld.addSource(eventFlow.asLiveData()) { ev ->
             when (ev) {
 //                is MediaPlayerEvent -> {
 //                    when (ev.ev.type) {
@@ -52,7 +52,7 @@ class PlayerViewModel(private val a: Application) : AndroidViewModel(a), KoinCom
             }
         }
 
-        ld.addSource(eventLiveData) { ev ->
+        ld.addSource(eventFlow.asLiveData()) { ev ->
             when (ev) {
                 is PeerCastNotifyMessageEvent -> {
                     ld.value = ev.message

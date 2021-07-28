@@ -44,7 +44,7 @@ class PlayerService : LifecycleService() {
 
     private val square by inject<Square>()
     private val appPrefs by inject<ViewerPreference>()
-    private val eventLiveData by inject<PlayerServiceEventLiveData>()
+    private val eventFlow by inject<PlayerServiceEventFlow>()
     var playingUrl: Uri = Uri.EMPTY
         private set
 
@@ -90,6 +90,12 @@ class PlayerService : LifecycleService() {
         })
     }
 
+    private fun PlayerServiceEvent.emit(){
+        lifecycleScope.launch {
+            eventFlow.emit(this@emit)
+        }
+    }
+
     private val analyticsListener = object : AnalyticsListener {
         private var jBuf: Job? = null
 
@@ -98,7 +104,7 @@ class PlayerService : LifecycleService() {
                 Player.STATE_BUFFERING -> {
                     jBuf = lifecycleScope.launch {
                         while (isActive) {
-                            eventLiveData.value = PlayerBufferingEvent(player.bufferedPercentage)
+                            eventFlow.emit(PlayerBufferingEvent(player.bufferedPercentage))
                             delay(3_000)
                         }
                     }
@@ -121,10 +127,10 @@ class PlayerService : LifecycleService() {
             //Timber.d("state -> $state")
         }
 
-        private fun sendPlayerErrorEvent(errorType: String, e: Exception){
+         private fun sendPlayerErrorEvent(errorType: String, e: Exception){
             jBuf?.cancel()
             Timber.e(e, "$errorType -> $e")
-            eventLiveData.value = PlayerErrorEvent(errorType, e)
+            PlayerErrorEvent(errorType, e).emit()
         }
 
         override fun onPlayerError(
@@ -205,7 +211,7 @@ class PlayerService : LifecycleService() {
             mediaLoadData: MediaLoadData
         ) {
             Timber.d("onLoadStarted -> ${loadEventInfo.uri}")
-            eventLiveData.value = PlayerLoadStartEvent(loadEventInfo.uri)
+            PlayerLoadStartEvent(loadEventInfo.uri).emit()
         }
 
         override fun onLoadError(
@@ -216,7 +222,7 @@ class PlayerService : LifecycleService() {
             wasCanceled: Boolean
         ) {
             Timber.w(error, "onLoadError -> ${loadEventInfo.uri}")
-            eventLiveData.value = PlayerLoadErrorEvent(loadEventInfo.uri, error)
+            PlayerLoadErrorEvent(loadEventInfo.uri, error).emit()
         }
 
 
@@ -249,7 +255,7 @@ class PlayerService : LifecycleService() {
 
         override fun onNotifyMessage(types: EnumSet<NotifyMessageType>, message: String) {
             Timber.d("onNotifyMessage: $types $message")
-            eventLiveData.value = PeerCastNotifyMessageEvent(types, message)
+            PeerCastNotifyMessageEvent(types, message).emit()
         }
     }
 
