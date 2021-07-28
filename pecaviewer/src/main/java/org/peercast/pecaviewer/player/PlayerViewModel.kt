@@ -72,6 +72,10 @@ class PlayerViewModel(private val a: Application) : AndroidViewModel(a), KoinCom
                 is PlayerLoadStartEvent -> {
                     ld.value = a.getString(R.string.start_loading)
                 }
+
+                is PlayerErrorEvent -> {
+                    ld.value = "${ev.errorType} ${ev.e.message?.take(20)}"
+                }
             }
         }
     }

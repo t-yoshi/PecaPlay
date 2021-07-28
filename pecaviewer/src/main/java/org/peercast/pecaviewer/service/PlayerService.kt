@@ -6,19 +6,16 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Bitmap
 import android.net.Uri
-import android.os.Handler
-import android.os.Looper
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
-import com.google.android.exoplayer2.C
-import com.google.android.exoplayer2.MediaItem
-import com.google.android.exoplayer2.Player
-import com.google.android.exoplayer2.SimpleExoPlayer
+import com.google.android.exoplayer2.*
+import com.google.android.exoplayer2.analytics.AnalyticsListener
 import com.google.android.exoplayer2.audio.AudioAttributes
 import com.google.android.exoplayer2.ext.okhttp.OkHttpDataSource
 import com.google.android.exoplayer2.source.*
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.DefaultLoadErrorHandlingPolicy
+import com.google.android.exoplayer2.upstream.HttpDataSource
 import com.google.android.exoplayer2.upstream.LoadErrorHandlingPolicy
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -30,12 +27,12 @@ import org.peercast.core.lib.notify.NotifyMessageType
 import org.peercast.pecaplay.core.app.PecaViewerIntent
 import org.peercast.pecaplay.core.app.Yp4gChannel
 import org.peercast.pecaplay.core.io.Square
-import org.peercast.pecaplay.core.io.selfAndCauses
 import org.peercast.pecaviewer.ViewerPreference
 import timber.log.Timber
 import java.io.IOException
-import java.net.SocketTimeoutException
+import java.lang.Exception
 import java.util.*
+import java.util.concurrent.TimeUnit
 
 
 class PlayerService : LifecycleService() {
@@ -74,7 +71,7 @@ class PlayerService : LifecycleService() {
             .setAudioAttributes(AA_MEDIA_MOVIE, true)
             .setWakeMode(C.WAKE_MODE_LOCAL)
             .build()
-        player.addListener(playerListener)
+        player.addAnalyticsListener(analyticsListener)
 
         notificationHelper = NotificationHelper(this)
 
@@ -92,33 +89,21 @@ class PlayerService : LifecycleService() {
         })
     }
 
-    private val playerListener = object : Player.Listener {
-//        override fun onMetadata(metadata: Metadata) {
-//            Timber.d("metadata -> $metadata")
-//        }
-//
-//        override fun onTimelineChanged(timeline: Timeline, reason: Int) {
-//            Timber.d("onTimelineChanged -> $timeline : $reason")
-//        }
-//
-//        override fun onPlayerError(error: ExoPlaybackException) {
-//            Timber.e(error, "onPlayerError -> $error")
-//        }
+    private val analyticsListener = object : AnalyticsListener {
+        private var jBuf: Job? = null
 
-        private var jobBuffering: Job? = null
-
-        override fun onPlaybackStateChanged(state: Int) {
+        override fun onPlaybackStateChanged(eventTime: AnalyticsListener.EventTime, state: Int) {
             when (state) {
                 Player.STATE_BUFFERING -> {
-                    jobBuffering = lifecycleScope.launch {
+                    jBuf = lifecycleScope.launch {
                         while (isActive) {
                             eventLiveData.value = PlayerBufferingEvent(player.bufferedPercentage)
-                            delay(10_000)
+                            delay(3_000)
                         }
                     }
                 }
                 else -> {
-                    jobBuffering?.cancel()
+                    jBuf?.cancel()
                 }
             }
 
@@ -135,14 +120,53 @@ class PlayerService : LifecycleService() {
             //Timber.d("state -> $state")
         }
 
-//        override fun onEvents(player: Player, events: Player.Events) {
+        private fun sendPlayerErrorEvent(errorType: String, e: Exception){
+            jBuf?.cancel()
+            Timber.e(e, "$errorType -> $e")
+            eventLiveData.value = PlayerErrorEvent(errorType, e)
+        }
+
+        override fun onPlayerError(
+            eventTime: AnalyticsListener.EventTime,
+            error: ExoPlaybackException
+        ){
+            sendPlayerErrorEvent("PlayerError", error)
+        }
+
+        override fun onAudioCodecError(
+            eventTime: AnalyticsListener.EventTime,
+            audioCodecError: Exception
+        ) {
+            sendPlayerErrorEvent("AudioCodecError", audioCodecError)
+        }
+
+        override fun onAudioSinkError(
+            eventTime: AnalyticsListener.EventTime,
+            audioSinkError: Exception
+        ) {
+            sendPlayerErrorEvent("AudioSinkError", audioSinkError)
+        }
+
+        override fun onVideoCodecError(
+            eventTime: AnalyticsListener.EventTime,
+            videoCodecError: Exception
+        ) {
+            sendPlayerErrorEvent("VideoCodecError", videoCodecError)
+        }
+
+
+        override fun onEvents(player: Player, events: AnalyticsListener.Events) {
 //            val s = (0 until events.size()).map {
 //                events[it]
 //            }.joinToString()
 //            Timber.d("events -> $s")
-//        }
+        }
 
-        override fun onSurfaceSizeChanged(width: Int, height: Int) {
+        override fun onSurfaceSizeChanged(
+            eventTime: AnalyticsListener.EventTime,
+            width: Int,
+            height: Int
+        ) {
             Timber.d("onSurfaceSizeChanged -> $width, $height")
             if (width == 0 && height == 0 && player.isPlaying && appPrefs.isBackgroundPlaying) {
                 notificationHelper.startForeground()
@@ -151,45 +175,34 @@ class PlayerService : LifecycleService() {
             }
         }
 
-//        override fun onVideoSizeChanged(videoSize: VideoSize) {
-//            Timber.d("onVideoSizeChanged -> $videoSize")
-//        }
-//
-//        override fun onMediaMetadataChanged(mediaMetadata: MediaMetadata) {
-//            Timber.d("mediaMetadata -> $mediaMetadata")
-//        }
-//
-//        override fun onStaticMetadataChanged(metadataList: MutableList<Metadata>) {
-//            Timber.d("metadataList -> $metadataList")
-//        }
-
-        override fun onIsPlayingChanged(isPlaying: Boolean) {
+        override fun onIsPlayingChanged(
+            eventTime: AnalyticsListener.EventTime,
+            isPlaying: Boolean
+        ) {
             notificationHelper.isPlaying = isPlaying
         }
-    }
 
-    private val mediaSourceListener = object : MediaSourceEventListener {
         override fun onLoadStarted(
-            windowIndex: Int,
-            mediaPeriodId: MediaSource.MediaPeriodId?,
+            eventTime: AnalyticsListener.EventTime,
             loadEventInfo: LoadEventInfo,
-            mediaLoadData: MediaLoadData,
+            mediaLoadData: MediaLoadData
         ) {
-            eventLiveData.value = PlayerLoadStartEvent(loadEventInfo.uri)
             Timber.d("onLoadStarted -> ${loadEventInfo.uri}")
+            eventLiveData.value = PlayerLoadStartEvent(loadEventInfo.uri)
         }
 
         override fun onLoadError(
-            windowIndex: Int,
-            mediaPeriodId: MediaSource.MediaPeriodId?,
+            eventTime: AnalyticsListener.EventTime,
             loadEventInfo: LoadEventInfo,
             mediaLoadData: MediaLoadData,
             error: IOException,
-            wasCanceled: Boolean,
+            wasCanceled: Boolean
         ) {
-            eventLiveData.value = PlayerLoadErrorEvent(loadEventInfo.uri, error)
             Timber.w(error, "onLoadError -> ${loadEventInfo.uri}")
+            eventLiveData.value = PlayerLoadErrorEvent(loadEventInfo.uri, error)
         }
+
+
     }
 
     class Binder(val service: PlayerService) : android.os.Binder()
@@ -210,9 +223,11 @@ class PlayerService : LifecycleService() {
 
     private val pecaEventHandler = object : PeerCastController.EventListener {
         override fun onConnectService(controller: PeerCastController) {
+            Timber.d("onConnectService: ${controller.rpcEndPoint}")
         }
 
         override fun onDisconnectService() {
+            Timber.d("onDisconnectService")
         }
 
         override fun onNotifyMessage(types: EnumSet<NotifyMessageType>, message: String) {
@@ -233,7 +248,12 @@ class PlayerService : LifecycleService() {
     }
 
     private val progressiveFactory = ProgressiveMediaSource.Factory(
-        OkHttpDataSource.Factory(square.okHttpClient)
+        OkHttpDataSource.Factory(square.okHttpClient.newBuilder()
+            //ピアキャス接続に時間がかかるので長めに
+            .connectTimeout(5, TimeUnit.SECONDS)
+            .readTimeout(15, TimeUnit.SECONDS)
+            .writeTimeout(15, TimeUnit.SECONDS)
+            .build())
     ).also { f ->
         f.setLoadErrorHandlingPolicy(object : DefaultLoadErrorHandlingPolicy() {
             override fun getMinimumLoadableRetryCount(dataType: Int): Int {
@@ -241,19 +261,33 @@ class PlayerService : LifecycleService() {
             }
 
             override fun getRetryDelayMsFor(loadErrorInfo: LoadErrorHandlingPolicy.LoadErrorInfo): Long {
-                Timber.d("-> ${loadErrorInfo.exception} @${loadErrorInfo.errorCount}")
+                Timber.d("-> getRetryDelayMsFor ${loadErrorInfo.exception} @${loadErrorInfo.errorCount}")
+                val e = loadErrorInfo.exception
+                if (
+                    e is HttpDataSource.InvalidResponseCodeException &&
+                    e.responseCode in listOf(404, )
+                ) {
+                   return C.TIME_UNSET
+                }
 
-                //PeerCastがまだ起動されていない
-                val isTimeout = loadErrorInfo.exception.let { e ->
-                    //e is HttpDataSource.HttpDataSourceException &&
-                    e.selfAndCauses().any { it is SocketTimeoutException }
-                }
-                return if (isTimeout) {
-                    3000L
-                } else {
-                    super.getRetryDelayMsFor(loadErrorInfo)
-                }
+                return 5_000//super.getRetryDelayMsFor(loadErrorInfo)
             }
+
+//            override fun getRetryDelayMsFor(loadErrorInfo: LoadErrorHandlingPolicy.LoadErrorInfo): Long {
+//                //PeerCastがまだ起動されていない
+//                val isTimeout = loadErrorInfo.exception.let { e ->
+//                    //e is HttpDataSource.HttpDataSourceException &&
+//                    e.selfAndCauses().any { it is SocketTimeoutException }
+//                }
+//                val r = if (isTimeout) {
+//                    3000L
+//                } else {
+//                    super.getRetryDelayMsFor(loadErrorInfo)
+//                }
+//
+//                Timber.d("-> getRetryDelayMsFor $r, ${loadErrorInfo.exception} @${loadErrorInfo.errorCount}")
+//                return r
+//            }
         })
     }
 
@@ -271,9 +305,7 @@ class PlayerService : LifecycleService() {
             return
 
         val item = MediaItem.fromUri(u)
-        val src = progressiveFactory.createMediaSource(item)
-        src.addEventListener(Handler(Looper.getMainLooper()), mediaSourceListener)
-        player.setMediaSource(src)
+        player.setMediaSource(progressiveFactory.createMediaSource(item))
 
         if (u.host in listOf("localhost", "127.0.0.1"))
             bindPeerCastService()

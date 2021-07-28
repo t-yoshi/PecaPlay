@@ -34,4 +34,4 @@ data class PeerCastNotifyMessageEvent(
 data class PlayerBufferingEvent(val percentage: Int = 0) : PlayerServiceEvent()
 data class PlayerLoadStartEvent(val url: Uri) : PlayerServiceEvent()
 data class PlayerLoadErrorEvent(val url: Uri, val e: IOException) : PlayerServiceEvent()
-
+data class PlayerErrorEvent(val errorType: String, val e: Exception) : PlayerServiceEvent()
