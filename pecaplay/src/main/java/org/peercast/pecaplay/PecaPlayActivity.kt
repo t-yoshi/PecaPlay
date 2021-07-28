@@ -24,10 +24,7 @@ import androidx.fragment.app.FragmentContainerView
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -43,6 +40,7 @@ import org.peercast.pecaplay.worker.LoadingEvent
 import org.peercast.pecaplay.worker.LoadingEventFlow
 import org.peercast.pecaplay.yp4g.SpeedTestFragment
 import org.peercast.pecaplay.yp4g.YpDisplayOrder
+import org.peercast.pecaviewer.player.MiniPlayerFragment
 import timber.log.Timber
 
 /*
@@ -70,12 +68,13 @@ class PecaPlayActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         lastLoadedET = savedInstanceState?.getLong(STATE_LAST_LOADED_ER_TIME) ?: 0L
 
-        setContentView(R.layout.pacaplay_activity)
+        setContentView(R.layout.pecaplay_activity)
         vToolbar = findViewById(R.id.vToolbar)
         vDrawerLayout = findViewById(R.id.vDrawerLayout)
         vNavigation = findViewById(R.id.vNavigation)
         vAppBarLayout = findViewById(R.id.vAppBarLayout)
         vYpChannelFragmentContainer = findViewById(R.id.vYpChannelFragmentContainer)
+
         setTitle(R.string.app_name)
 
         setSupportActionBar(vToolbar)
@@ -104,7 +103,6 @@ class PecaPlayActivity : AppCompatActivity() {
             })
             drawer.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START)
         }
-
 
         vNavigation.onItemClick = { item ->
             viewModel.channelFilter.apply {
@@ -139,9 +137,17 @@ class PecaPlayActivity : AppCompatActivity() {
         lifecycleScope.launchWhenResumed {
             viewModel.message.filter { it.isNotEmpty() }.onEach {
                 Snackbar.make(vYpChannelFragmentContainer, it, Snackbar.LENGTH_LONG).show()
-                viewModel.message.value = ""
             }.collect()
         }
+
+        viewModel.rpcClient.filterNotNull().onEach { client ->
+            //PeerCastの起動を知らせる。ミニプレーヤーと被るときは表示しない。
+            if (!intent.hasExtra(PecaPlayIntent.EX_MINIPLAYER_ENABLED)) {
+                viewModel.message.emit(
+                    getString(R.string.peercast_has_started, client.rpcEndPoint.port)
+                )
+            }
+        }.launchIn(lifecycleScope)
 
         lifecycleScope.launchWhenResumed {
             viewModel.existsNotification.collect {
@@ -156,15 +162,7 @@ class PecaPlayActivity : AppCompatActivity() {
             }
         }
 
-        onNewIntent(intent)
-
-        viewModel.bindService()
-    }
-
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-
-        Timber.d("intent=$intent")
+        Timber.d("intent=$intent, extras=${intent.extras?.keySet()?.toList()}")
         when (intent.action) {
             PecaPlayIntent.ACTION_VIEW_NOTIFIED -> {
                 removeNotification()
@@ -173,6 +171,16 @@ class PecaPlayActivity : AppCompatActivity() {
         }
 
         vNavigation.model.repository.collectIn(lifecycleScope)
+
+        if (intent.getBooleanExtra(PecaPlayIntent.EX_MINIPLAYER_ENABLED, false)) {
+            //vMiniPlayerContainer.isVisible =
+            //    intent.getBooleanExtra(PecaPlayIntent.EX_MINIPLAYER_ENABLED, false)
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.vMiniPlayerContainer, MiniPlayerFragment())
+                .commit()
+        }
+
+        viewModel.bindService()
     }
 
     private fun removeNotification() {

@@ -1,16 +1,12 @@
 package org.peercast.pecaviewer
 
-import android.app.PictureInPictureParams
 import android.content.*
 import android.content.pm.ActivityInfo
-import android.content.pm.PackageManager
 import android.content.res.Configuration
-import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.NavUtils
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.doOnLayout
@@ -99,7 +95,7 @@ class PecaViewerActivity : AppCompatActivity(),
         binding.toolbar.text1.text = channel.run { "$genre $description $comment".trim() }
 
         lifecycleScope.launch {
-                chatViewModel.presenter.loadUrl(channel.url.toString())
+            chatViewModel.presenter.loadUrl(channel.url.toString())
         }
 
         registerReceiver(receiver, IntentFilter(NotificationHelper.ACTION_STOP))
@@ -143,26 +139,6 @@ class PecaViewerActivity : AppCompatActivity(),
             }
             binding.vSlidingUpPanel.anchorPoint = anchorPercentage / 100f
         }.launchIn(lifecycleScope)
-    }
-
-    override fun onUserLeaveHint() {
-        //TODO pip mode
-        if (false &&
-            viewerPrefs.isBackgroundPlaying &&
-            service?.isPlaying == true &&
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
-            packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)
-        ) {
-            Timber.d("-> onUserLeaveHint()")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val params = PictureInPictureParams.Builder()
-                    //.setActions()
-                    .build()
-                enterPictureInPictureMode(params)
-            } else {
-                enterPictureInPictureMode()
-            }
-        }
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
@@ -245,10 +221,6 @@ class PecaViewerActivity : AppCompatActivity(),
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putBoolean(STATE_PLAYING, service?.isPlaying ?: true)
-    }
-
-    override fun onBackPressed() {
-        NavUtils.navigateUpFromSameTask(this)
     }
 
     override fun onDestroy() {

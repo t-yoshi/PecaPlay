@@ -2,12 +2,14 @@ package org.peercast.pecaviewer.player
 
 import android.annotation.SuppressLint
 import android.content.ComponentName
+import android.content.Context
 import android.content.ServiceConnection
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.view.*
 import android.widget.ImageView
+import androidx.activity.addCallback
 import androidx.appcompat.widget.ActionMenuView
 import androidx.core.app.NavUtils
 import androidx.fragment.app.Fragment
@@ -17,6 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
+import org.peercast.pecaplay.core.app.PecaPlayIntent
 import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.ViewerPreference
 import org.peercast.pecaviewer.ViewerViewModel
@@ -42,10 +45,12 @@ class PlayerFragment : Fragment(), ServiceConnection {
         return inflater.inflate(R.layout.fragment_player, container, false)
     }
 
-    private lateinit var vPlayer: PlayerView
+    private var vPlayer: PlayerView? = null
     private lateinit var vPlayerMenu: ActionMenuView
     private lateinit var vQuit: ImageView
     private lateinit var vFullScreen: ImageView
+
+    private var isToLaunchMiniPlayer = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -63,7 +68,7 @@ class PlayerFragment : Fragment(), ServiceConnection {
             vFullScreen.setImageResource(r)
         }
 
-        vPlayer.setControllerVisibilityListener {
+        vPlayer?.setControllerVisibilityListener {
             playerViewModel.isControlsViewVisible.value = it == View.VISIBLE
         }
 
@@ -74,10 +79,27 @@ class PlayerFragment : Fragment(), ServiceConnection {
         }
 
         vQuit.setOnClickListener {
-            NavUtils.navigateUpFromSameTask(requireActivity())
+            navigateToParentActivity(true)
         }
+
         vFullScreen.setOnClickListener(::onFullScreenClicked)
         view.setOnTouchListener(DoubleTabDetector(view, ::onFullScreenClicked))
+    }
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        requireActivity().onBackPressedDispatcher.addCallback(this) {
+            navigateToParentActivity(false)
+        }
+    }
+
+    private fun navigateToParentActivity(miniPlayerEnabled: Boolean) {
+        val a = requireActivity()
+        val i = checkNotNull(NavUtils.getParentActivityIntent(a))
+        i.putExtra(PecaPlayIntent.EX_MINIPLAYER_ENABLED, miniPlayerEnabled)
+        if (miniPlayerEnabled)
+            isToLaunchMiniPlayer = true
+        NavUtils.navigateUpTo(a, i)
     }
 
     private fun onFullScreenClicked(v__: View) {
@@ -132,42 +154,38 @@ class PlayerFragment : Fragment(), ServiceConnection {
         service = null
 
         lifecycleScope.launch(Dispatchers.Main.immediate) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                if (sv.isPlaying) {
-                    kotlin.runCatching {
-                        takeScreenShot(vPlayer.videoSurfaceView as SurfaceView, 256)
-                    }.onSuccess {
-                        sv.thumbnail = it
-                    }.onFailure(Timber::w)
-                }
-
-                if (requireActivity().isInPictureInPictureMode)
-                    return@launch
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && sv.isPlaying) {
+                kotlin.runCatching {
+                    takeScreenShot(vPlayer?.videoSurfaceView as SurfaceView, 256)
+                }.onSuccess {
+                    sv.thumbnail = it
+                }.onFailure(Timber::w)
             }
 
-            if (!viewerPrefs.isBackgroundPlaying) {
+            Timber.d("${viewerPrefs.isBackgroundPlaying} ${isToLaunchMiniPlayer}")
+            if (!(viewerPrefs.isBackgroundPlaying || isToLaunchMiniPlayer)) {
                 sv.stop()
             }
-            vPlayer.player = null
-            requireContext().unbindService(this@PlayerFragment)
-        }
-    }
 
-    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean) {
-        vPlayer.useController = !isInPictureInPictureMode
-        if (isInPictureInPictureMode)
-            playerViewModel.isControlsViewVisible.value = false
+            requireContext().unbindService(this@PlayerFragment)
+            onServiceDisconnected(null)
+        }
     }
 
     override fun onServiceConnected(name: ComponentName, binder: IBinder) {
         //Timber.d("$binder")
         service = (binder as PlayerService.Binder).service.also { s ->
-            s.attachPlayerView(vPlayer)
+            vPlayer?.let(s::attachPlayerView)
         }
     }
 
     override fun onServiceDisconnected(name: ComponentName?) {
         service = null
+        vPlayer?.player = null
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        vPlayer = null
+    }
 }

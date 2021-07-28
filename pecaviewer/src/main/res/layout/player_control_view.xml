@@ -35,7 +35,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="top|start"
         android:layout_margin="10dp"
-        android:src="@drawable/ic_quit_white_36dp"
+        android:src="@drawable/ic_expand_more_white_36dp"
         android:contentDescription="@null"/>
 
     <LinearLayout

@@ -26,6 +26,13 @@
         android:layout_marginLeft="@dimen/navigation_width"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
+    <FrameLayout
+        android:id="@+id/vMiniPlayerContainer"
+        android:layout_gravity="end|bottom"
+        android:layout_width="200dp"
+        android:layout_height="150dp"
+        />
+
     <org.peercast.pecaplay.navigation.PecaNaviView
         android:id="@+id/vNavigation"
         android:layout_width="@dimen/navigation_width"

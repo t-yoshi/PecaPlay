@@ -3,7 +3,9 @@ package org.peercast.pecaplay
 import android.app.Application
 import android.net.Uri
 import androidx.core.text.HtmlCompat
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import org.peercast.core.lib.app.BaseClientViewModel
 import org.peercast.pecaplay.app.AppRoomDatabase
@@ -30,7 +32,7 @@ class AppViewModel(
     val existsNotification = MutableStateFlow(false)
 
     /**Snackbarで表示するメッセージ*/
-    val message = MutableStateFlow<CharSequence>("")
+    val message = MutableSharedFlow<CharSequence>(1, 0, BufferOverflow.DROP_OLDEST)
 
     init {
         database.favoriteDao.query().map { favorites ->
@@ -38,17 +40,14 @@ class AppViewModel(
         }.onEach { existsNotification.value = it }
             .launchIn(viewModelScope)
 
-        rpcClient.filterNotNull().onEach { client ->
-            message.value = a.getString(R.string.peercast_has_started, client.rpcEndPoint.port)
-        }.launchIn(viewModelScope)
-
         loadingEvent.filterIsInstance<LoadingEvent.OnException>().onEach { ev ->
             val s = when (ev.e) {
                 is HttpException -> ev.e.response()?.message()
                     ?: ev.e.localizedSystemMessage()
                 else -> ev.e.localizedSystemMessage()
             }
-            message.value = HtmlCompat.fromHtml("<font color=red>${ev.yp.name}: $s", 0)
+            val h = HtmlCompat.fromHtml("<font color=red>${ev.yp.name}: $s", 0)
+            message.emit(h)
         }.launchIn(viewModelScope)
 
     }

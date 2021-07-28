@@ -47,6 +47,8 @@ class PlayerService : LifecycleService() {
     private val eventFlow by inject<PlayerServiceEventFlow>()
     var playingUrl: Uri = Uri.EMPTY
         private set
+    val resumeIntent: Intent get() = notificationHelper.resumeIntent
+
 
     var thumbnail: Bitmap?
         set(value) {
