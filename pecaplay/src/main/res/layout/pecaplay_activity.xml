@@ -33,8 +33,8 @@
         <FrameLayout
             android:id="@+id/vMiniPlayerContainer"
             android:layout_gravity="end|bottom"
-            android:layout_width="250dp"
-            android:layout_height="150dp"
+            android:layout_width="@dimen/miniplayer_width"
+            android:layout_height="@dimen/miniplayer_height"
             />
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 

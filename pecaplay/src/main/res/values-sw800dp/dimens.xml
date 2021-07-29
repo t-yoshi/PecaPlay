@@ -6,4 +6,6 @@
     -->
     <dimen name="activity_horizontal_margin">16dp</dimen>
 
+    <dimen name="miniplayer_width">240dp</dimen>
+    <dimen name="miniplayer_height">180dp</dimen>
 </resources>

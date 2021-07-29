@@ -15,4 +15,7 @@ http://developer.android.com/guide/topics/appwidgets/index.html#CreatingLayout
     <dimen name="widget_margin">8dp</dimen>
 
     <dimen name="navigation_width">260dp</dimen>
+
+    <dimen name="miniplayer_width">160dp</dimen>
+    <dimen name="miniplayer_height">120dp</dimen>
 </resources>
