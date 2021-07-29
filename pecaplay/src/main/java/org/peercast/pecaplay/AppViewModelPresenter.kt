@@ -61,7 +61,8 @@ class AppViewModelPresenter(
         } else {
             Intent().also {
                 it.action = Intent.ACTION_VIEW
-                it.setDataAndTypeAndNormalize(streamUrl, "video/${ch.type.lowercase()}")
+                it.data = streamUrl
+                //it.setDataAndTypeAndNormalize(streamUrl, "video/${ch.type.lowercase()}")
                 it.putExtra(LibPeerCast.EXTRA_CONTACT_URL, ch.url.toString())
                 it.putExtra(LibPeerCast.EXTRA_NAME, ch.name)
                 it.putExtra(LibPeerCast.EXTRA_DESCRIPTION, "${ch.genre} ${ch.description}")
