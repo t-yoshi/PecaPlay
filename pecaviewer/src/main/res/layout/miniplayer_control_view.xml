@@ -5,8 +5,9 @@
     android:layout_height="match_parent"
     android:layoutDirection="ltr">
 
+    <!--  -->
     <ImageView
-        android:id="@+id/vResume"
+        android:id="@+id/exo_pause"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:layout_gravity="center"
@@ -16,5 +17,45 @@
         app:tint="@color/grey_300"
         android:contentDescription="@null" />
 
+    <ImageView
+        android:id="@+id/exo_play"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_gravity="center"
+        android:background="?attr/selectableItemBackground"
+        android:scaleType="fitCenter"
+        android:src="@drawable/ic_baseline_play_arrow_white_36"
+        app:tint="@color/grey_300"
+        android:contentDescription="@null" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="36dp"
+        android:background="#D0212121"
+        android:layout_gravity="bottom"
+        android:padding="3dp">
+
+        <TextView
+            android:id="@+id/vTitle"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:gravity="center_vertical"
+            android:singleLine="true"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            android:textColor="@color/green_700"
+            android:textStyle="normal" />
+
+        <ImageView
+            android:id="@+id/vClose"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_close_black_24dp"
+            app:tint="@color/grey_300"
+            android:contentDescription="@null" />
+
+    </LinearLayout>
 
 </FrameLayout>

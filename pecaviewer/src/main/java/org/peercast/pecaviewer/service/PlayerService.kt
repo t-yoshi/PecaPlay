@@ -45,16 +45,8 @@ class PlayerService : LifecycleService() {
     private val square by inject<Square>()
     private val appPrefs by inject<ViewerPreference>()
     private val eventFlow by inject<PlayerServiceEventFlow>()
-    var playingUrl: Uri = Uri.EMPTY
+    var playingIntent = Intent()
         private set
-    val resumeIntent: Intent get() = notificationHelper.resumeIntent
-
-
-    var thumbnail: Bitmap?
-        set(value) {
-            notificationHelper.thumbnail = value
-        }
-        get() = notificationHelper.thumbnail
 
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -310,11 +302,9 @@ class PlayerService : LifecycleService() {
     }
 
     fun prepareFromUri(u: Uri, ch: Yp4gChannel) {
-        notificationHelper.resumeIntent = PecaViewerIntent.create(u, ch)
-
-        if (playingUrl == u)
+        if (playingIntent.data == u)
             return
-        playingUrl = u
+        playingIntent = PecaViewerIntent.create(u, ch)
 
         player.stop()
         player.clearMediaItems()
@@ -340,6 +330,10 @@ class PlayerService : LifecycleService() {
 
     fun stop() {
         player.stop()
+    }
+
+    fun setThumbnail(b: Bitmap?){
+        playingIntent.putExtra(PecaViewerIntent.EX_THUMBNAIL, b)
     }
 
     override fun onDestroy() {

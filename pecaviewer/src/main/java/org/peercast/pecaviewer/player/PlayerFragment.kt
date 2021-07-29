@@ -47,7 +47,7 @@ class PlayerFragment : Fragment(), ServiceConnection {
 
     private var vPlayer: PlayerView? = null
     private lateinit var vPlayerMenu: ActionMenuView
-    private lateinit var vQuit: ImageView
+    private lateinit var vIntoMiniWindow: ImageView
     private lateinit var vFullScreen: ImageView
 
     private var isToLaunchMiniPlayer = false
@@ -57,7 +57,7 @@ class PlayerFragment : Fragment(), ServiceConnection {
 
         vPlayer = view as PlayerView
         vPlayerMenu = view.findViewById(R.id.vPlayerMenu)
-        vQuit = view.findViewById(R.id.vQuit)
+        vIntoMiniWindow = view.findViewById(R.id.vIntoMiniWindow)
         vFullScreen = view.findViewById(R.id.vFullScreen)
 
         playerViewModel.isFullScreenMode.observe(viewLifecycleOwner) {
@@ -78,7 +78,7 @@ class PlayerFragment : Fragment(), ServiceConnection {
             it.setOnMenuItemClickListener(::onOptionsItemSelected)
         }
 
-        vQuit.setOnClickListener {
+        vIntoMiniWindow.setOnClickListener {
             navigateToParentActivity(true)
         }
 
@@ -158,11 +158,10 @@ class PlayerFragment : Fragment(), ServiceConnection {
                 kotlin.runCatching {
                     takeScreenShot(vPlayer?.videoSurfaceView as SurfaceView, 256)
                 }.onSuccess {
-                    sv.thumbnail = it
+                    sv.setThumbnail(it)
                 }.onFailure(Timber::w)
             }
 
-            Timber.d("${viewerPrefs.isBackgroundPlaying} ${isToLaunchMiniPlayer}")
             if (!(viewerPrefs.isBackgroundPlaying || isToLaunchMiniPlayer)) {
                 sv.stop()
             }

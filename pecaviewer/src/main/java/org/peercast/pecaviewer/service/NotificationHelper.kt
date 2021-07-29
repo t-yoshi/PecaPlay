@@ -22,16 +22,14 @@ class NotificationHelper(private val service: PlayerService) {
 
     private fun <T> updateNotifyWhenChanged(initialValue: T) =
         Delegates.observable(initialValue) { _, oldValue, newValue ->
-            if (isForeground && oldValue != newValue)
-                notificationManager.notify(ID, buildNotification())
+            if (oldValue != newValue)
+                updateNotification()
         }
 
     var isPlaying by updateNotifyWhenChanged(true)
 
-    var thumbnail by updateNotifyWhenChanged<Bitmap?>(null)
-
     /**タスクバーから復帰するためのインテント*/
-    lateinit var resumeIntent: Intent
+    var resumeIntent = Intent()
 
     private var isForeground = false
 
@@ -89,11 +87,18 @@ class NotificationHelper(private val service: PlayerService) {
     fun stopForeground() {
         if (isForeground) {
             isForeground = false
-            thumbnail = null
+            service.playingIntent.removeExtra(PecaViewerIntent.EX_THUMBNAIL)
             service.stopForeground(true)
             service.stopSelf()
         }
     }
+
+    fun updateNotification(){
+        if (isForeground)
+            notificationManager.notify(ID, buildNotification())
+    }
+
+
 
     private fun buildNotification(): Notification {
         val builder = NotificationCompat.Builder(
@@ -118,7 +123,7 @@ class NotificationHelper(private val service: PlayerService) {
             .setContentIntent(buildPendingIntent())
             .setContentTitle("PecaPlayViewer")
             .setSmallIcon(R.drawable.ic_play_circle_outline_black_24dp)
-            .setLargeIcon(service.thumbnail)
+            .setLargeIcon(service.playingIntent.getParcelableExtra(PecaViewerIntent.EX_THUMBNAIL))
             .setContentTitle(ch?.name)
             .setContentText(ch?.run { "$genre $description $comment".trim() })
             .setPriority(NotificationCompat.PRIORITY_LOW)

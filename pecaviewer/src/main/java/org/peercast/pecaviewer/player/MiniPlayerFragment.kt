@@ -1,6 +1,7 @@
 package org.peercast.pecaviewer.player
 
 import android.content.ComponentName
+import android.content.Intent
 import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.IBinder
@@ -26,8 +27,20 @@ class MiniPlayerFragment : Fragment(), ServiceConnection {
 
     private val viewerPrefs by inject<ViewerPreference>()
     private var service: PlayerService? = null
-    private var vPlayer: PlayerView? = null
-    private var vTitle: TextView? = null
+    private val vPlayer get() = view as PlayerView?
+    private val vTitle: TextView? get() = view?.findViewById(R.id.vTitle)
+    private var isLaunchPecaViewerActivity = false
+    private var wasPlaying = false
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        wasPlaying = savedInstanceState?.getBoolean(STATE_PLAYING) ?: false
+        Timber.d("onCreate: $savedInstanceState wasPlaying->$wasPlaying")
+
+        requireContext().let { c ->
+            c.startService(Intent(c, PlayerService::class.java))
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -38,18 +51,28 @@ class MiniPlayerFragment : Fragment(), ServiceConnection {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        vPlayer = view.findViewById(R.id.vPlayer)
-        vTitle = view.findViewById(R.id.vTitle)
-
-        view.findViewById<ImageView>(R.id.vResume)?.setOnClickListener {
-            service?.resumeIntent?.let {
+        //[]ボタン
+        view.findViewById<ImageView>(R.id.exo_pause)?.setOnClickListener {
+            isLaunchPecaViewerActivity = true
+            service?.playingIntent?.let {
                 startActivity(it)
             }
         }
 
         view.findViewById<ImageView>(R.id.vClose).setOnClickListener {
             service?.stop()
+            it.context.let { c ->
+                c.stopService(Intent(c, PlayerService::class.java))
+            }
             unbindPlayerService()
+        }
+    }
+
+    private fun unbindPlayerService() {
+        if (service != null) {
+            wasPlaying = service!!.isPlaying
+            requireContext().unbindService(this)
+            onServiceDisconnected(null)
         }
     }
 
@@ -58,27 +81,28 @@ class MiniPlayerFragment : Fragment(), ServiceConnection {
         requireContext().bindPlayerService(this)
     }
 
-    private fun unbindPlayerService() {
-        requireContext().unbindService(this)
-        onServiceDisconnected(null)
-    }
-
     override fun onStop() {
         super.onStop()
 
-        if (service != null)
-            unbindPlayerService()
+        if (!(viewerPrefs.isBackgroundPlaying || isLaunchPecaViewerActivity)) {
+            service?.stop()
+        }
+
+        unbindPlayerService()
     }
 
     override fun onServiceConnected(name: ComponentName?, binder: IBinder) {
         Timber.d("onServiceConnected")
         service = (binder as PlayerService.Binder).service.also {
-            if (it.isPlaying) {
-                view?.isVisible = true
+            val ch =
+                it.playingIntent.getParcelableExtra<Yp4gChannel>(PecaViewerIntent.EX_YP4G_CHANNEL)
+            Timber.d("wasPlaying -> $wasPlaying, ch -> $ch")
+            if (ch != null) {
+                if (wasPlaying)
+                    it.play()
+                vPlayer?.isVisible = true
                 vPlayer?.let(it::attachPlayerView)
-                val ch =
-                    it.resumeIntent.getParcelableExtra<Yp4gChannel>(PecaViewerIntent.EX_YP4G_CHANNEL)
-                vTitle?.text = ch?.name
+                vTitle?.text = ch.name
             }
         }
     }
@@ -86,14 +110,20 @@ class MiniPlayerFragment : Fragment(), ServiceConnection {
     override fun onServiceDisconnected(name: ComponentName?) {
         Timber.d("onServiceDisconnected")
         service = null
-        view?.isVisible = false
-        vPlayer?.player = null
+        vPlayer?.run {
+            isVisible = false
+            player = null
+        }
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        vPlayer = null
-        vTitle = null
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        Timber.d("onSaveInstanceState: $wasPlaying")
+        outState.putBoolean(STATE_PLAYING, wasPlaying)
+    }
+
+    companion object {
+        private const val STATE_PLAYING = "playing"
     }
 
 }

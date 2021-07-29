@@ -6,12 +6,11 @@ import android.content.Intent
 import android.net.Uri
 
 object PecaViewerIntent {
-    val ComponentPecaViewer = ComponentName(
-        "org.peercast.pecaplay",
-        "org.peercast.pecaviewer.PecaViewerActivity"
-    )
+    /**(Yp4gChannel)*/
+    const val EX_YP4G_CHANNEL = "yp4g_channel"
 
-    const val EX_YP4G_CHANNEL = "yp4g_channel" //Yp4gChannel
+    /**(Bitmap)*/
+    const val EX_THUMBNAIL = "thumbnail"
 
     fun create(streamUri: Uri, ch: Yp4gChannel): Intent {
         return Intent().also {
@@ -21,4 +20,8 @@ object PecaViewerIntent {
         }
     }
 
+    private val ComponentPecaViewer = ComponentName(
+        "org.peercast.pecaplay",
+        "org.peercast.pecaviewer.PecaViewerActivity"
+    )
 }
