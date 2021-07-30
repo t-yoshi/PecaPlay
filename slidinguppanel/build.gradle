@@ -2,14 +2,16 @@ apply plugin: 'com.android.library'
 
 dependencies {
     implementation "androidx.appcompat:appcompat:$androidx_version"
-    implementation "androidx.recyclerview:recyclerview:1.2.0"
+    implementation "androidx.recyclerview:recyclerview:1.2.1"
 }
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion target_sdk_version
+    buildToolsVersion build_tools_version
 
     defaultConfig {
-        minSdkVersion 16
+        minSdkVersion min_sdk_version
+        targetSdkVersion target_sdk_version
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner" // For Instrumentation Unit testing
     }
