@@ -21,7 +21,7 @@ abstract class NavigationItem(
     /**非表示設定のキー*/
     abstract val key: String
 
-    abstract val selector: YpChannelPredicate
+    abstract val predicate: YpChannelPredicate
 
 
     var isVisible = true

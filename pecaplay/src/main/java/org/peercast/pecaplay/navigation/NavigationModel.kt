@@ -9,6 +9,7 @@ import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.peercast.pecaplay.app.Favorite
 import org.peercast.pecaplay.app.YellowPage
+import org.peercast.pecaplay.chanlist.filter.YpChannelPredicate
 import org.peercast.pecaplay.prefs.AppPreferences
 import org.peercast.pecaplay.yp4g.YpChannel
 import timber.log.Timber
@@ -92,13 +93,20 @@ class NavigationModel(private val c: Context) : KoinComponent {
         favorites: List<Favorite>,
         channels: List<YpChannel>,
     ) {
-        Timber.d("onUpdate()")
+        Timber.d("updateItems()")
         val items = createNavigationItems(yellowPages, favorites, channels)
+
+        val ng = favorites.filter { it.flags.isNG }
+        val ngPredicate: YpChannelPredicate = { ch ->
+            ng.none { it.matches(ch) }
+        }
 
         withContext(Dispatchers.Default) {
             items.filterIsInstance<BadgeableNavigationItem>().map { item ->
                 async {
-                    val n = channels.filter { !it.isEmptyId && item.selector(it) }.count()
+                    val n = channels.filter {
+                        !it.isEmptyId && ngPredicate(it) && item.predicate(it)
+                    }.count()
                     item.badge = when {
                         n > 99 -> "99+"
                         else -> "$n"
