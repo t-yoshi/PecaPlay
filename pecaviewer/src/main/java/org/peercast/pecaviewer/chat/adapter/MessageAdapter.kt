@@ -7,11 +7,14 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.annotation.MainThread
-import androidx.databinding.Observable
 import androidx.databinding.ViewDataBinding
+import androidx.lifecycle.ViewTreeLifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
+import kotlinx.coroutines.flow.collect
 import org.peercast.pecaviewer.BR
 import org.peercast.pecaviewer.R
+import org.peercast.pecaviewer.chat.ChatFragment
 import org.peercast.pecaviewer.chat.net.IBrowsable
 import org.peercast.pecaviewer.chat.net.IMessage
 import org.peercast.pecaviewer.chat.net.PostMessage
@@ -23,7 +26,7 @@ import timber.log.Timber
 import kotlin.properties.Delegates
 
 
-class MessageAdapter(private val thumbnailViewListener: ThumbnailView.OnItemEventListener) :
+class MessageAdapter(private val fragment: ChatFragment) :
     RecyclerView.Adapter<MessageAdapter.ViewHolder>(),
     PopupSpan.SupportAdapter {
 
@@ -94,6 +97,11 @@ class MessageAdapter(private val thumbnailViewListener: ThumbnailView.OnItemEven
         private val vThumbnail: ThumbnailView? = itemView.findViewById(R.id.vThumbnail)
 
         init {
+            binding.lifecycleOwner = fragment
+            vThumbnail?.let {
+                ViewTreeLifecycleOwner.set(it, fragment)
+            }
+
             if (!binding.setVariable(BR.viewModel, viewModel))
                 throw RuntimeException("Nothing defined viewModel in layout.")
             vBody?.run {
@@ -105,13 +113,12 @@ class MessageAdapter(private val thumbnailViewListener: ThumbnailView.OnItemEven
                 }
             }
             vThumbnail?.let { v ->
-                v.eventListener = thumbnailViewListener
-                viewModel.thumbnails.addOnPropertyChangedCallback(object :
-                    Observable.OnPropertyChangedCallback() {
-                    override fun onPropertyChanged(sender: Observable, propertyId: Int) {
-                        v.adapter.urls = viewModel.thumbnails.get() ?: emptyList()
+                v.eventListener = fragment
+                fragment.lifecycleScope.launchWhenCreated {
+                    viewModel.thumbnails.collect {
+                        v.adapter.urls = it
                     }
-                })
+                }
             }
         }
 

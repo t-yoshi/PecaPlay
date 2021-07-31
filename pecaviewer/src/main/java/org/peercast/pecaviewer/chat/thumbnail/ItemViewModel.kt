@@ -1,22 +1,14 @@
 package org.peercast.pecaviewer.chat.thumbnail
 
 import android.graphics.drawable.Drawable
-import androidx.databinding.ObservableBoolean
-import androidx.databinding.ObservableField
+import kotlinx.coroutines.flow.MutableStateFlow
 
 class ItemViewModel {
-    val src = ObservableField<Drawable>()
-    val background = ObservableField<Drawable>()
-    val error = ObservableField<CharSequence>("loading..")
-    val isTooLargeFileSize = ObservableBoolean(false)
-    val isLinkUrl = ObservableBoolean(false)
-    val isAnimation = ObservableBoolean(false)
+    val src = MutableStateFlow<Drawable?>(null)
+    val background = MutableStateFlow<Drawable?>(null)
+    val error = MutableStateFlow<CharSequence?>("loading..")
+    val isTooLargeFileSize = MutableStateFlow(false)
+    val isLinkUrl = MutableStateFlow(false)
+    val isAnimation = MutableStateFlow(false)
 }
 
-var <T> ObservableField<T>.value: T?
-    get() = this.get()
-    set(value) = set(value)
-
-var ObservableBoolean.value: Boolean
-    get() = this.get()
-    set(value) = set(value)

@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.core.view.isGone
+import androidx.lifecycle.findViewTreeLifecycleOwner
 import com.bumptech.glide.request.target.CustomTarget
 import com.bumptech.glide.request.transition.Transition
 import org.peercast.pecaviewer.R
@@ -58,6 +59,7 @@ class ViewAdapter(private val view: ThumbnailView) {
 
         init {
             binding.vm = viewModel
+            binding.lifecycleOwner = checkNotNull(view.findViewTreeLifecycleOwner())
         }
 
         private var prevLoader: DefaultImageLoader? = null
@@ -85,7 +87,7 @@ class ViewAdapter(private val view: ThumbnailView) {
 
                 binding.root.setOnClickListener {
                     when {
-                        u.linkUrl.isNotEmpty() || error.get().isNullOrEmpty() -> {
+                        u.linkUrl.isNotEmpty() || error.value.isNullOrEmpty() -> {
                             view.eventListener?.onLaunchImageViewer(u)
                         }
                         else -> {

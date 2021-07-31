@@ -3,7 +3,7 @@ package org.peercast.pecaviewer.chat.adapter
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import androidx.core.text.getSpans
-import androidx.databinding.ObservableField
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.peercast.pecaviewer.chat.net.BbsMessage
 import org.peercast.pecaviewer.chat.net.IMessage
 import org.peercast.pecaviewer.chat.thumbnail.ThumbnailSpan
@@ -12,46 +12,46 @@ import org.peercast.pecaviewer.util.DateUtils
 
 class MessageViewModel {
     /**レス番号*/
-    val number = ObservableField<CharSequence>()
+    val number = MutableStateFlow<CharSequence>("")
 
     /**名前*/
-    val name = ObservableField<CharSequence>()
+    val name = MutableStateFlow<CharSequence>("")
 
     /**日付*/
-    val date = ObservableField<CharSequence>()
+    val date = MutableStateFlow<CharSequence>("")
 
-    val id = ObservableField<CharSequence>()
+    val id = MutableStateFlow<CharSequence>("")
 
     /**本文*/
-    val body = ObservableField<CharSequence>()
+    val body = MutableStateFlow<CharSequence>("")
 
-    val elapsedTime = ObservableField<CharSequence>()
+    val elapsedTime = MutableStateFlow<CharSequence>("")
 
-    val thumbnails = ObservableField<List<ThumbnailUrl>>()
+    val thumbnails = MutableStateFlow<List<ThumbnailUrl>>(emptyList())
 
     fun setMessage(m: IMessage, isShowElapsedTime: Boolean = true) {
-        number.set("${m.number}")
-        name.set(m.name)
-        date.set(m.date)
-        id.set(m.id)
+        number.value = "${m.number}"
+        name.value = m.name
+        date.value = m.date
+        id.value = m.id
 
-        when (val b = m.body) {
+        thumbnails.value = when (val b = m.body) {
             is Spannable -> {
                 b.getSpans<ThumbnailSpan>().take(16).map { it.url }
             }
             else -> emptyList()
-        }.let(thumbnails::set)
+        }
 
         if (isShowElapsedTime && m is BbsMessage && m.timeInMillis > 0) {
             val et = DateUtils.formatElapsedTime(System.currentTimeMillis() - m.timeInMillis)
-            elapsedTime.set(et)
+            elapsedTime.value = et
             // elapsedTimeのぶん、末尾を空けておく
             val sbBody = SpannableStringBuilder(m.body.trimEnd())
             sbBody.append(NBSP.repeat(et.width + 2))
-            body.set(sbBody)
+            body.value = sbBody
         } else {
-            elapsedTime.set("")
-            body.set(m.body)
+            elapsedTime.value = ""
+            body.value = m.body
         }
     }
 
