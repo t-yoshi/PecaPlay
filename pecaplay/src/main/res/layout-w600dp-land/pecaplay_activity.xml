@@ -26,6 +26,7 @@
         android:layout_marginStart="@dimen/navigation_width"
         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
+    <!--TODO-->
     <FrameLayout
         android:id="@+id/vMiniPlayerContainer"
         android:layout_gravity="end|bottom"

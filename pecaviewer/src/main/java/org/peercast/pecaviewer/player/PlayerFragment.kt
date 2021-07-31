@@ -11,15 +11,13 @@ import android.view.*
 import android.widget.ImageView
 import androidx.activity.addCallback
 import androidx.appcompat.widget.ActionMenuView
-import androidx.core.app.NavUtils
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.google.android.exoplayer2.ui.PlayerView
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
-import org.peercast.pecaplay.core.app.PecaPlayIntent
+import org.peercast.pecaviewer.PecaViewerActivity
 import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.ViewerPreference
 import org.peercast.pecaviewer.ViewerViewModel
@@ -34,6 +32,7 @@ class PlayerFragment : Fragment(), ServiceConnection {
     private val appViewModel by sharedViewModel<ViewerViewModel>()
     private val playerViewModel by sharedViewModel<PlayerViewModel>()
     private val viewerPrefs by inject<ViewerPreference>()
+    private val activity get() = requireActivity() as PecaViewerActivity
 
     private var service: PlayerService? = null
 
@@ -47,17 +46,15 @@ class PlayerFragment : Fragment(), ServiceConnection {
 
     private var vPlayer: PlayerView? = null
     private lateinit var vPlayerMenu: ActionMenuView
-    private lateinit var vIntoMiniWindow: ImageView
+    private lateinit var vQuit: ImageView
     private lateinit var vFullScreen: ImageView
-
-    private var isToLaunchMiniPlayer = false
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         vPlayer = view as PlayerView
         vPlayerMenu = view.findViewById(R.id.vPlayerMenu)
-        vIntoMiniWindow = view.findViewById(R.id.vIntoMiniWindow)
+        vQuit = view.findViewById(R.id.vIntoMiniWindow)
         vFullScreen = view.findViewById(R.id.vFullScreen)
 
         playerViewModel.isFullScreenMode.observe(viewLifecycleOwner) {
@@ -78,8 +75,8 @@ class PlayerFragment : Fragment(), ServiceConnection {
             it.setOnMenuItemClickListener(::onOptionsItemSelected)
         }
 
-        vIntoMiniWindow.setOnClickListener {
-            navigateToParentActivity(true)
+        vQuit.setOnClickListener {
+            activity.navigateToParentActivity()
         }
 
         vFullScreen.setOnClickListener(::onFullScreenClicked)
@@ -89,17 +86,8 @@ class PlayerFragment : Fragment(), ServiceConnection {
     override fun onAttach(context: Context) {
         super.onAttach(context)
         requireActivity().onBackPressedDispatcher.addCallback(this) {
-            navigateToParentActivity(false)
+            activity.navigateToParentActivity()
         }
-    }
-
-    private fun navigateToParentActivity(miniPlayerEnabled: Boolean) {
-        val a = requireActivity()
-        val i = checkNotNull(NavUtils.getParentActivityIntent(a))
-        i.putExtra(PecaPlayIntent.EX_MINIPLAYER_ENABLED, miniPlayerEnabled)
-        if (miniPlayerEnabled)
-            isToLaunchMiniPlayer = true
-        NavUtils.navigateUpTo(a, i)
     }
 
     private fun onFullScreenClicked(v__: View) {
@@ -163,7 +151,7 @@ class PlayerFragment : Fragment(), ServiceConnection {
             }
         }
 
-        if (!(viewerPrefs.isBackgroundPlaying || isToLaunchMiniPlayer)) {
+        if (!viewerPrefs.isBackgroundPlaying) {
             sv.stop()
         }
 

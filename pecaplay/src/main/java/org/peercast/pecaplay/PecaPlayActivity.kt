@@ -142,11 +142,11 @@ class PecaPlayActivity : AppCompatActivity() {
 
         viewModel.rpcClient.filterNotNull().onEach { client ->
             //PeerCastの起動を知らせる。ミニプレーヤーと被るときは表示しない。
-            if (!intent.hasExtra(PecaPlayIntent.EX_MINIPLAYER_ENABLED)) {
+            //if (!intent.hasExtra(PecaPlayIntent.EX_MINIPLAYER_ENABLED)) {
                 viewModel.message.emit(
                     getString(R.string.peercast_has_started, client.rpcEndPoint.port)
                 )
-            }
+            //}
         }.launchIn(lifecycleScope)
 
         lifecycleScope.launchWhenResumed {
@@ -172,13 +172,12 @@ class PecaPlayActivity : AppCompatActivity() {
 
         vNavigation.model.repository.collectIn(lifecycleScope)
 
-        if (intent.getBooleanExtra(PecaPlayIntent.EX_MINIPLAYER_ENABLED, false)) {
-            //vMiniPlayerContainer.isVisible =
-            //    intent.getBooleanExtra(PecaPlayIntent.EX_MINIPLAYER_ENABLED, false)
-            supportFragmentManager.beginTransaction()
-                .replace(R.id.vMiniPlayerContainer, MiniPlayerFragment())
-                .commit()
-        }
+//TODO: 小窓で再生
+//        if (intent.getBooleanExtra(PecaPlayIntent.EX_MINIPLAYER_ENABLED, false)) {
+//            supportFragmentManager.beginTransaction()
+//                .replace(R.id.vMiniPlayerContainer, MiniPlayerFragment())
+//                .commit()
+//        }
 
         viewModel.bindService()
     }

@@ -7,10 +7,8 @@ import android.os.Bundle
 import android.os.IBinder
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.doOnLayout
-import androidx.core.view.updatePadding
+import androidx.core.app.NavUtils
+import androidx.core.view.*
 import androidx.lifecycle.lifecycleScope
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -115,13 +113,24 @@ class PecaViewerActivity : AppCompatActivity(),
 
         binding.vSlidingUpPanel.addPanelSlideListener(panelSlideListener)
 
-        appViewModel.isImmersiveMode.observe(this) {
+//        appViewModel.isImmersiveMode.observe(this) {
+//            val insetsController = WindowCompat.getInsetsController(window, window.decorView)
+//            if (isLandscapeMode.value && insetsController != null) {
+//                when (it) {
+//                    true -> insetsController::hide
+//                    else -> insetsController::show
+//                }(WindowInsetsCompat.Type.systemBars())
+//            }
+//        }
+
+        playerViewModel.isFullScreenMode.observe(this) {
             val insetsController = WindowCompat.getInsetsController(window, window.decorView)
-            if (isLandscapeMode.value && insetsController != null) {
-                when (it) {
-                    true -> insetsController::hide
-                    else -> insetsController::show
-                }(WindowInsetsCompat.Type.systemBars())
+            if (it){
+                insetsController?.hide(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
+                insetsController?.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            } else {
+                insetsController?.show(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
+                //insetsController?.systemBarsBehavior = 0
             }
         }
 
@@ -221,6 +230,18 @@ class PecaViewerActivity : AppCompatActivity(),
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putBoolean(STATE_PLAYING, service?.isPlaying ?: true)
+    }
+
+    fun navigateToParentActivity() {
+        if (intent.flags and Intent.FLAG_ACTIVITY_CLEAR_TASK != 0 ||
+            intent.flags and Intent.FLAG_ACTIVITY_CLEAR_TOP != 0
+        ) {
+            //通知バーから復帰した場合
+            NavUtils.navigateUpFromSameTask(this)
+        } else {
+            //PecaPlayActivityから起動した場合
+            finish()
+        }
     }
 
     override fun onDestroy() {

@@ -64,10 +64,10 @@ class NotificationHelper(private val service: PlayerService) {
 
     //タスクバーから復帰する
     private fun buildPendingIntent(): PendingIntent {
+        val i = Intent(service.playingIntent)
+        i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
         return PendingIntent.getActivity(
-            service,
-            0,
-            service.playingIntent,
+            service, 0, i,
             PendingIntent.FLAG_UPDATE_CURRENT
         )
     }
