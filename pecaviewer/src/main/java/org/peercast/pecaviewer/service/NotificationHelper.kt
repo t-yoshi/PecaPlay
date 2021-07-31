@@ -6,7 +6,6 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
@@ -27,9 +26,6 @@ class NotificationHelper(private val service: PlayerService) {
         }
 
     var isPlaying by updateNotifyWhenChanged(true)
-
-    /**タスクバーから復帰するためのインテント*/
-    var resumeIntent = Intent()
 
     private var isForeground = false
 
@@ -71,7 +67,7 @@ class NotificationHelper(private val service: PlayerService) {
         return PendingIntent.getActivity(
             service,
             0,
-            resumeIntent,
+            service.playingIntent,
             PendingIntent.FLAG_UPDATE_CURRENT
         )
     }
@@ -93,11 +89,10 @@ class NotificationHelper(private val service: PlayerService) {
         }
     }
 
-    fun updateNotification(){
+    fun updateNotification() {
         if (isForeground)
             notificationManager.notify(ID, buildNotification())
     }
-
 
 
     private fun buildNotification(): Notification {
@@ -117,7 +112,8 @@ class NotificationHelper(private val service: PlayerService) {
             .setCancelButtonIntent(stopAction.actionIntent)
             //.setShowActionsInCompactView(0)
             .setShowCancelButton(true)
-        val ch = resumeIntent.getParcelableExtra<Yp4gChannel>(PecaViewerIntent.EX_YP4G_CHANNEL)
+        val ch =
+            service.playingIntent.getParcelableExtra<Yp4gChannel>(PecaViewerIntent.EX_YP4G_CHANNEL)
 
         return builder
             .setContentIntent(buildPendingIntent())

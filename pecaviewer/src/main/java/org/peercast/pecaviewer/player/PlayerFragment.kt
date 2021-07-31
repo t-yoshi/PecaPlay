@@ -153,22 +153,22 @@ class PlayerFragment : Fragment(), ServiceConnection {
         val sv = service ?: return
         service = null
 
-        lifecycleScope.launch(Dispatchers.Main.immediate) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && sv.isPlaying) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && sv.isPlaying) {
+            lifecycleScope.launch {
                 kotlin.runCatching {
                     takeScreenShot(vPlayer?.videoSurfaceView as SurfaceView, 256)
                 }.onSuccess {
                     sv.setThumbnail(it)
                 }.onFailure(Timber::w)
             }
-
-            if (!(viewerPrefs.isBackgroundPlaying || isToLaunchMiniPlayer)) {
-                sv.stop()
-            }
-
-            requireContext().unbindService(this@PlayerFragment)
-            onServiceDisconnected(null)
         }
+
+        if (!(viewerPrefs.isBackgroundPlaying || isToLaunchMiniPlayer)) {
+            sv.stop()
+        }
+
+        requireContext().unbindService(this@PlayerFragment)
+        onServiceDisconnected(null)
     }
 
     override fun onServiceConnected(name: ComponentName, binder: IBinder) {

@@ -334,6 +334,7 @@ class PlayerService : LifecycleService() {
 
     fun setThumbnail(b: Bitmap?){
         playingIntent.putExtra(PecaViewerIntent.EX_THUMBNAIL, b)
+        notificationHelper.updateNotification()
     }
 
     override fun onDestroy() {
