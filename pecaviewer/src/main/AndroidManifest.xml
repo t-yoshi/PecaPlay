@@ -10,7 +10,6 @@
             android:theme="@style/ViewerTheme"
             android:windowSoftInputMode="adjustPan"
             android:parentActivityName="org.peercast.pecaplay.PecaPlayActivity"
-            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"
         />
 
         <service

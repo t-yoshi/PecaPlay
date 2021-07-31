@@ -11,9 +11,6 @@ import androidx.core.app.NavUtils
 import androidx.core.view.*
 import androidx.lifecycle.lifecycleScope
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -44,11 +41,10 @@ class PecaViewerActivity : AppCompatActivity(),
     private val viewerPrefs by inject<ViewerPreference>()
     private var onServiceConnect: (PlayerService) -> Unit = {}
     private var service: PlayerService? = null
-    private val isLandscapeMode = MutableStateFlow(false)
+    private val isLandscapeMode get() = resources.getBoolean(R.bool.isLandscapeMode)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        isLandscapeMode.value = resources.configuration.isLandscapeMode
 
         requestedOrientation = when (viewerPrefs.isFullScreenMode) {
             true -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
@@ -113,47 +109,25 @@ class PecaViewerActivity : AppCompatActivity(),
 
         binding.vSlidingUpPanel.addPanelSlideListener(panelSlideListener)
 
-//        appViewModel.isImmersiveMode.observe(this) {
-//            val insetsController = WindowCompat.getInsetsController(window, window.decorView)
-//            if (isLandscapeMode.value && insetsController != null) {
-//                when (it) {
-//                    true -> insetsController::hide
-//                    else -> insetsController::show
-//                }(WindowInsetsCompat.Type.systemBars())
-//            }
-//        }
-
         playerViewModel.isFullScreenMode.observe(this) {
             val insetsController = WindowCompat.getInsetsController(window, window.decorView)
-            if (it){
+            if (it) {
                 insetsController?.hide(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
-                insetsController?.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                insetsController?.systemBarsBehavior =
+                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
             } else {
                 insetsController?.show(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
-                //insetsController?.systemBarsBehavior = 0
             }
         }
 
-        isLandscapeMode.onEach {
-            Timber.d("isLandscapeMode: $it")
-            val anchorPercentage: Int
-            if (it) {
-                anchorPercentage =
-                    resources.getInteger(R.integer.sliding_up_panel_anchor_point_land)
-                initPanelState(SlidingUpPanelLayout.PanelState.EXPANDED)
-            } else {
-                anchorPercentage =
-                    resources.getInteger(R.integer.sliding_up_panel_anchor_point_port)
-                initPanelState(viewerPrefs.initPanelState)
-            }
-            binding.vSlidingUpPanel.anchorPoint = anchorPercentage / 100f
-        }.launchIn(lifecycleScope)
-    }
-
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        super.onConfigurationChanged(newConfig)
-
-        isLandscapeMode.value = newConfig.isLandscapeMode
+        val anchorPercentage = if (isLandscapeMode) {
+            initPanelState(SlidingUpPanelLayout.PanelState.EXPANDED)
+            resources.getInteger(R.integer.sliding_up_panel_anchor_point_land)
+        } else {
+            initPanelState(viewerPrefs.initPanelState)
+            resources.getInteger(R.integer.sliding_up_panel_anchor_point_port)
+        }
+        binding.vSlidingUpPanel.anchorPoint = anchorPercentage / 100f
     }
 
     //通知バーの停止ボタンが押されたとき
@@ -213,8 +187,9 @@ class PecaViewerActivity : AppCompatActivity(),
                 )
             ) {
                 appViewModel.slidingPanelState.value = newState.ordinal
-                if (!isLandscapeMode.value)
+                if (!isLandscapeMode) {
                     viewerPrefs.initPanelState = newState
+                }
             }
         }
     }
@@ -253,9 +228,6 @@ class PecaViewerActivity : AppCompatActivity(),
     }
 
     companion object {
-        private val Configuration.isLandscapeMode: Boolean
-            get() = orientation == Configuration.ORIENTATION_LANDSCAPE
-
         private const val STATE_PLAYING = "STATE_PLAYING"
     }
 }
