@@ -134,8 +134,9 @@ class PecaPlayActivity : AppCompatActivity() {
         }
 
         lifecycleScope.launchWhenResumed {
+            val content = findViewById<View>(android.R.id.content)
             viewModel.message.filter { it.isNotEmpty() }.onEach {
-                Snackbar.make(vYpChannelFragmentContainer, it, Snackbar.LENGTH_LONG).show()
+                Snackbar.make(content, it, Snackbar.LENGTH_LONG).show()
             }.collect()
         }
 
