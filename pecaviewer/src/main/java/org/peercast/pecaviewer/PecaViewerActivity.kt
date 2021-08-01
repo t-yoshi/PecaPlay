@@ -130,15 +130,18 @@ class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
             .commit()
     }
 
+    fun launchParentActivity() {
+        val i = checkNotNull(NavUtils.getParentActivityIntent(this))
+        i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        startActivity(i)
+    }
+
     fun navigateToParentActivity() {
         Timber.d("navigateToParentActivity: ${intent.flags.toHexString()}")
         if (intent.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0) {
             //通知バーまたはPIPモードから復帰した場合
-            val i = checkNotNull(NavUtils.getParentActivityIntent(this))
-            Timber.d("call navigateUpTo $i")
-            i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
-            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            startActivity(i)
+            launchParentActivity()
         }
         finish()
     }
@@ -155,6 +158,7 @@ class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
         }
     }
 
+    /**Android8以降でプレーヤーをPIP化する。*/
     fun enterPipMode(): Boolean {
         if (isApi26AtLeast &&
             packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE) &&

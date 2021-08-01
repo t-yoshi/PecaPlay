@@ -76,8 +76,15 @@ class PlayerFragment : Fragment(), ServiceConnection {
         }
 
         vIntoPipMode.setOnClickListener {
-            if (!viewerActivity.enterPipMode())
-                viewerActivity.navigateToParentActivity()
+            with(viewerActivity) {
+                if (enterPipMode()) {
+                    //プレーヤーをPIP化 + PecaPlay起動
+                    launchParentActivity()
+                } else {
+                    //PIP化しないのでPecaPlayへ戻る
+                    navigateToParentActivity()
+                }
+            }
         }
 
         vFullScreen.setOnClickListener(::onFullScreenClicked)
