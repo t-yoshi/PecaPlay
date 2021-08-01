@@ -17,6 +17,7 @@ import org.peercast.pecaplay.core.app.PecaViewerIntent
 import org.peercast.pecaplay.core.app.Yp4gChannel
 import org.peercast.pecaviewer.player.PlayerViewModel
 import org.peercast.pecaviewer.service.NotificationHelper
+import timber.log.Timber
 
 class PecaViewerActivity : AppCompatActivity() {
 
@@ -85,6 +86,7 @@ class PecaViewerActivity : AppCompatActivity() {
     }
 
     fun navigateToParentActivity() {
+        //Timber.d("navigateToParentActivity: ${intent.flags}")
         if (intent.flags and Intent.FLAG_ACTIVITY_CLEAR_TASK != 0 ||
             intent.flags and Intent.FLAG_ACTIVITY_CLEAR_TOP != 0
         ) {

@@ -3,7 +3,6 @@ package org.peercast.pecaviewer
 import android.content.ComponentName
 import android.content.Intent
 import android.content.ServiceConnection
-import android.net.Uri
 import android.os.Bundle
 import android.os.IBinder
 import android.view.LayoutInflater
@@ -40,53 +39,18 @@ class PecaViewerFragment : Fragment(), ServiceConnection {
     }
     private val viewerPrefs by inject<ViewerPreference>()
     private var onServiceConnect: (PlayerService) -> Unit = {}
+    private lateinit var channel: Yp4gChannel
     private var service: PlayerService? = null
     private val isLandscapeMode get() = resources.getBoolean(R.bool.isLandscapeMode)
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?,
-    ): View {
-        binding = ActivityMainBinding.inflate(layoutInflater).also {
-            it.chatViewModel = chatViewModel
-            it.playerViewModel = playerViewModel
-            it.appViewModel = appViewModel
-            it.lifecycleOwner = this
-        }
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
-        binding.vPostDialogButton.setOnClickListener {
-            //フルスクリーン時には一時的にコントロールボタンを
-            //表示させないとOSのナビゲーションバーが残る
-            if (playerViewModel.isFullScreenMode.value == true)
-                playerViewModel.isControlsViewVisible.value = true
-            val f = PostMessageDialogFragment()
-            f.show(parentFragmentManager, "tag#PostMessageDialogFragment")
-        }
-
-        binding.vSlidingUpPanel.addPanelSlideListener(panelSlideListener)
-
-        val anchorPercentage = if (isLandscapeMode) {
-            initPanelState(SlidingUpPanelLayout.PanelState.EXPANDED)
-            resources.getInteger(R.integer.sliding_up_panel_anchor_point_land)
-        } else {
-            initPanelState(viewerPrefs.initPanelState)
-            resources.getInteger(R.integer.sliding_up_panel_anchor_point_port)
-        }
-        binding.vSlidingUpPanel.anchorPoint = anchorPercentage / 100f
-
-        return binding.root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         val intent = checkNotNull(requireArguments().getParcelable<Intent>(ARG_INTENT))
-        val streamUrl = intent.data as Uri
-        val channel = checkNotNull(
-            intent.getParcelableExtra<Yp4gChannel>(PecaViewerIntent.EX_YP4G_CHANNEL)
+        val streamUrl = checkNotNull(intent.data)
+        channel = checkNotNull(
+            intent.getParcelableExtra(PecaViewerIntent.EX_YP4G_CHANNEL)
         )
-
-        binding.toolbar.title.text = channel.name
-        binding.toolbar.text1.text = channel.run { "$genre $description $comment".trim() }
 
         onServiceConnect = {
             it.prepareFromUri(streamUrl, channel)
@@ -101,6 +65,45 @@ class PecaViewerFragment : Fragment(), ServiceConnection {
         }
 
         requireContext().bindPlayerService(this)
+    }
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?,
+    ): View {
+        return ActivityMainBinding.inflate(layoutInflater).also {
+            binding = it
+            it.chatViewModel = chatViewModel
+            it.playerViewModel = playerViewModel
+            it.appViewModel = appViewModel
+            it.lifecycleOwner = viewLifecycleOwner
+        }.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        binding.vPostDialogButton.setOnClickListener {
+            //フルスクリーン時には一時的にコントロールボタンを
+            //表示させないとOSのナビゲーションバーが残る
+            if (playerViewModel.isFullScreenMode.value == true)
+                playerViewModel.isControlsViewVisible.value = true
+            val f = PostMessageDialogFragment()
+            f.show(parentFragmentManager, "tag#PostMessageDialogFragment")
+        }
+
+        binding.vSlidingUpPanel.addPanelSlideListener(panelSlideListener)
+
+        val anchorPoint = if (isLandscapeMode) {
+            initPanelState(SlidingUpPanelLayout.PanelState.EXPANDED)
+            resources.getInteger(R.integer.sliding_up_panel_anchor_point_land)
+        } else {
+            initPanelState(viewerPrefs.initPanelState)
+            resources.getInteger(R.integer.sliding_up_panel_anchor_point_port)
+        }
+
+        binding.vSlidingUpPanel.anchorPoint = anchorPoint / 100f
+        binding.toolbar.title.text = channel.name
+        binding.toolbar.text1.text = channel.run { "$genre $description $comment".trim() }
     }
 
     private fun initPanelState(state: SlidingUpPanelLayout.PanelState) {
