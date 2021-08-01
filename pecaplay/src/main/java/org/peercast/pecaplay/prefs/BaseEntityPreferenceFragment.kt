@@ -9,7 +9,6 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceViewHolder
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import org.koin.android.ext.android.inject
 import org.peercast.pecaplay.R
 import org.peercast.pecaplay.app.AppRoomDatabase
@@ -50,29 +49,7 @@ abstract class BaseEntityPreferenceFragment<ME : ManageableEntity>
         preferenceScreen = preferenceManager.createPreferenceScreen(context)
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?,
-    ): View? {
-        val vg = super.onCreateView(inflater, container, savedInstanceState) as ViewGroup
-
-        // +ボタン
-        if (isLandscapeMode) {
-            val fab = inflater.inflate(R.layout.pref_fragment_floatingactionbutton, vg, false)
-                    as FloatingActionButton
-            fab.setOnClickListener {
-                showEditDialog(null)
-            }
-            vg.addView(fab)
-        }
-
-        return vg
-    }
-
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        if (isLandscapeMode)
-            return
         //新規メニュー
         inflater.inflate(R.menu.settings_menu, menu)
     }
@@ -167,10 +144,6 @@ abstract class BaseEntityPreferenceFragment<ME : ManageableEntity>
             }
         }
     }
-
-    /**w600dp 以上 */
-    val isLandscapeMode: Boolean
-        get() = resources.getBoolean(R.bool.landscape_mode)
 
     companion object {
         private const val EXT_TARGET = "target"
