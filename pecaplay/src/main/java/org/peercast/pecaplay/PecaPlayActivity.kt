@@ -142,7 +142,7 @@ class PecaPlayActivity : AppCompatActivity() {
 
         viewModel.rpcClient.filterNotNull().onEach { client ->
             //PeerCastの起動を知らせる。Pipからの復帰時は表示しない。
-            if (intent.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0) {
+            if (intent.flags and Intent.FLAG_ACTIVITY_NEW_TASK == 0) {
                 viewModel.message.emit(
                     getString(R.string.peercast_has_started, client.rpcEndPoint.port)
                 )
