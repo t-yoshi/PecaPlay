@@ -28,12 +28,11 @@ import org.peercast.core.lib.notify.NotifyMessageType
 import org.peercast.pecaplay.core.app.PecaViewerIntent
 import org.peercast.pecaplay.core.app.Yp4gChannel
 import org.peercast.pecaplay.core.io.Square
-import org.peercast.pecaviewer.ViewerPreference
+import org.peercast.pecaviewer.PecaViewerPreference
 import timber.log.Timber
 import java.io.IOException
 import java.lang.Exception
 import java.util.*
-import java.util.concurrent.TimeUnit
 
 
 class PlayerService : LifecycleService() {
@@ -43,7 +42,7 @@ class PlayerService : LifecycleService() {
     private var peerCastController: PeerCastController? = null
 
     private val square by inject<Square>()
-    private val appPrefs by inject<ViewerPreference>()
+    private val appPrefs by inject<PecaViewerPreference>()
     private val eventFlow by inject<PlayerServiceEventFlow>()
     var playingIntent = Intent()
         private set
@@ -336,6 +335,8 @@ class PlayerService : LifecycleService() {
         playingIntent.putExtra(PecaViewerIntent.EX_THUMBNAIL, b)
         notificationHelper.updateNotification()
     }
+
+    val videoSize get() = player.videoSize
 
     override fun onDestroy() {
         super.onDestroy()

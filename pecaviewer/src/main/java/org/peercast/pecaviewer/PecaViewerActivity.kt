@@ -1,53 +1,82 @@
 package org.peercast.pecaviewer
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
+import android.app.PictureInPictureParams
+import android.content.*
 import android.content.pm.ActivityInfo
+import android.content.pm.PackageManager
+import android.content.res.Configuration
+import android.os.Build
 import android.os.Bundle
+import android.os.IBinder
+import android.os.PersistableBundle
+import android.util.Rational
+import androidx.annotation.ChecksSdkIntAtLeast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NavUtils
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.OnLifecycleEvent
+import com.google.android.exoplayer2.video.VideoSize
+import okhttp3.internal.toHexString
 import org.koin.android.ext.android.inject
-import org.koin.androidx.viewmodel.ext.android.viewModel
+import org.koin.androidx.viewmodel.ext.android.getViewModel
+import org.koin.core.parameter.parametersOf
 import org.peercast.pecaplay.core.app.PecaViewerIntent
 import org.peercast.pecaplay.core.app.Yp4gChannel
+import org.peercast.pecaviewer.chat.ChatViewModel
 import org.peercast.pecaviewer.player.PlayerViewModel
 import org.peercast.pecaviewer.service.NotificationHelper
+import org.peercast.pecaviewer.service.PlayerService
+import org.peercast.pecaviewer.service.bindPlayerService
 import timber.log.Timber
+import kotlin.properties.Delegates
 
-class PecaViewerActivity : AppCompatActivity() {
+class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
 
-    private val playerViewModel by viewModel<PlayerViewModel>()
-    private val viewerPrefs by inject<ViewerPreference>()
+    private lateinit var playerViewModel: PlayerViewModel
+    private lateinit var chatViewModel: ChatViewModel
+    private lateinit var viewerViewModel: PecaViewerViewModel
+    private val viewerPrefs by inject<PecaViewerPreference>()
+    private var service: PlayerService? = null
 
     //通知バーの停止ボタンが押されたとき
-    private var isStopPushed = false
+    private var isStopPushed by Delegates.notNull<Boolean>()
+
+    private val receiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                NotificationHelper.ACTION_STOP -> {
+                    isStopPushed = true
+                }
+            }
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        isStopPushed = savedInstanceState?.getBoolean(STATE_STOP_PUSHED) ?: false
+
+        playerViewModel = getViewModel()
+        chatViewModel = getViewModel()
+        viewerViewModel = getViewModel<PecaViewerViewModel> {
+            parametersOf(
+                playerViewModel,
+                chatViewModel
+            )
+        }
 
         requestedOrientation = when (viewerPrefs.isFullScreenMode) {
             true -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
             else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         }
 
-        checkNotNull(intent.data)
-        checkNotNull(
-            intent.getParcelableExtra(PecaViewerIntent.EX_YP4G_CHANNEL) as? Yp4gChannel
-        )
-
         if (savedInstanceState == null) {
-            val f = PecaViewerFragment()
-            f.arguments = Bundle().also {
-                it.putParcelable(PecaViewerFragment.ARG_INTENT, intent)
-            }
-            supportFragmentManager.beginTransaction()
-                .replace(android.R.id.content, f)
-                .commit()
+            replaceMainFragment()
         }
 
         playerViewModel.isFullScreenMode.let { ld ->
@@ -73,28 +102,103 @@ class PecaViewerActivity : AppCompatActivity() {
         }
 
         registerReceiver(receiver, IntentFilter(NotificationHelper.ACTION_STOP))
+        bindPlayerService(this)
     }
 
-    private val receiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            when (intent?.action) {
-                NotificationHelper.ACTION_STOP -> {
-                    isStopPushed = true
-                }
-            }
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+
+        replaceMainFragment()
+    }
+
+    private fun replaceMainFragment() {
+        checkNotNull(intent.data)
+        checkNotNull(
+            intent.getParcelableExtra(PecaViewerIntent.EX_YP4G_CHANNEL) as? Yp4gChannel
+        )
+
+        val f = when (isApi26AtLeast && isInPictureInPictureMode) {
+            true -> PictureInPictureFragment()
+            else -> MainFragment()
         }
+        f.arguments = Bundle(1).also {
+            it.putParcelable(ARG_INTENT, intent)
+        }
+        supportFragmentManager.beginTransaction()
+            .replace(android.R.id.content, f)
+            .commit()
     }
 
     fun navigateToParentActivity() {
-        //Timber.d("navigateToParentActivity: ${intent.flags}")
-        if (intent.flags and Intent.FLAG_ACTIVITY_CLEAR_TASK != 0 ||
-            intent.flags and Intent.FLAG_ACTIVITY_CLEAR_TOP != 0
+        Timber.d("navigateToParentActivity: ${intent.flags.toHexString()}")
+        if (intent.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0) {
+            //通知バーまたはPIPモードから復帰した場合
+            val i = checkNotNull(NavUtils.getParentActivityIntent(this))
+            Timber.d("call navigateUpTo $i")
+            i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(i)
+        }
+        finish()
+    }
+
+    //PIPモードの終了イベントを得る方法はない
+    //https://stackoverflow.com/questions/47066517/detect-close-and-maximize-clicked-event-in-picture-in-picture-mode-in-android
+    private val pipWindowCloseObserver = object : LifecycleObserver {
+        @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
+        @RequiresApi(Build.VERSION_CODES.O)
+        fun onStop() {
+            Timber.i("PipWindow closed.")
+            service?.stop()
+            lifecycle.removeObserver(this)
+        }
+    }
+
+    fun enterPipMode(): Boolean {
+        if (isApi26AtLeast &&
+            packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE) &&
+            service?.isPlaying == true
         ) {
-            //通知バーから復帰した場合
-            NavUtils.navigateUpFromSameTask(this)
-        } else {
-            //PecaPlayActivityから起動した場合
-            finish()
+            Timber.i("enterPipMode")
+            val b = PictureInPictureParams.Builder()
+            val size = service?.videoSize ?: VideoSize.UNKNOWN
+            if (size != VideoSize.UNKNOWN) {
+                b.setAspectRatio(Rational(size.width, size.height))
+            }
+            val r = enterPictureInPictureMode(b.build())
+            if (r) {
+                lifecycle.addObserver(pipWindowCloseObserver)
+            }
+            return r
+        }
+        return false
+    }
+
+    override fun onUserLeaveHint() {
+        //ホームボタンが押された。
+        Timber.d("onUserLeaveHint() isFinishing=$isFinishing")
+        if (!isFinishing && isApi26AtLeast && !isInPictureInPictureMode) {
+            enterPipMode()
+        }
+    }
+
+    override fun onBackPressed() {
+        navigateToParentActivity()
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        //回転時に再生成
+        replaceMainFragment()
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+        val isInPipMode = isApi26AtLeast && isInPictureInPictureMode
+        if (!(viewerPrefs.isBackgroundPlaying || isInPipMode)) {
+            service?.stop()
         }
     }
 
@@ -106,10 +210,37 @@ class PecaViewerActivity : AppCompatActivity() {
         }
     }
 
+    override fun onServiceConnected(name: ComponentName?, binder: IBinder) {
+        service = (binder as PlayerService.Binder).service
+    }
+
+    override fun onServiceDisconnected(name: ComponentName?) {
+        service = null
+    }
+
+    override fun onSaveInstanceState(outState: Bundle, outPersistentState: PersistableBundle) {
+        super.onSaveInstanceState(outState, outPersistentState)
+        outState.putBoolean(STATE_STOP_PUSHED, isStopPushed)
+    }
+
     override fun onDestroy() {
         super.onDestroy()
 
         unregisterReceiver(receiver)
+
+        if (service != null) {
+            unbindService(this)
+            onServiceDisconnected(null)
+        }
     }
 
+
+    companion object {
+        const val ARG_INTENT = "intent"
+
+        private const val STATE_STOP_PUSHED = "stop-pushed"
+
+        @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.O)
+        private val isApi26AtLeast = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+    }
 }

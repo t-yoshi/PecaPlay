@@ -7,8 +7,8 @@ import org.peercast.pecaviewer.player.PlayerViewModel
 import org.peercast.pecaviewer.service.PlayerServiceEventFlow
 
 val pecaviewerModule = module {
-    single { ViewerPreference(get()) }
-    viewModel { (pvm: PlayerViewModel, cvm: ChatViewModel) -> ViewerViewModel(get(), pvm, cvm) }
+    single { PecaViewerPreference(get()) }
+    viewModel { (pvm: PlayerViewModel, cvm: ChatViewModel) -> PecaViewerViewModel(get(), pvm, cvm) }
     viewModel { PlayerViewModel(get()) }
     viewModel { ChatViewModel(get()) }
 

@@ -30,13 +30,6 @@
             android:layout_height="match_parent"
             app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
-        <!--TODO-->
-        <FrameLayout
-            android:id="@+id/vMiniPlayerContainer"
-            android:layout_gravity="end|bottom"
-            android:layout_width="@dimen/miniplayer_width"
-            android:layout_height="@dimen/miniplayer_height"
-            />
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 
     <org.peercast.pecaplay.navigation.PecaNaviView

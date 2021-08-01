@@ -18,9 +18,9 @@ import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import org.peercast.pecaviewer.PecaViewerActivity
+import org.peercast.pecaviewer.PecaViewerPreference
+import org.peercast.pecaviewer.PecaViewerViewModel
 import org.peercast.pecaviewer.R
-import org.peercast.pecaviewer.ViewerPreference
-import org.peercast.pecaviewer.ViewerViewModel
 import org.peercast.pecaviewer.service.PlayerService
 import org.peercast.pecaviewer.service.bindPlayerService
 import org.peercast.pecaviewer.util.takeScreenShot
@@ -29,10 +29,10 @@ import timber.log.Timber
 @Suppress("unused")
 class PlayerFragment : Fragment(), ServiceConnection {
 
-    private val appViewModel by sharedViewModel<ViewerViewModel>()
+    private val viewerViewModel by sharedViewModel<PecaViewerViewModel>()
     private val playerViewModel by sharedViewModel<PlayerViewModel>()
-    private val viewerPrefs by inject<ViewerPreference>()
-    private val activity get() = requireActivity() as PecaViewerActivity
+    private val viewerPrefs by inject<PecaViewerPreference>()
+    private val viewerActivity get() = requireActivity() as PecaViewerActivity
 
     private var service: PlayerService? = null
 
@@ -46,7 +46,7 @@ class PlayerFragment : Fragment(), ServiceConnection {
 
     private var vPlayer: PlayerView? = null
     private lateinit var vPlayerMenu: ActionMenuView
-    private lateinit var vQuit: ImageView
+    private lateinit var vIntoPipMode: ImageView
     private lateinit var vFullScreen: ImageView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -54,7 +54,7 @@ class PlayerFragment : Fragment(), ServiceConnection {
 
         vPlayer = view as PlayerView
         vPlayerMenu = view.findViewById(R.id.vPlayerMenu)
-        vQuit = view.findViewById(R.id.vIntoMiniWindow)
+        vIntoPipMode = view.findViewById(R.id.vIntoPipMode)
         vFullScreen = view.findViewById(R.id.vFullScreen)
 
         playerViewModel.isFullScreenMode.observe(viewLifecycleOwner) {
@@ -75,8 +75,9 @@ class PlayerFragment : Fragment(), ServiceConnection {
             it.setOnMenuItemClickListener(::onOptionsItemSelected)
         }
 
-        vQuit.setOnClickListener {
-            activity.navigateToParentActivity()
+        vIntoPipMode.setOnClickListener {
+            if (!viewerActivity.enterPipMode())
+                viewerActivity.navigateToParentActivity()
         }
 
         vFullScreen.setOnClickListener(::onFullScreenClicked)
@@ -86,7 +87,7 @@ class PlayerFragment : Fragment(), ServiceConnection {
     override fun onAttach(context: Context) {
         super.onAttach(context)
         requireActivity().onBackPressedDispatcher.addCallback(this) {
-            activity.navigateToParentActivity()
+            viewerActivity.navigateToParentActivity()
         }
     }
 
@@ -135,11 +136,17 @@ class PlayerFragment : Fragment(), ServiceConnection {
             requireContext().bindPlayerService(this)
     }
 
+    private fun unbindPlayerService() {
+        if (service != null) {
+            requireContext().unbindService(this@PlayerFragment)
+            onServiceDisconnected(null)
+        }
+    }
+
     override fun onPause() {
         super.onPause()
 
         val sv = service ?: return
-        service = null
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && sv.isPlaying) {
             lifecycleScope.launch {
@@ -151,12 +158,7 @@ class PlayerFragment : Fragment(), ServiceConnection {
             }
         }
 
-        if (!viewerPrefs.isBackgroundPlaying) {
-            sv.stop()
-        }
-
-        requireContext().unbindService(this@PlayerFragment)
-        onServiceDisconnected(null)
+        unbindPlayerService()
     }
 
     override fun onServiceConnected(name: ComponentName, binder: IBinder) {
@@ -173,6 +175,11 @@ class PlayerFragment : Fragment(), ServiceConnection {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        unbindPlayerService()
         vPlayer = null
     }
+
+    private val isInPictureInPictureMode
+        get() =
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && requireActivity().isInPictureInPictureMode
 }

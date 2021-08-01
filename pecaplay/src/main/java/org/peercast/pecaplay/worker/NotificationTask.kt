@@ -48,6 +48,7 @@ class NotificationTask(worker: ListenableWorker) : LoadingWorker.Task(worker), K
         val i = Intent().also {
             it.setClass(c, PecaPlayActivity::class.java)
             it.action = PecaPlayIntent.ACTION_VIEW_NOTIFIED
+            it.putExtra(PecaPlayIntent.EX_SELECT_NOTIFIED, true)
         }
         return PendingIntent.getActivity(
             c, 0, i,

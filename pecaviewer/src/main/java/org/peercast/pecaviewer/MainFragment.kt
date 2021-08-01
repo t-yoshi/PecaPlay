@@ -15,7 +15,6 @@ import androidx.lifecycle.lifecycleScope
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
-import org.koin.core.parameter.parametersOf
 import org.peercast.pecaplay.core.app.PecaViewerIntent
 import org.peercast.pecaplay.core.app.Yp4gChannel
 import org.peercast.pecaviewer.chat.ChatViewModel
@@ -26,18 +25,13 @@ import org.peercast.pecaviewer.service.PlayerService
 import org.peercast.pecaviewer.service.bindPlayerService
 import timber.log.Timber
 
-class PecaViewerFragment : Fragment(), ServiceConnection {
+internal class MainFragment : Fragment(), ServiceConnection {
 
     private lateinit var binding: ActivityMainBinding
     private val playerViewModel by sharedViewModel<PlayerViewModel>()
     private val chatViewModel by sharedViewModel<ChatViewModel>()
-    private val appViewModel by sharedViewModel<ViewerViewModel> {
-        parametersOf(
-            playerViewModel,
-            chatViewModel
-        )
-    }
-    private val viewerPrefs by inject<ViewerPreference>()
+    private val appViewModel by sharedViewModel<PecaViewerViewModel>()
+    private val viewerPrefs by inject<PecaViewerPreference>()
     private var onServiceConnect: (PlayerService) -> Unit = {}
     private lateinit var channel: Yp4gChannel
     private var service: PlayerService? = null
@@ -46,7 +40,8 @@ class PecaViewerFragment : Fragment(), ServiceConnection {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val intent = checkNotNull(requireArguments().getParcelable<Intent>(ARG_INTENT))
+        val intent =
+            checkNotNull(requireArguments().getParcelable<Intent>(PecaViewerActivity.ARG_INTENT))
         val streamUrl = checkNotNull(intent.data)
         channel = checkNotNull(
             intent.getParcelableExtra(PecaViewerIntent.EX_YP4G_CHANNEL)
@@ -63,6 +58,8 @@ class PecaViewerFragment : Fragment(), ServiceConnection {
         lifecycleScope.launchWhenCreated {
             chatViewModel.presenter.loadUrl(channel.url.toString())
         }
+
+
 
         requireContext().bindPlayerService(this)
     }
@@ -183,6 +180,5 @@ class PecaViewerFragment : Fragment(), ServiceConnection {
 
     companion object {
         private const val STATE_PLAYING = "STATE_PLAYING"
-        const val ARG_INTENT = "intent"
     }
 }

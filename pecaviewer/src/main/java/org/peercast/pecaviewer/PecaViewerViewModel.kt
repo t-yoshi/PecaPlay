@@ -9,7 +9,7 @@ import org.peercast.pecaviewer.chat.ChatViewModel
 import org.peercast.pecaviewer.player.PlayerViewModel
 
 
-internal class ViewerViewModel(
+internal class PecaViewerViewModel(
     private val a: Application,
     private val playerViewModel: PlayerViewModel,
     private val chatViewModel: ChatViewModel,

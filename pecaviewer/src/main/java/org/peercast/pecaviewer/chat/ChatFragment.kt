@@ -23,7 +23,7 @@ import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.*
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import org.peercast.pecaviewer.R
-import org.peercast.pecaviewer.ViewerViewModel
+import org.peercast.pecaviewer.PecaViewerViewModel
 import org.peercast.pecaviewer.chat.adapter.MessageAdapter
 import org.peercast.pecaviewer.chat.adapter.ThreadAdapter
 import org.peercast.pecaviewer.chat.thumbnail.ImageViewerFragment
@@ -39,7 +39,7 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener,
 
     private val chatViewModel by sharedViewModel<ChatViewModel>()
     private val playerViewModel by sharedViewModel<PlayerViewModel>()
-    private val appViewModel by sharedViewModel<ViewerViewModel>()
+    private val appViewModel by sharedViewModel<PecaViewerViewModel>()
     private val chatPrefs by lazy(LazyThreadSafetyMode.NONE) {
         requireContext().getSharedPreferences("chat", Context.MODE_PRIVATE)
     }

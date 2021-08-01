@@ -30,7 +30,7 @@
         android:contentDescription="@null"/>
 
     <ImageView
-        android:id="@+id/vIntoMiniWindow"
+        android:id="@+id/vIntoPipMode"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="top|start"

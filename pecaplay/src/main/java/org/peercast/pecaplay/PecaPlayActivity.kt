@@ -40,7 +40,6 @@ import org.peercast.pecaplay.worker.LoadingEvent
 import org.peercast.pecaplay.worker.LoadingEventFlow
 import org.peercast.pecaplay.yp4g.SpeedTestFragment
 import org.peercast.pecaplay.yp4g.YpDisplayOrder
-import org.peercast.pecaviewer.player.MiniPlayerFragment
 import timber.log.Timber
 
 /*
@@ -141,12 +140,12 @@ class PecaPlayActivity : AppCompatActivity() {
         }
 
         viewModel.rpcClient.filterNotNull().onEach { client ->
-            //PeerCastの起動を知らせる。ミニプレーヤーと被るときは表示しない。
-            //if (!intent.hasExtra(PecaPlayIntent.EX_MINIPLAYER_ENABLED)) {
+            //PeerCastの起動を知らせる。Pipからの復帰時は表示しない。
+            if (intent.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0) {
                 viewModel.message.emit(
                     getString(R.string.peercast_has_started, client.rpcEndPoint.port)
                 )
-            //}
+            }
         }.launchIn(lifecycleScope)
 
         lifecycleScope.launchWhenResumed {
@@ -162,25 +161,30 @@ class PecaPlayActivity : AppCompatActivity() {
             }
         }
 
-        Timber.d("intent=$intent, extras=${intent.extras?.keySet()?.toList()}")
-        when (intent.action) {
-            PecaPlayIntent.ACTION_VIEW_NOTIFIED -> {
-                removeNotification()
-                vNavigation.navigate { it is NavigationNotifiedItem }
-            }
-        }
+        handleIntent()
 
         vNavigation.model.repository.collectIn(lifecycleScope)
 
-//TODO: 小窓で再生
-//        if (intent.getBooleanExtra(PecaPlayIntent.EX_MINIPLAYER_ENABLED, false)) {
-//            supportFragmentManager.beginTransaction()
-//                .replace(R.id.vMiniPlayerContainer, MiniPlayerFragment())
-//                .commit()
-//        }
-
         viewModel.bindService()
     }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+
+        handleIntent()
+    }
+
+    private fun handleIntent() {
+        Timber.d("intent=$intent, extras=${intent.extras?.keySet()?.toList()}")
+        if (intent.action == PecaPlayIntent.ACTION_VIEW_NOTIFIED ||
+            intent.getBooleanExtra(PecaPlayIntent.EX_SELECT_NOTIFIED, false)
+        ) {
+            removeNotification()
+            vNavigation.navigate { it is NavigationNotifiedItem }
+        }
+    }
+
 
     private fun removeNotification() {
         appPrefs.notificationNewlyChannelsId = emptyList()

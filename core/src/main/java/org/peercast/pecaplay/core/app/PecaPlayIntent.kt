@@ -7,8 +7,7 @@ import android.net.Uri
 object PecaPlayIntent {
     const val ACTION_VIEW_NOTIFIED = "ACTION_VIEW_NOTIFIED"
 
-    //TODO
-    //const val EX_MINIPLAYER_ENABLED = "miniplayer-enabled" //boolean
+    const val EX_SELECT_NOTIFIED = "select-notified" //boolean
 
     val ComponentPlayActivity = ComponentName(
         "org.peercast.pecaplay",
