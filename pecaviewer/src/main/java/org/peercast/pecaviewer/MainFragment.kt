@@ -3,6 +3,7 @@ package org.peercast.pecaviewer
 import android.content.ComponentName
 import android.content.Intent
 import android.content.ServiceConnection
+import android.content.res.Configuration
 import android.os.Bundle
 import android.os.IBinder
 import android.view.LayoutInflater
@@ -19,7 +20,7 @@ import org.peercast.pecaplay.core.app.PecaViewerIntent
 import org.peercast.pecaplay.core.app.Yp4gChannel
 import org.peercast.pecaviewer.chat.ChatViewModel
 import org.peercast.pecaviewer.chat.PostMessageDialogFragment
-import org.peercast.pecaviewer.databinding.ActivityMainBinding
+import org.peercast.pecaviewer.databinding.MainFragmentBinding
 import org.peercast.pecaviewer.player.PlayerViewModel
 import org.peercast.pecaviewer.service.PlayerService
 import org.peercast.pecaviewer.service.bindPlayerService
@@ -27,7 +28,7 @@ import timber.log.Timber
 
 internal class MainFragment : Fragment(), ServiceConnection {
 
-    private lateinit var binding: ActivityMainBinding
+    private lateinit var binding: MainFragmentBinding
     private val playerViewModel by sharedViewModel<PlayerViewModel>()
     private val chatViewModel by sharedViewModel<ChatViewModel>()
     private val appViewModel by sharedViewModel<PecaViewerViewModel>()
@@ -35,7 +36,6 @@ internal class MainFragment : Fragment(), ServiceConnection {
     private var onServiceConnect: (PlayerService) -> Unit = {}
     private lateinit var channel: Yp4gChannel
     private var service: PlayerService? = null
-    private val isLandscapeMode get() = resources.getBoolean(R.bool.isLandscapeMode)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -59,8 +59,6 @@ internal class MainFragment : Fragment(), ServiceConnection {
             chatViewModel.presenter.loadUrl(channel.url.toString())
         }
 
-
-
         requireContext().bindPlayerService(this)
     }
 
@@ -69,7 +67,7 @@ internal class MainFragment : Fragment(), ServiceConnection {
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View {
-        return ActivityMainBinding.inflate(layoutInflater).also {
+        return MainFragmentBinding.inflate(layoutInflater).also {
             binding = it
             it.chatViewModel = chatViewModel
             it.playerViewModel = playerViewModel
@@ -88,17 +86,22 @@ internal class MainFragment : Fragment(), ServiceConnection {
             f.show(parentFragmentManager, "tag#PostMessageDialogFragment")
         }
 
-        binding.vSlidingUpPanel.addPanelSlideListener(panelSlideListener)
-
-        val anchorPoint = if (isLandscapeMode) {
-            initPanelState(SlidingUpPanelLayout.PanelState.EXPANDED)
-            resources.getInteger(R.integer.sliding_up_panel_anchor_point_land)
-        } else {
-            initPanelState(viewerPrefs.initPanelState)
+        if (isPortraitMode) {
             resources.getInteger(R.integer.sliding_up_panel_anchor_point_port)
+        } else {
+            resources.getInteger(R.integer.sliding_up_panel_anchor_point_land)
+        }.let {
+            binding.vSlidingUpPanel.anchorPoint = it / 100f
         }
 
-        binding.vSlidingUpPanel.anchorPoint = anchorPoint / 100f
+        if (isPortraitMode) {
+            initPanelState(viewerPrefs.initPanelState)
+        } else {
+            initPanelState(SlidingUpPanelLayout.PanelState.EXPANDED)
+        }
+
+        binding.vSlidingUpPanel.addPanelSlideListener(panelSlideListener)
+
         binding.toolbar.title.text = channel.name
         binding.toolbar.text1.text = channel.run { "$genre $description $comment".trim() }
     }
@@ -107,9 +110,7 @@ internal class MainFragment : Fragment(), ServiceConnection {
         binding.vSlidingUpPanel.panelState = state
         binding.vSlidingUpPanel.doOnLayout {
             panelSlideListener.onPanelStateChanged(
-                binding.vSlidingUpPanel,
-                SlidingUpPanelLayout.PanelState.COLLAPSED,
-                state
+                binding.vSlidingUpPanel, state, state
             )
         }
     }
@@ -144,14 +145,16 @@ internal class MainFragment : Fragment(), ServiceConnection {
                 }
             }
 
-            if (newState in listOf(
+            if (newState in setOf(
                     SlidingUpPanelLayout.PanelState.EXPANDED,
                     SlidingUpPanelLayout.PanelState.COLLAPSED,
                     SlidingUpPanelLayout.PanelState.ANCHORED
                 )
             ) {
-                appViewModel.slidingPanelState.value = newState.ordinal
-                if (!isLandscapeMode) {
+                if (appViewModel.slidingPanelState.value != newState.ordinal) {
+                    appViewModel.slidingPanelState.value = newState.ordinal
+                }
+                if (isPortraitMode && newState != previousState) {
                     viewerPrefs.initPanelState = newState
                 }
             }
@@ -177,6 +180,8 @@ internal class MainFragment : Fragment(), ServiceConnection {
         if (service != null)
             requireContext().unbindService(this)
     }
+
+    private val isPortraitMode get() = resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
 
     companion object {
         private const val STATE_PLAYING = "STATE_PLAYING"
