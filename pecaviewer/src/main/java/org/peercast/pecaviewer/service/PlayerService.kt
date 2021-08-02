@@ -31,7 +31,6 @@ import org.peercast.pecaplay.core.io.Square
 import org.peercast.pecaviewer.PecaViewerPreference
 import timber.log.Timber
 import java.io.IOException
-import java.lang.Exception
 import java.util.*
 
 
@@ -66,6 +65,7 @@ class PlayerService : LifecycleService() {
             .setWakeMode(C.WAKE_MODE_LOCAL)
             .build()
         player.addAnalyticsListener(analyticsListener)
+        player.repeatMode = Player.REPEAT_MODE_OFF
 
         notificationHelper = NotificationHelper(this)
 
@@ -83,7 +83,7 @@ class PlayerService : LifecycleService() {
         })
     }
 
-    private fun PlayerServiceEvent.emit(){
+    private fun PlayerServiceEvent.emit() {
         lifecycleScope.launch {
             eventFlow.emit(this@emit)
         }
@@ -96,9 +96,16 @@ class PlayerService : LifecycleService() {
             when (state) {
                 Player.STATE_BUFFERING -> {
                     jBuf = lifecycleScope.launch {
+                        var i = 0
                         while (isActive) {
                             eventFlow.emit(PlayerBufferingEvent(player.bufferedPercentage))
-                            delay(3_000)
+                            delay(5_000)
+                            if (++i % 3 == 0) {
+                                //バッファー状態でフリーズすることを防ぐ
+                                Timber.d("call prepare() again.")
+                                //player.stop()
+                                player.prepare()
+                            }
                         }
                     }
                 }
@@ -120,7 +127,7 @@ class PlayerService : LifecycleService() {
             //Timber.d("state -> $state")
         }
 
-         private fun sendPlayerErrorEvent(errorType: String, e: Exception){
+        private fun sendPlayerErrorEvent(errorType: String, e: Exception) {
             jBuf?.cancel()
             Timber.e(e, "$errorType -> $e")
             PlayerErrorEvent(errorType, e).emit()
@@ -128,28 +135,28 @@ class PlayerService : LifecycleService() {
 
         override fun onPlayerError(
             eventTime: AnalyticsListener.EventTime,
-            error: ExoPlaybackException
-        ){
+            error: ExoPlaybackException,
+        ) {
             sendPlayerErrorEvent("PlayerError", error)
         }
 
         override fun onAudioCodecError(
             eventTime: AnalyticsListener.EventTime,
-            audioCodecError: Exception
+            audioCodecError: Exception,
         ) {
             sendPlayerErrorEvent("AudioCodecError", audioCodecError)
         }
 
         override fun onAudioSinkError(
             eventTime: AnalyticsListener.EventTime,
-            audioSinkError: Exception
+            audioSinkError: Exception,
         ) {
             sendPlayerErrorEvent("AudioSinkError", audioSinkError)
         }
 
         override fun onVideoCodecError(
             eventTime: AnalyticsListener.EventTime,
-            videoCodecError: Exception
+            videoCodecError: Exception,
         ) {
             sendPlayerErrorEvent("VideoCodecError", videoCodecError)
         }
@@ -165,7 +172,7 @@ class PlayerService : LifecycleService() {
         override fun onSurfaceSizeChanged(
             eventTime: AnalyticsListener.EventTime,
             width: Int,
-            height: Int
+            height: Int,
         ) {
             Timber.d("onSurfaceSizeChanged -> $width, $height")
             if (width == 0 && height == 0 && player.isPlaying && appPrefs.isBackgroundPlaying) {
@@ -178,7 +185,7 @@ class PlayerService : LifecycleService() {
         override fun onAudioInputFormatChanged(
             eventTime: AnalyticsListener.EventTime,
             format: Format,
-            decoderReuseEvaluation: DecoderReuseEvaluation?
+            decoderReuseEvaluation: DecoderReuseEvaluation?,
         ) {
             Timber.d("onAudioInputFormatChanged -> $format")
         }
@@ -186,14 +193,14 @@ class PlayerService : LifecycleService() {
         override fun onVideoInputFormatChanged(
             eventTime: AnalyticsListener.EventTime,
             format: Format,
-            decoderReuseEvaluation: DecoderReuseEvaluation?
+            decoderReuseEvaluation: DecoderReuseEvaluation?,
         ) {
             Timber.d("onVideoInputFormatChanged -> $format")
         }
 
         override fun onIsPlayingChanged(
             eventTime: AnalyticsListener.EventTime,
-            isPlaying: Boolean
+            isPlaying: Boolean,
         ) {
             notificationHelper.isPlaying = isPlaying
         }
@@ -201,7 +208,7 @@ class PlayerService : LifecycleService() {
         override fun onLoadStarted(
             eventTime: AnalyticsListener.EventTime,
             loadEventInfo: LoadEventInfo,
-            mediaLoadData: MediaLoadData
+            mediaLoadData: MediaLoadData,
         ) {
             Timber.d("onLoadStarted -> ${loadEventInfo.uri}")
             PlayerLoadStartEvent(loadEventInfo.uri).emit()
@@ -212,7 +219,7 @@ class PlayerService : LifecycleService() {
             loadEventInfo: LoadEventInfo,
             mediaLoadData: MediaLoadData,
             error: IOException,
-            wasCanceled: Boolean
+            wasCanceled: Boolean,
         ) {
             Timber.w(error, "onLoadError -> ${loadEventInfo.uri}")
             PlayerLoadErrorEvent(loadEventInfo.uri, error).emit()
@@ -222,7 +229,7 @@ class PlayerService : LifecycleService() {
             eventTime: AnalyticsListener.EventTime,
             totalLoadTimeMs: Int,
             totalBytesLoaded: Long,
-            bitrateEstimate: Long
+            bitrateEstimate: Long,
         ) {
 
             Timber.d("onBandwidthEstimate -> $totalLoadTimeMs $bitrateEstimate")
@@ -293,7 +300,7 @@ class PlayerService : LifecycleService() {
                     e is HttpDataSource.InvalidResponseCodeException &&
                     e.responseCode == 404
                 ) {
-                   return C.TIME_UNSET
+                    return C.TIME_UNSET
                 }
                 return 5_000
             }
@@ -312,6 +319,7 @@ class PlayerService : LifecycleService() {
             return
 
         val item = MediaItem.fromUri(u)
+
         player.setMediaSource(progressiveFactory.createMediaSource(item))
 
         if (u.host in listOf("localhost", "127.0.0.1"))
@@ -323,7 +331,6 @@ class PlayerService : LifecycleService() {
     val isPlaying get() = player.isPlaying
 
     fun play() {
-        //player.play()
         player.playWhenReady = true
     }
 
@@ -331,7 +338,7 @@ class PlayerService : LifecycleService() {
         player.stop()
     }
 
-    fun setThumbnail(b: Bitmap?){
+    fun setThumbnail(b: Bitmap?) {
         playingIntent.putExtra(PecaViewerIntent.EX_THUMBNAIL, b)
         notificationHelper.updateNotification()
     }
