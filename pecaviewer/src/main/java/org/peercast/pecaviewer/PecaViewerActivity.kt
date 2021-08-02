@@ -139,8 +139,12 @@ class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
 
     fun navigateToParentActivity() {
         Timber.d("navigateToParentActivity: ${intent.flags.toHexString()}")
-        if (intent.flags and Intent.FLAG_ACTIVITY_NEW_TASK != 0) {
+        if (intent.getBooleanExtra(PecaViewerIntent.EX_LAUNCHED_FROM_PECAPLAY, false)) {
+            //PecaPlayから起動した場合、単にfinishすれば戻れる
+            Timber.d(" it is just finish.")
+        } else {
             //通知バーまたはPIPモードから復帰した場合
+            Timber.d(" launch ParentActivity.")
             launchParentActivity()
         }
         finish()
@@ -169,6 +173,7 @@ class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
             if (size != VideoSize.UNKNOWN) {
                 b.setAspectRatio(Rational(size.width, size.height))
             }
+            intent.putExtra(PecaViewerIntent.EX_LAUNCHED_FROM_PECAPLAY, false)
             return enterPictureInPictureMode(b.build())
         }
         return false

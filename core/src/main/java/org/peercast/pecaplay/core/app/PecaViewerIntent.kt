@@ -12,6 +12,8 @@ object PecaViewerIntent {
     /**(Bitmap)*/
     const val EX_THUMBNAIL = "thumbnail"
 
+    const val EX_LAUNCHED_FROM_PECAPLAY = "launched-from-pecaplay"
+
     fun create(streamUri: Uri, ch: Yp4gChannel): Intent {
         return Intent().also {
             it.data = streamUri

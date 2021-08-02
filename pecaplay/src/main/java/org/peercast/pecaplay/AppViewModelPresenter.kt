@@ -69,6 +69,7 @@ class AppViewModelPresenter(
                 it.putExtra(LibPeerCast.EXTRA_COMMENT, ch.comment)
             }
         }
+        intent.putExtra(PecaViewerIntent.EX_LAUNCHED_FROM_PECAPLAY, true)
 
         try {
             f.startActivity(intent)
