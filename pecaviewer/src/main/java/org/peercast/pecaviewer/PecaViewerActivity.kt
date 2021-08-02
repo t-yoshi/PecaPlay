@@ -150,7 +150,6 @@ class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
     //https://stackoverflow.com/questions/47066517/detect-close-and-maximize-clicked-event-in-picture-in-picture-mode-in-android
     private val pipWindowCloseObserver = object : LifecycleObserver {
         @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
-        @RequiresApi(Build.VERSION_CODES.O)
         fun onStop() {
             Timber.i("PipWindow closed.")
             service?.stop()
@@ -170,11 +169,7 @@ class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
             if (size != VideoSize.UNKNOWN) {
                 b.setAspectRatio(Rational(size.width, size.height))
             }
-            val r = enterPictureInPictureMode(b.build())
-            if (r) {
-                lifecycle.addObserver(pipWindowCloseObserver)
-            }
-            return r
+            return enterPictureInPictureMode(b.build())
         }
         return false
     }
@@ -189,6 +184,21 @@ class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
 
     override fun onBackPressed() {
         navigateToParentActivity()
+    }
+
+    override fun onPictureInPictureModeChanged(
+        isInPictureInPictureMode: Boolean,
+        newConfig: Configuration?
+    ) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        Timber.d("onPictureInPictureModeChanged $isInPictureInPictureMode")
+
+        //PIPの閉じるボタンのイベントをなんとか得る
+        if (isInPictureInPictureMode) {
+            lifecycle.addObserver(pipWindowCloseObserver)
+        } else {
+            lifecycle.removeObserver(pipWindowCloseObserver)
+        }
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
