@@ -72,7 +72,10 @@ class AppViewModelPresenter(
         intent.putExtra(PecaViewerIntent.EX_LAUNCHED_FROM_PECAPLAY, true)
 
         try {
-            f.startActivity(intent)
+            f.requireActivity().let { a ->
+                a.startActivity(intent)
+                a.overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
+            }
 
             viewModel.viewModelScope.launch {
                 database.ypHistoryDao.addHistory(YpHistoryChannel(ch))

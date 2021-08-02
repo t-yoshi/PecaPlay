@@ -148,6 +148,7 @@ class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
             launchParentActivity()
         }
         finish()
+        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
     }
 
     //PIPモードの終了イベントを得る方法はない
