@@ -63,9 +63,11 @@ class PlayerService : LifecycleService() {
         player = SimpleExoPlayer.Builder(this)
             .setAudioAttributes(AA_MEDIA_MOVIE, true)
             .setWakeMode(C.WAKE_MODE_LOCAL)
+            .setLoadControl(LOAD_CONTROL)
+            .setUseLazyPreparation(true)
             .build()
         player.addAnalyticsListener(analyticsListener)
-        player.repeatMode = Player.REPEAT_MODE_OFF
+        player.repeatMode = Player.REPEAT_MODE_ONE
 
         notificationHelper = NotificationHelper(this)
 
@@ -98,12 +100,14 @@ class PlayerService : LifecycleService() {
                     jBuf = lifecycleScope.launch {
                         var i = 0
                         while (isActive) {
+                            Timber.d("${player.isLoading}")
                             eventFlow.emit(PlayerBufferingEvent(player.bufferedPercentage))
                             delay(5_000)
                             if (++i % 3 == 0) {
                                 //バッファー状態でフリーズすることを防ぐ
                                 Timber.d("call prepare() again.")
                                 //player.stop()
+                                player.seekTo(0)
                                 player.prepare()
                             }
                         }
@@ -358,6 +362,15 @@ class PlayerService : LifecycleService() {
         private val AA_MEDIA_MOVIE = AudioAttributes.Builder()
             .setUsage(C.USAGE_MEDIA)
             .setContentType(C.CONTENT_TYPE_MOVIE)
+            .build()
+
+        private val LOAD_CONTROL = DefaultLoadControl.Builder()
+            .setBufferDurationsMs(
+                1_000,//DefaultLoadControl.DEFAULT_MIN_BUFFER_MS,
+                1_000,//30_000,
+                1_000,// DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS,
+                1_000, //DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS,
+            )
             .build()
     }
 }
