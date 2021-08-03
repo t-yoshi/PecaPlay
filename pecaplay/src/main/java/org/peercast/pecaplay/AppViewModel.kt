@@ -3,13 +3,13 @@ package org.peercast.pecaplay
 import android.app.Application
 import android.net.Uri
 import androidx.core.text.HtmlCompat
-import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import org.peercast.core.lib.app.BaseClientViewModel
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.chanlist.filter.ChannelFilter
+import org.peercast.pecaplay.core.app.AppActivityLauncher
 import org.peercast.pecaplay.core.io.localizedSystemMessage
 import org.peercast.pecaplay.prefs.AppPreferences
 import org.peercast.pecaplay.worker.LoadingEvent
@@ -18,12 +18,13 @@ import retrofit2.HttpException
 
 
 class AppViewModel(
-    private val a: Application,
+    a: Application,
     private val appPrefs: AppPreferences,
-    private val database: AppRoomDatabase,
-    private val loadingEvent: LoadingEventFlow,
+    database: AppRoomDatabase,
+    loadingEvent: LoadingEventFlow,
+    launcher: AppActivityLauncher,
 ) : BaseClientViewModel(a) {
-    val presenter = AppViewModelPresenter(this, appPrefs, database)
+    val presenter = AppViewModelPresenter(this, appPrefs, database, launcher)
 
     /**リスト表示用*/
     val channelFilter = ChannelFilter(viewModelScope, database, appPrefs)

@@ -140,14 +140,16 @@ class PecaPlayActivity : AppCompatActivity() {
             }.collect()
         }
 
-        viewModel.rpcClient.filterNotNull().onEach { client ->
-            //PeerCastの起動を知らせる。Pipからの復帰時は表示しない。
-            if (intent.flags and Intent.FLAG_ACTIVITY_NEW_TASK == 0) {
-                viewModel.message.emit(
-                    getString(R.string.peercast_has_started, client.rpcEndPoint.port)
-                )
+        lifecycleScope.launchWhenResumed {
+            viewModel.rpcClient.filterNotNull().collect {
+                //PeerCastの起動を知らせる。プレーヤーからの復帰時は表示しない。
+                if (intent.hasCategory(Intent.CATEGORY_LAUNCHER)) {
+                    viewModel.message.emit(
+                        getString(R.string.peercast_has_started, it.rpcEndPoint.port)
+                    )
+                }
             }
-        }.launchIn(lifecycleScope)
+        }
 
         lifecycleScope.launchWhenResumed {
             viewModel.existsNotification.collect {
@@ -162,8 +164,6 @@ class PecaPlayActivity : AppCompatActivity() {
             }
         }
 
-        handleIntent()
-
         vNavigation.model.repository.collectIn(lifecycleScope)
 
         viewModel.bindService()
@@ -172,20 +172,7 @@ class PecaPlayActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         setIntent(intent)
-
-        handleIntent()
     }
-
-    private fun handleIntent() {
-        Timber.d("intent=$intent, extras=${intent.extras?.keySet()?.toList()}")
-        if (intent.action == PecaPlayIntent.ACTION_VIEW_NOTIFIED ||
-            intent.getBooleanExtra(PecaPlayIntent.EX_SELECT_NOTIFIED, false)
-        ) {
-            removeNotification()
-            vNavigation.navigate { it is NavigationNotifiedItem }
-        }
-    }
-
 
     private fun removeNotification() {
         appPrefs.notificationNewlyChannelsId = emptyList()
@@ -195,6 +182,14 @@ class PecaPlayActivity : AppCompatActivity() {
 
     override fun onPostCreate(savedInstanceState: Bundle?) {
         super.onPostCreate(savedInstanceState)
+
+        Timber.d("intent=$intent, extras=${intent.extras?.keySet()?.toList()}")
+        if (intent.action == PecaPlayIntent.ACTION_VIEW_NOTIFIED ||
+            intent.getBooleanExtra(PecaPlayIntent.EX_SELECT_NOTIFIED, false)
+        ) {
+            removeNotification()
+            vNavigation.navigate { it is NavigationNotifiedItem }
+        }
 
         drawerToggle?.syncState()
     }
@@ -388,9 +383,6 @@ class PecaPlayActivity : AppCompatActivity() {
 
     companion object {
         private const val STATE_LAST_LOADED_ER_TIME = "lastLoadedERTime"
-
-        /**通知済みの新着を表示する*/
-        const val EX_IS_NOTIFIED = "notified"
     }
 }
 

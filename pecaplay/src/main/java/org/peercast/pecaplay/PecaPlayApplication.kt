@@ -18,18 +18,19 @@ import org.peercast.pecaviewer.pecaviewerModule
 import timber.log.Timber
 import java.util.*
 
+private val pecaplayModule = module {
+    single { AppRoomDatabase.createInstance(get(), "pecaplay-5") }
+    single<AppPreferences> { DefaultAppPreferences(get()) }
+    single { LoadingEventFlow() }
+    viewModel { AppViewModel(get(), get(), get(), get(), get()) }
+}
+
+
 @Suppress("unused")
 class PecaPlayApplication : Application() {
     private val appPrefs: AppPreferences by inject()
 
     private lateinit var kApp: KoinApplication
-
-    private val pecaplayModule = module {
-        single { AppRoomDatabase.createInstance(get(), "pecaplay-5") }
-        single<AppPreferences> { DefaultAppPreferences(get()) }
-        single { LoadingEventFlow() }
-        viewModel { AppViewModel(get(), get(), get(), get()) }
-    }
 
     override fun onCreate() {
         super.onCreate()

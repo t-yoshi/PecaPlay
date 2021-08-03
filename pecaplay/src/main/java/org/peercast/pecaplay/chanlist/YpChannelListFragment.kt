@@ -205,7 +205,7 @@ class YpChannelFragment : Fragment() {
 
         override fun onItemClick(m: ListItemViewModel, position: Int) {
             if (m.ch.isPlayable && !m.isNg) {
-                viewModel.presenter.startPlay(this@YpChannelFragment, m.ch)
+                viewModel.presenter.startPlay(requireActivity(), m.ch)
             }
         }
 

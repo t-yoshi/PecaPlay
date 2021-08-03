@@ -11,7 +11,6 @@ import android.os.IBinder
 import android.os.PersistableBundle
 import android.util.Rational
 import androidx.annotation.ChecksSdkIntAtLeast
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NavUtils
 import androidx.core.view.WindowCompat
@@ -25,6 +24,7 @@ import okhttp3.internal.toHexString
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.getViewModel
 import org.koin.core.parameter.parametersOf
+import org.peercast.pecaplay.core.app.AppActivityLauncher
 import org.peercast.pecaplay.core.app.PecaViewerIntent
 import org.peercast.pecaplay.core.app.Yp4gChannel
 import org.peercast.pecaviewer.chat.ChatViewModel
@@ -41,6 +41,7 @@ class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
     private lateinit var chatViewModel: ChatViewModel
     private lateinit var viewerViewModel: PecaViewerViewModel
     private val viewerPrefs by inject<PecaViewerPreference>()
+    private val launcher by inject<AppActivityLauncher>()
     private var service: PlayerService? = null
 
     //通知バーの停止ボタンが押されたとき
@@ -130,25 +131,15 @@ class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
             .commit()
     }
 
-    fun launchParentActivity() {
-        val i = checkNotNull(NavUtils.getParentActivityIntent(this))
-        i.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        startActivity(i)
-    }
-
-    fun navigateToParentActivity() {
-        Timber.d("navigateToParentActivity: ${intent.flags.toHexString()}")
-        if (intent.getBooleanExtra(PecaViewerIntent.EX_LAUNCHED_FROM_PECAPLAY, false)) {
-            //PecaPlayから起動した場合、単にfinishすれば戻れる
-            Timber.d(" it is just finish.")
+    /**ユーザーがPipを要求した*/
+    fun requestEnterPipMode(){
+        if (enterPipMode()) {
+            //プレーヤーをPIP化 & PecaPlay起動
+            launcher.launchPecaPlay(this)
         } else {
-            //通知バーまたはPIPモードから復帰した場合
-            Timber.d(" launch ParentActivity.")
-            launchParentActivity()
+            //(停止中なので) PIP化せず、単にPecaPlayへ戻る
+            launcher.backToPecaPlay(this)
         }
-        finish()
-        overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
     }
 
     //PIPモードの終了イベントを得る方法はない
@@ -163,10 +154,10 @@ class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
     }
 
     /**Android8以降でプレーヤーをPIP化する。*/
-    fun enterPipMode(): Boolean {
+    private fun enterPipMode(): Boolean {
         if (isApi26AtLeast &&
             packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE) &&
-            service?.isPlaying == true
+            (service?.isPlaying == true || service?.isBuffering == true)
         ) {
             Timber.i("enterPipMode")
             val b = PictureInPictureParams.Builder()
@@ -174,7 +165,7 @@ class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
             if (size != VideoSize.UNKNOWN) {
                 b.setAspectRatio(Rational(size.width, size.height))
             }
-            intent.putExtra(PecaViewerIntent.EX_LAUNCHED_FROM_PECAPLAY, false)
+            intent.removeExtra(PecaViewerIntent.EX_LAUNCHED_FROM)
             return enterPictureInPictureMode(b.build())
         }
         return false
@@ -189,7 +180,7 @@ class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
     }
 
     override fun onBackPressed() {
-        navigateToParentActivity()
+        launcher.backToPecaPlay(this)
     }
 
     override fun onPictureInPictureModeChanged(
@@ -226,7 +217,8 @@ class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
         super.onResume()
 
         if (isStopPushed) {
-            navigateToParentActivity()
+            finish()
+            //navigateToParentActivity()
         }
     }
 

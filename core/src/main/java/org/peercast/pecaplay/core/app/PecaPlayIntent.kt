@@ -9,7 +9,9 @@ object PecaPlayIntent {
 
     const val EX_SELECT_NOTIFIED = "select-notified" //boolean
 
-    val ComponentPlayActivity = ComponentName(
+    const val EX_LAUNCHED_FROM = "pecaplay-launched-from"
+
+    internal val COMPONENT_NAME = ComponentName(
         "org.peercast.pecaplay",
         "org.peercast.pecaplay.PecaPlayActivity"
     )

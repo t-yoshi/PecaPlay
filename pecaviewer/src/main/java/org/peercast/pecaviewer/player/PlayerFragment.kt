@@ -2,14 +2,12 @@ package org.peercast.pecaviewer.player
 
 import android.annotation.SuppressLint
 import android.content.ComponentName
-import android.content.Context
 import android.content.ServiceConnection
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.view.*
 import android.widget.ImageView
-import androidx.activity.addCallback
 import androidx.appcompat.widget.ActionMenuView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -17,6 +15,7 @@ import com.google.android.exoplayer2.ui.PlayerView
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
+import org.peercast.pecaplay.core.app.AppActivityLauncher
 import org.peercast.pecaviewer.PecaViewerActivity
 import org.peercast.pecaviewer.PecaViewerPreference
 import org.peercast.pecaviewer.PecaViewerViewModel
@@ -32,6 +31,7 @@ class PlayerFragment : Fragment(), ServiceConnection {
     private val viewerViewModel by sharedViewModel<PecaViewerViewModel>()
     private val playerViewModel by sharedViewModel<PlayerViewModel>()
     private val viewerPrefs by inject<PecaViewerPreference>()
+    private val launcher by inject<AppActivityLauncher>()
     private val viewerActivity get() = requireActivity() as PecaViewerActivity
 
     private var service: PlayerService? = null
@@ -76,26 +76,11 @@ class PlayerFragment : Fragment(), ServiceConnection {
         }
 
         vIntoPipMode.setOnClickListener {
-            with(viewerActivity) {
-                if (enterPipMode()) {
-                    //プレーヤーをPIP化 + PecaPlay起動
-                    launchParentActivity()
-                } else {
-                    //PIP化しないのでPecaPlayへ戻る
-                    navigateToParentActivity()
-                }
-            }
+            viewerActivity.requestEnterPipMode()
         }
 
         vFullScreen.setOnClickListener(::onFullScreenClicked)
         view.setOnTouchListener(DoubleTabDetector(view, ::onFullScreenClicked))
-    }
-
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-        requireActivity().onBackPressedDispatcher.addCallback(this) {
-            viewerActivity.navigateToParentActivity()
-        }
     }
 
     private fun onFullScreenClicked(v__: View) {
@@ -186,7 +171,4 @@ class PlayerFragment : Fragment(), ServiceConnection {
         vPlayer = null
     }
 
-    private val isInPictureInPictureMode
-        get() =
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && requireActivity().isInPictureInPictureMode
 }

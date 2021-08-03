@@ -12,17 +12,17 @@ object PecaViewerIntent {
     /**(Bitmap)*/
     const val EX_THUMBNAIL = "thumbnail"
 
-    const val EX_LAUNCHED_FROM_PECAPLAY = "launched-from-pecaplay"
+    const val EX_LAUNCHED_FROM = "pevaviewer-launched-from"
 
-    fun create(streamUri: Uri, ch: Yp4gChannel): Intent {
-        return Intent().also {
-            it.data = streamUri
-            it.component = ComponentPecaViewer
-            it.putExtra(EX_YP4G_CHANNEL, ch)
-        }
-    }
+//    fun create(streamUri: Uri, ch: Yp4gChannel): Intent {
+//        return Intent().also {
+//            it.data = streamUri
+//            it.component = COMPONENT_NAME
+//            it.putExtra(EX_YP4G_CHANNEL, ch)
+//        }
+//    }
 
-    private val ComponentPecaViewer = ComponentName(
+    internal val COMPONENT_NAME = ComponentName(
         "org.peercast.pecaplay",
         "org.peercast.pecaviewer.PecaViewerActivity"
     )

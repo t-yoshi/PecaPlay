@@ -1,17 +1,16 @@
 package org.peercast.pecaplay
 
+import android.app.Activity
 import android.app.Application
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.widget.Toast
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
-import org.peercast.core.lib.LibPeerCast
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.YpHistoryChannel
 import org.peercast.pecaplay.app.saveRecentQuery
-import org.peercast.pecaplay.core.app.PecaViewerIntent
+import org.peercast.pecaplay.core.app.AppActivityLauncher
 import org.peercast.pecaplay.core.app.stream
 import org.peercast.pecaplay.prefs.AppPreferences
 import org.peercast.pecaplay.worker.LoadingWorkerManager
@@ -23,6 +22,7 @@ class AppViewModelPresenter(
     private val viewModel: AppViewModel,
     private val appPrefs: AppPreferences,
     private val database: AppRoomDatabase,
+    private val launcher: AppActivityLauncher,
 ) {
     private val a = viewModel.getApplication<Application>()
     private val workerManager = LoadingWorkerManager(a)
@@ -47,7 +47,7 @@ class AppViewModelPresenter(
 
 
     /**再生する*/
-    fun startPlay(f: Fragment, ch: YpChannel) {
+    fun startPlay(a: Activity, ch: YpChannel) {
         Timber.i("startPlay(%s)", ch)
 
         val searchQuery = viewModel.channelFilter.params.searchQuery
@@ -56,27 +56,18 @@ class AppViewModelPresenter(
         }
         val streamUrl = ch.stream(appPrefs.peerCastUrl)
 
-        val intent = if (appPrefs.isViewerEnabled(ch.type)) {
-            PecaViewerIntent.create(streamUrl, ch)
-        } else {
-            Intent().also {
-                it.action = Intent.ACTION_VIEW
-                it.data = streamUrl
-                //it.setDataAndTypeAndNormalize(streamUrl, "video/${ch.type.lowercase()}")
-                it.putExtra(LibPeerCast.EXTRA_CONTACT_URL, ch.url.toString())
-                it.putExtra(LibPeerCast.EXTRA_NAME, ch.name)
-                it.putExtra(LibPeerCast.EXTRA_DESCRIPTION, "${ch.genre} ${ch.description}")
-                it.putExtra(LibPeerCast.EXTRA_COMMENT, ch.comment)
-            }
+        if (appPrefs.isViewerEnabled(ch.type)) {
+            launcher.launchPecaViewer(a, streamUrl, ch)
+            return
         }
-        intent.putExtra(PecaViewerIntent.EX_LAUNCHED_FROM_PECAPLAY, true)
+
+        val intent = Intent().also {
+            it.action = Intent.ACTION_VIEW
+            it.data = streamUrl
+        }
 
         try {
-            f.requireActivity().let { a ->
-                a.startActivity(intent)
-                a.overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
-            }
-
+            a.startActivity(intent)
             viewModel.viewModelScope.launch {
                 database.ypHistoryDao.addHistory(YpHistoryChannel(ch))
             }

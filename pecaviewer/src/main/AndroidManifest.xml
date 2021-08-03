@@ -9,7 +9,6 @@
             android:name="org.peercast.pecaviewer.PecaViewerActivity"
             android:theme="@style/ViewerTheme"
             android:windowSoftInputMode="adjustPan"
-            android:parentActivityName="org.peercast.pecaplay.PecaPlayActivity"
             android:supportsPictureInPicture="true"
             android:launchMode="singleTask"
             android:taskAffinity="org.peercast.pecaviewer.PecaViewerActivity"

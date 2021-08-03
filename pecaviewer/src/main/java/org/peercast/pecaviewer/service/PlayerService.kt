@@ -28,6 +28,7 @@ import org.peercast.core.lib.notify.NotifyMessageType
 import org.peercast.pecaplay.core.app.PecaViewerIntent
 import org.peercast.pecaplay.core.app.Yp4gChannel
 import org.peercast.pecaplay.core.io.Square
+import org.peercast.pecaviewer.PecaViewerActivity
 import org.peercast.pecaviewer.PecaViewerPreference
 import timber.log.Timber
 import java.io.IOException
@@ -314,7 +315,9 @@ class PlayerService : LifecycleService() {
     fun prepareFromUri(u: Uri, ch: Yp4gChannel) {
         if (playingIntent.data == u)
             return
-        playingIntent = PecaViewerIntent.create(u, ch)
+        playingIntent = Intent(this, PecaViewerActivity::class.java)
+            .setData(u)
+            .putExtra(PecaViewerIntent.EX_YP4G_CHANNEL, ch)
 
         player.stop()
         player.clearMediaItems()
@@ -333,6 +336,8 @@ class PlayerService : LifecycleService() {
     }
 
     val isPlaying get() = player.isPlaying
+
+    val isBuffering get() = player.playbackState == Player.STATE_BUFFERING
 
     fun play() {
         player.playWhenReady = true
