@@ -31,7 +31,6 @@ class PlayerFragment : Fragment(), ServiceConnection {
     private val viewerViewModel by sharedViewModel<PecaViewerViewModel>()
     private val playerViewModel by sharedViewModel<PlayerViewModel>()
     private val viewerPrefs by inject<PecaViewerPreference>()
-    private val launcher by inject<AppActivityLauncher>()
     private val viewerActivity get() = requireActivity() as PecaViewerActivity
 
     private var service: PlayerService? = null

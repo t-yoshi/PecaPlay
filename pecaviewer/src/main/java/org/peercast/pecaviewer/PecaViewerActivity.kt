@@ -1,18 +1,18 @@
 package org.peercast.pecaviewer
 
 import android.app.PictureInPictureParams
-import android.content.*
+import android.content.ComponentName
+import android.content.Intent
+import android.content.ServiceConnection
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
-import android.os.PersistableBundle
 import android.util.Rational
 import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.NavUtils
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -20,7 +20,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
 import com.google.android.exoplayer2.video.VideoSize
-import okhttp3.internal.toHexString
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.getViewModel
 import org.koin.core.parameter.parametersOf
@@ -29,11 +28,9 @@ import org.peercast.pecaplay.core.app.PecaViewerIntent
 import org.peercast.pecaplay.core.app.Yp4gChannel
 import org.peercast.pecaviewer.chat.ChatViewModel
 import org.peercast.pecaviewer.player.PlayerViewModel
-import org.peercast.pecaviewer.service.NotificationHelper
 import org.peercast.pecaviewer.service.PlayerService
 import org.peercast.pecaviewer.service.bindPlayerService
 import timber.log.Timber
-import kotlin.properties.Delegates
 
 class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
 
@@ -44,27 +41,12 @@ class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
     private val launcher by inject<AppActivityLauncher>()
     private var service: PlayerService? = null
 
-    //通知バーの停止ボタンが押されたとき
-    private var isStopPushed by Delegates.notNull<Boolean>()
-
-    private val receiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            when (intent?.action) {
-                NotificationHelper.ACTION_STOP -> {
-                    isStopPushed = true
-                }
-            }
-        }
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        isStopPushed = savedInstanceState?.getBoolean(STATE_STOP_PUSHED) ?: false
-
         playerViewModel = getViewModel()
         chatViewModel = getViewModel()
-        viewerViewModel = getViewModel<PecaViewerViewModel> {
+        viewerViewModel = getViewModel {
             parametersOf(
                 playerViewModel,
                 chatViewModel
@@ -102,7 +84,6 @@ class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
             }
         }
 
-        registerReceiver(receiver, IntentFilter(NotificationHelper.ACTION_STOP))
         bindPlayerService(this)
     }
 
@@ -132,12 +113,12 @@ class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
     }
 
     /**ユーザーがPipを要求した*/
-    fun requestEnterPipMode(){
+    fun requestEnterPipMode() {
         if (enterPipMode()) {
             //プレーヤーをPIP化 & PecaPlay起動
             launcher.launchPecaPlay(this)
         } else {
-            //(停止中なので) PIP化せず、単にPecaPlayへ戻る
+            //(再生してないので) PIP化せず、単にPecaPlayへ戻る
             launcher.backToPecaPlay(this)
         }
     }
@@ -174,7 +155,9 @@ class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
     override fun onUserLeaveHint() {
         //ホームボタンが押された。
         Timber.d("onUserLeaveHint() isFinishing=$isFinishing")
-        if (!isFinishing && isApi26AtLeast && !isInPictureInPictureMode) {
+        if (!isFinishing && viewerPrefs.isBackgroundPlaying &&
+            isApi26AtLeast && !isInPictureInPictureMode
+        ) {
             enterPipMode()
         }
     }
@@ -185,7 +168,7 @@ class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
 
     override fun onPictureInPictureModeChanged(
         isInPictureInPictureMode: Boolean,
-        newConfig: Configuration?
+        newConfig: Configuration?,
     ) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
         Timber.d("onPictureInPictureModeChanged $isInPictureInPictureMode")
@@ -213,15 +196,6 @@ class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-
-        if (isStopPushed) {
-            finish()
-            //navigateToParentActivity()
-        }
-    }
-
     override fun onServiceConnected(name: ComponentName?, binder: IBinder) {
         service = (binder as PlayerService.Binder).service
     }
@@ -230,15 +204,8 @@ class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
         service = null
     }
 
-    override fun onSaveInstanceState(outState: Bundle, outPersistentState: PersistableBundle) {
-        super.onSaveInstanceState(outState, outPersistentState)
-        outState.putBoolean(STATE_STOP_PUSHED, isStopPushed)
-    }
-
     override fun onDestroy() {
         super.onDestroy()
-
-        unregisterReceiver(receiver)
 
         if (service != null) {
             unbindService(this)
@@ -249,8 +216,6 @@ class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
 
     companion object {
         const val ARG_INTENT = "intent"
-
-        private const val STATE_STOP_PUSHED = "stop-pushed"
 
         @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.O)
         private val isApi26AtLeast = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O

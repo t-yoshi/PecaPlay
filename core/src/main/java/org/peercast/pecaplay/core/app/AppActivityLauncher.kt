@@ -56,7 +56,8 @@ class AppActivityLauncher(val a: Application) {
     fun launchPecaPlay(src: Activity) {
         val it = Intent()
         it.action = Intent.ACTION_MAIN
-        //it.addCategory(Intent.CATEGORY_LAUNCHER)
+        //CATEGORY_LAUNCHERは付けずに、
+        // システムランチャーからの起動とは区別する
         it.component = PecaPlayIntent.COMPONENT_NAME
         it.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
         it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
