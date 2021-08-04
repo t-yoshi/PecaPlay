@@ -63,8 +63,8 @@ class PlayerService : LifecycleService() {
 
         player = SimpleExoPlayer.Builder(this)
             .setAudioAttributes(AA_MEDIA_MOVIE, true)
-            .setWakeMode(C.WAKE_MODE_LOCAL)
-            .setLoadControl(LOAD_CONTROL)
+            .setWakeMode(C.WAKE_MODE_NETWORK)
+            //.setLoadControl(LOAD_CONTROL)
             .setUseLazyPreparation(true)
             .build()
         player.addAnalyticsListener(analyticsListener)
@@ -94,6 +94,7 @@ class PlayerService : LifecycleService() {
 
     private val analyticsListener = object : AnalyticsListener {
         private var jBuf: Job? = null
+        var numReconnect = 0
 
         override fun onPlaybackStateChanged(eventTime: AnalyticsListener.EventTime, state: Int) {
             when (state) {
@@ -101,14 +102,12 @@ class PlayerService : LifecycleService() {
                     jBuf = lifecycleScope.launch {
                         var i = 0
                         while (isActive) {
-                            Timber.d("${player.isLoading}")
                             eventFlow.emit(PlayerBufferingEvent(player.bufferedPercentage))
                             delay(5_000)
-                            if (++i % 3 == 0) {
+                            if (++i % 3 == 0 && numReconnect++ < 5) {
                                 //バッファー状態でフリーズすることを防ぐ
                                 Timber.d("call prepare() again.")
-                                //player.stop()
-                                player.seekTo(0)
+                                player.stop()
                                 player.prepare()
                             }
                         }
@@ -284,7 +283,7 @@ class PlayerService : LifecycleService() {
         view.player = object : Player by player {
             override fun setPlayWhenReady(playWhenReady: Boolean) {
                 if (!playWhenReady)
-                    player.stop()
+                    this@PlayerService.stop()
                 player.playWhenReady = playWhenReady
             }
         }
@@ -293,23 +292,23 @@ class PlayerService : LifecycleService() {
     private val progressiveFactory = ProgressiveMediaSource.Factory(
         OkHttpDataSource.Factory(square.okHttpClient)
     ).also { f ->
-        f.setLoadErrorHandlingPolicy(object : DefaultLoadErrorHandlingPolicy() {
-            override fun getMinimumLoadableRetryCount(dataType: Int): Int {
-                return 8
-            }
-
-            override fun getRetryDelayMsFor(loadErrorInfo: LoadErrorHandlingPolicy.LoadErrorInfo): Long {
-                Timber.d("-> getRetryDelayMsFor ${loadErrorInfo.exception} @${loadErrorInfo.errorCount}")
-                val e = loadErrorInfo.exception
-                if (
-                    e is HttpDataSource.InvalidResponseCodeException &&
-                    e.responseCode == 404
-                ) {
-                    return C.TIME_UNSET
-                }
-                return 5_000
-            }
-        })
+//        f.setLoadErrorHandlingPolicy(object : DefaultLoadErrorHandlingPolicy() {
+//            override fun getMinimumLoadableRetryCount(dataType: Int): Int {
+//                return 8
+//            }
+//
+//            override fun getRetryDelayMsFor(loadErrorInfo: LoadErrorHandlingPolicy.LoadErrorInfo): Long {
+//                Timber.d("-> getRetryDelayMsFor ${loadErrorInfo.exception} @${loadErrorInfo.errorCount}")
+//                val e = loadErrorInfo.exception
+//                if (
+//                    e is HttpDataSource.InvalidResponseCodeException &&
+//                    e.responseCode == 404
+//                ) {
+//                    return C.TIME_UNSET
+//                }
+//                return 5_000
+//            }
+//        })
     }
 
     fun prepareFromUri(u: Uri, ch: Yp4gChannel) {
@@ -344,6 +343,7 @@ class PlayerService : LifecycleService() {
     }
 
     fun stop() {
+        analyticsListener.numReconnect = 0
         player.stop()
     }
 
