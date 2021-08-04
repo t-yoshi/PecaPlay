@@ -137,13 +137,14 @@ class PecaPlayActivity : AppCompatActivity() {
             val content = findViewById<View>(android.R.id.content)
             viewModel.message.filter { it.isNotEmpty() }.onEach {
                 Snackbar.make(content, it, Snackbar.LENGTH_LONG).show()
+                viewModel.message.emit("")
             }.collect()
         }
 
         lifecycleScope.launchWhenResumed {
             viewModel.rpcClient.filterNotNull().collect {
                 //PeerCastの起動を知らせる。プレーヤーからの復帰時は表示しない。
-                if (intent.hasCategory(Intent.CATEGORY_LAUNCHER)) {
+                if (savedInstanceState == null && intent.hasCategory(Intent.CATEGORY_LAUNCHER)) {
                     viewModel.message.emit(
                         getString(R.string.peercast_has_started, it.rpcEndPoint.port)
                     )
