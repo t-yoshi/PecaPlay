@@ -1,6 +1,7 @@
 package org.peercast.pecaplay.navigation
 
 import android.content.Context
+import android.graphics.drawable.ColorDrawable
 import android.os.Parcelable
 import android.util.AttributeSet
 import android.view.LayoutInflater
@@ -28,7 +29,7 @@ class PecaNaviView : NavigationView {
 
     //非表示アイテム
     private val prefs = context.getSharedPreferences(
-        "navigation_v5", Context.MODE_PRIVATE
+        "navigation_v8", Context.MODE_PRIVATE
     )
 
     // 表示/非表示をチェックボタンで切り替える。
@@ -36,19 +37,34 @@ class PecaNaviView : NavigationView {
         private set
 
     init {
-        model.onChanged = ::rebuildMenuAndReselect
-        rebuildMenu()
-
-        setCheckedItem(model.items[0].itemId)
+        val homeItem = model.items[0]
+        //初回だけ選択の復元
+        model.onChanged = {
+            rebuildMenu()
+            selectNavigationItem(prefs.getInt(KEY_SELECTED, homeItem.itemId))
+            //2回目以降
+            model.onChanged = ::rebuildMenuAndReselect
+        }
     }
 
     private fun selectNavigationItem(item: NavigationItem) {
         setCheckedItem(item.itemId)
+        prefs.edit {
+            putInt(KEY_SELECTED, item.itemId)
+        }
 
         menu.forEach { (it.actionView as? TextView)?.isSelected = false }
         (menu.findItem(item.itemId)?.actionView as? TextView)?.isSelected = true
 
         onItemClick(item)
+    }
+
+    private fun selectNavigationItem(itemId: Int) {
+        val item = model.items.firstOrNull {
+            it.itemId == itemId
+        } ?: model.items[0] //home
+
+        selectNavigationItem(item)
     }
 
     private fun addMenu(item: NavigationItem) {
@@ -58,7 +74,6 @@ class PecaNaviView : NavigationView {
         )
         mi.setIcon(item.icon)
         mi.isVisible = isEditMode || (item.isVisible && item.key !in prefs)
-        //mi.isEnabled = isEditMode || item.isEnabled
 
         if (isEditMode) {
             mi.isEnabled = false
@@ -66,7 +81,7 @@ class PecaNaviView : NavigationView {
         } else {
             mi.isCheckable = true
             mi.setOnMenuItemClickListener {
-                selectNavigationItem(item)
+                post { selectNavigationItem(item) }
                 true
             }
             if (item is BadgeableNavigationItem)
@@ -79,10 +94,6 @@ class PecaNaviView : NavigationView {
             return
 
         mi.actionView = inflater.inflate(R.layout.navigation_action_view_checkbox, this, false)
-        mi.setOnMenuItemClickListener {
-            false
-        }
-
         mi.actionView.findViewById<CheckBox>(R.id.vCheckbox).let { cb ->
             cb.isChecked = it.key !in prefs
             cb.setOnCheckedChangeListener { _, isChecked ->
@@ -98,29 +109,29 @@ class PecaNaviView : NavigationView {
 
     //設定ボタン用
     private fun addFooterMenuItem() {
-        val mi = menu.add(0, 0, 0xfff0, "")
-        mi.isEnabled = false
-        val v = inflater.inflate(R.layout.navigation_setting_button, this, false)
-        mi.actionView = v
+        if (isEditMode) {
+            //非表示をリセット
+            val miReset = menu.add(0, 0, 0xfff0, R.string.reset)
+            miReset.icon = TRANSPARENT
+            miReset.isEnabled = true
+            miReset.setOnMenuItemClickListener {
+                prefs.edit { clear() }
+                isEditMode = false
+                post { rebuildMenu() }
+                true
+            }
+        }
 
+        val miEdit = menu.add(0, 0, 0xfff1, "")
+        miEdit.isEnabled = false
+        miEdit.icon = TRANSPARENT
+        val v = inflater.inflate(R.layout.navigation_setting_button, this, false)
+        miEdit.actionView = v
         //編集モードに
         v.setOnClickListener {
             isEditMode = !isEditMode
-            rebuildMenu()
+            post { rebuildMenu() }
         }
-
-        //非表示をリセット
-        v.setOnLongClickListener {
-            android.widget.PopupMenu(context, v).apply {
-                menu.add(R.string.reset).setOnMenuItemClickListener {
-                    prefs.edit { clear() }
-                    rebuildMenu()
-                    true
-                }
-            }.show()
-            true
-        }
-        mi.setOnMenuItemClickListener { true }
     }
 
     //メニュー再生成
@@ -144,9 +155,7 @@ class PecaNaviView : NavigationView {
     private fun rebuildMenuAndReselect() {
         val checkedId = checkedItem?.itemId ?: 0
         rebuildMenu()
-        model.items.firstOrNull {
-            it.itemId == checkedId
-        }?.let(::selectNavigationItem)
+        selectNavigationItem(checkedId)
     }
 
     private fun inflateBadge(mi: MenuItem, it: BadgeableNavigationItem) {
@@ -167,15 +176,12 @@ class PecaNaviView : NavigationView {
         val state = savedState as State
         super.onRestoreInstanceState(state.parent)
         isEditMode = state.isEditMode
-        state.checkedItemId?.let {
-            setCheckedItem(it)
-        }
     }
 
     override fun onSaveInstanceState(): Parcelable {
         return State(
             checkNotNull(super.onSaveInstanceState()),
-            isEditMode, checkedItem?.itemId
+            isEditMode,
         )
     }
 
@@ -200,11 +206,15 @@ class PecaNaviView : NavigationView {
     private data class State(
         val parent: Parcelable,
         val isEditMode: Boolean,
-        val checkedItemId: Int?,
     ) : Parcelable
 
 
     companion object {
         private const val TAG = "PecaNaviView"
+
+        /**itemId(Int)*/
+        private const val KEY_SELECTED = "#selected#"
+
+        private val TRANSPARENT = ColorDrawable(0)
     }
 }
