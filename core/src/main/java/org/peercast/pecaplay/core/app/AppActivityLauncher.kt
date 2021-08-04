@@ -5,6 +5,8 @@ import android.app.Application
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import androidx.core.app.NavUtils
+import androidx.core.app.TaskStackBuilder
 import org.peercast.pecaplay.core.R
 import timber.log.Timber
 
@@ -13,7 +15,7 @@ class AppActivityLauncher(val a: Application) {
 
     private val callback = object : Application.ActivityLifecycleCallbacks {
         override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-            stackedActivities.add(activity.componentName.className)
+            //stackedActivities.add(activity.componentName.className)
         }
 
         override fun onActivityStarted(activity: Activity) {
@@ -46,8 +48,8 @@ class AppActivityLauncher(val a: Application) {
         it.component = PecaViewerIntent.COMPONENT_NAME
         it.putExtra(PecaViewerIntent.EX_YP4G_CHANNEL, ch)
         it.putExtra(PecaViewerIntent.EX_LAUNCHED_FROM, javaClass.canonicalName)
-        it.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        //it.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        //it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
         src.startActivity(it)
         src.overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
@@ -59,11 +61,15 @@ class AppActivityLauncher(val a: Application) {
         //CATEGORY_LAUNCHERは付けずに、
         // システムランチャーからの起動とは区別する
         it.component = PecaPlayIntent.COMPONENT_NAME
-        it.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
-        it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        it.putExtra(PecaPlayIntent.EX_LAUNCHED_FROM, javaClass.canonicalName)
+        //it.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+        //it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        //it.putExtra(PecaPlayIntent.EX_LAUNCHED_FROM, javaClass.canonicalName)
 
-        src.startActivity(it)
+        if (NavUtils.shouldUpRecreateTask(src, it)) {
+            TaskStackBuilder.create(src).addNextIntentWithParentStack(it).startActivities()
+        } else {
+            src.navigateUpTo(it)
+        }
     }
 
     fun backToPecaPlay(src: Activity) {

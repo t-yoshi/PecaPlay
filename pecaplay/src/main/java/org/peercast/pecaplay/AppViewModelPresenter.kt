@@ -57,6 +57,9 @@ class AppViewModelPresenter(
         val streamUrl = ch.stream(appPrefs.peerCastUrl)
 
         if (appPrefs.isViewerEnabled(ch.type)) {
+            viewModel.viewModelScope.launch {
+                database.ypHistoryDao.addHistory(YpHistoryChannel(ch))
+            }
             launcher.launchPecaViewer(a, streamUrl, ch)
             return
         }

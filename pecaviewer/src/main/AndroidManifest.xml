@@ -10,6 +10,7 @@
             android:theme="@style/ViewerTheme"
             android:windowSoftInputMode="adjustPan"
             android:supportsPictureInPicture="true"
+            android:parentActivityName="org.peercast.pecaplay.PecaPlayActivity"
             android:launchMode="singleTask"
             android:taskAffinity="org.peercast.pecaviewer.PecaViewerActivity"
             android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"
