@@ -13,10 +13,14 @@
             android:launchMode="singleTask"
             android:taskAffinity="org.peercast.pecaviewer.PecaViewerActivity"
             android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"
+        />
+<!--
+android:taskAffinity="org.peercast.pecaviewer.PecaViewerActivity"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"
             android:autoRemoveFromRecents="true"
             android:excludeFromRecents="true"
             android:allowTaskReparenting="true"
-        />
+-->
 
         <service
             android:name="org.peercast.pecaviewer.service.PlayerService"

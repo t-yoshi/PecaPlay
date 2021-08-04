@@ -15,7 +15,6 @@ import com.google.android.exoplayer2.ui.PlayerView
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
-import org.peercast.pecaplay.core.app.AppActivityLauncher
 import org.peercast.pecaviewer.PecaViewerActivity
 import org.peercast.pecaviewer.PecaViewerPreference
 import org.peercast.pecaviewer.PecaViewerViewModel
