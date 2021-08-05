@@ -15,7 +15,7 @@ import org.peercast.pecaviewer.R
 import kotlin.properties.Delegates
 
 
-class NotificationHelper(private val service: PlayerService) {
+internal class NotificationHelper(private val service: PlayerService) {
     private val notificationManager =
         service.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
@@ -38,19 +38,19 @@ class NotificationHelper(private val service: PlayerService) {
     private val playAction = NotificationCompat.Action(
         R.drawable.ic_play_arrow_black_24dp,
         "play",
-        buildActionPendingIntent(ACTION_PLAY)
+        buildActionPendingIntent(PecaViewerIntent.ACTION_PLAY)
     )
 
     private val pauseAction = NotificationCompat.Action(
         R.drawable.ic_pause_black_24dp,
         "pause",
-        buildActionPendingIntent(ACTION_PAUSE)
+        buildActionPendingIntent(PecaViewerIntent.ACTION_PAUSE)
     )
 
     private val stopAction = NotificationCompat.Action(
         R.drawable.ic_stop_black_24dp,
         "stop",
-        buildActionPendingIntent(ACTION_STOP)
+        buildActionPendingIntent(PecaViewerIntent.ACTION_STOP)
     )
 
     private fun buildActionPendingIntent(act: String): PendingIntent {
@@ -84,7 +84,7 @@ class NotificationHelper(private val service: PlayerService) {
     fun stopForeground() {
         if (isForeground) {
             isForeground = false
-            service.playingIntent.removeExtra(PecaViewerIntent.EX_THUMBNAIL)
+            service.playingIntent.removeExtra(EX_THUMBNAIL)
             service.stopForeground(true)
             service.stopSelf()
         }
@@ -120,7 +120,7 @@ class NotificationHelper(private val service: PlayerService) {
             .setContentIntent(buildPendingIntent())
             .setContentTitle("PecaPlayViewer")
             .setSmallIcon(R.drawable.ic_play_circle_outline_black_24dp)
-            .setLargeIcon(service.playingIntent.getParcelableExtra(PecaViewerIntent.EX_THUMBNAIL))
+            .setLargeIcon(service.playingIntent.getParcelableExtra(EX_THUMBNAIL))
             .setContentTitle(ch?.name)
             .setContentText(ch?.run { "$genre $description $comment".trim() })
             .setPriority(NotificationCompat.PRIORITY_LOW)
@@ -144,11 +144,12 @@ class NotificationHelper(private val service: PlayerService) {
     }
 
     companion object {
-        const val ACTION_PLAY = "org.peercast.pecaviewer.ACTION_PLAY"
-        const val ACTION_PAUSE = "org.peercast.pecaviewer.ACTION_PAUSE"
-        const val ACTION_STOP = "org.peercast.pecaviewer.ACTION_STOP"
-
         private const val NOW_PLAYING_CHANNEL = "PecaPlayViewer"
+
+        /**(Bitmap)*/
+        const val EX_THUMBNAIL = "thumbnail"
+
+
         const val ID = 0x1
     }
 }

@@ -14,14 +14,13 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.google.android.exoplayer2.ui.PlayerView
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import org.peercast.pecaplay.core.app.PecaViewerIntent
 import org.peercast.pecaplay.core.app.Yp4gChannel
 import org.peercast.pecaviewer.service.PlayerService
 import org.peercast.pecaviewer.service.bindPlayerService
 import timber.log.Timber
 
-class PictureInPictureFragment : Fragment(), ServiceConnection {
+class PipPlayerFragment : Fragment(), ServiceConnection {
 
     private var service: PlayerService? = null
     private var vPlayer: PlayerView? = null
@@ -30,7 +29,9 @@ class PictureInPictureFragment : Fragment(), ServiceConnection {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val intent = checkNotNull(requireArguments().getParcelable<Intent>(PecaViewerActivity.ARG_INTENT))
+        val intent = checkNotNull(
+            requireArguments().getParcelable<Intent>(PecaViewerActivity.ARG_INTENT)
+        )
         val streamUrl = checkNotNull(intent.data)
         channel = checkNotNull(
             intent.getParcelableExtra(PecaViewerIntent.EX_YP4G_CHANNEL)
@@ -51,7 +52,7 @@ class PictureInPictureFragment : Fragment(), ServiceConnection {
         val vTitle = view.findViewById<TextView>(R.id.vTitle)
         val vTitleBar = view.findViewById<ViewGroup>(R.id.vTitleBar)
 
-        lifecycleScope.launchWhenStarted {
+        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             Timber.d("-> visible")
             vTitle.text = channel.name
             vTitleBar.isVisible = true

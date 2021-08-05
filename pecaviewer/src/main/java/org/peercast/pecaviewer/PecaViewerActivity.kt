@@ -1,9 +1,7 @@
 package org.peercast.pecaviewer
 
 import android.app.PictureInPictureParams
-import android.content.ComponentName
-import android.content.Intent
-import android.content.ServiceConnection
+import android.content.*
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -23,9 +21,7 @@ import com.google.android.exoplayer2.video.VideoSize
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.getViewModel
 import org.koin.core.parameter.parametersOf
-import org.peercast.pecaplay.core.app.AppActivityLauncher
-import org.peercast.pecaplay.core.app.PecaViewerIntent
-import org.peercast.pecaplay.core.app.Yp4gChannel
+import org.peercast.pecaplay.core.app.*
 import org.peercast.pecaviewer.chat.ChatViewModel
 import org.peercast.pecaviewer.player.PlayerViewModel
 import org.peercast.pecaviewer.service.PlayerService
@@ -38,7 +34,6 @@ class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
     private lateinit var chatViewModel: ChatViewModel
     private lateinit var viewerViewModel: PecaViewerViewModel
     private val viewerPrefs by inject<PecaViewerPreference>()
-    private val launcher by inject<AppActivityLauncher>()
     private var service: PlayerService? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -101,8 +96,8 @@ class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
         )
 
         val f = when (isApi26AtLeast && isInPictureInPictureMode) {
-            true -> PictureInPictureFragment()
-            else -> MainFragment()
+            true -> PipPlayerFragment()
+            else -> PecaViewerFragment()
         }
         f.arguments = Bundle(1).also {
             it.putParcelable(ARG_INTENT, intent)
@@ -116,10 +111,10 @@ class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
     fun requestEnterPipMode() {
         if (enterPipMode()) {
             //プレーヤーをPIP化 & PecaPlay起動
-            launcher.launchPecaPlay(this)
+            launchPecaPlay(this)
         } else {
             //(再生してないので) PIP化せず、単にPecaPlayへ戻る
-            launcher.backToPecaPlay(this)
+            backToPecaPlay(this)
         }
     }
 
@@ -146,7 +141,6 @@ class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
             if (size != VideoSize.UNKNOWN) {
                 b.setAspectRatio(Rational(size.width, size.height))
             }
-            intent.removeExtra(PecaViewerIntent.EX_LAUNCHED_FROM)
             return enterPictureInPictureMode(b.build())
         }
         return false
@@ -163,7 +157,7 @@ class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
     }
 
     override fun onBackPressed() {
-        launcher.backToPecaPlay(this)
+        backToPecaPlay(this)
     }
 
     override fun onPictureInPictureModeChanged(

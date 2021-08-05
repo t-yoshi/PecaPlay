@@ -25,6 +25,7 @@ import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.peercast.core.lib.PeerCastController
 import org.peercast.core.lib.notify.NotifyMessageType
+import org.peercast.pecaplay.core.app.PecaPlayIntent
 import org.peercast.pecaplay.core.app.PecaViewerIntent
 import org.peercast.pecaplay.core.app.Yp4gChannel
 import org.peercast.pecaplay.core.io.Square
@@ -50,9 +51,9 @@ class PlayerService : LifecycleService() {
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             when (intent?.action) {
-                NotificationHelper.ACTION_PLAY -> player.play()
-                NotificationHelper.ACTION_PAUSE -> player.pause()
-                NotificationHelper.ACTION_STOP -> player.stop()
+                PecaViewerIntent.ACTION_PLAY -> player.play()
+                PecaViewerIntent.ACTION_PAUSE -> player.pause()
+                PecaViewerIntent.ACTION_STOP -> player.stop()
                 else -> Timber.e("$intent")
             }
         }
@@ -80,9 +81,9 @@ class PlayerService : LifecycleService() {
         }
 
         registerReceiver(receiver, IntentFilter().also {
-            it.addAction(NotificationHelper.ACTION_PLAY)
-            it.addAction(NotificationHelper.ACTION_STOP)
-            it.addAction(NotificationHelper.ACTION_PAUSE)
+            it.addAction(PecaViewerIntent.ACTION_PLAY)
+            it.addAction(PecaViewerIntent.ACTION_STOP)
+            it.addAction(PecaViewerIntent.ACTION_PAUSE)
         })
     }
 
@@ -348,7 +349,7 @@ class PlayerService : LifecycleService() {
     }
 
     fun setThumbnail(b: Bitmap?) {
-        playingIntent.putExtra(PecaViewerIntent.EX_THUMBNAIL, b)
+        playingIntent.putExtra(NotificationHelper.EX_THUMBNAIL, b)
         notificationHelper.updateNotification()
     }
 

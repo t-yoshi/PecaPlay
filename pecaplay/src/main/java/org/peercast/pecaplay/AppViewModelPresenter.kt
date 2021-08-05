@@ -10,7 +10,7 @@ import kotlinx.coroutines.launch
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.YpHistoryChannel
 import org.peercast.pecaplay.app.saveRecentQuery
-import org.peercast.pecaplay.core.app.AppActivityLauncher
+import org.peercast.pecaplay.core.app.launchPecaViewer
 import org.peercast.pecaplay.core.app.stream
 import org.peercast.pecaplay.prefs.AppPreferences
 import org.peercast.pecaplay.worker.LoadingWorkerManager
@@ -22,7 +22,6 @@ class AppViewModelPresenter(
     private val viewModel: AppViewModel,
     private val appPrefs: AppPreferences,
     private val database: AppRoomDatabase,
-    private val launcher: AppActivityLauncher,
 ) {
     private val a = viewModel.getApplication<Application>()
     private val workerManager = LoadingWorkerManager(a)
@@ -57,33 +56,27 @@ class AppViewModelPresenter(
         val streamUrl = ch.stream(appPrefs.peerCastUrl)
 
         if (appPrefs.isViewerEnabled(ch.type)) {
-            viewModel.viewModelScope.launch {
-                database.ypHistoryDao.addHistory(YpHistoryChannel(ch))
-            }
-            launcher.launchPecaViewer(a, streamUrl, ch)
-            return
-        }
-
-        val intent = Intent().also {
-            it.action = Intent.ACTION_VIEW
-            it.data = streamUrl
-        }
-
-        try {
-            a.startActivity(intent)
-            viewModel.viewModelScope.launch {
-                database.ypHistoryDao.addHistory(YpHistoryChannel(ch))
-            }
-        } catch (e: RuntimeException) {
-            val s = when (e) {
-                is SecurityException,
-                is ActivityNotFoundException,
-                -> {
-                    a.getString(R.string.please_install_player_app, ch.type)
+            launchPecaViewer(a, streamUrl, ch)
+        } else {
+            try {
+                val i = Intent(Intent.ACTION_VIEW, streamUrl)
+                a.startActivity(i)
+            } catch (e: RuntimeException) {
+                val s = when (e) {
+                    is SecurityException,
+                    is ActivityNotFoundException,
+                    -> {
+                        a.getString(R.string.please_install_player_app, ch.type)
+                    }
+                    else -> throw e
                 }
-                else -> throw e
+                Toast.makeText(a, s, Toast.LENGTH_LONG).show()
+                return
             }
-            Toast.makeText(a, s, Toast.LENGTH_LONG).show()
+        }
+
+        viewModel.viewModelScope.launch {
+            database.ypHistoryDao.addHistory(YpHistoryChannel(ch))
         }
     }
 

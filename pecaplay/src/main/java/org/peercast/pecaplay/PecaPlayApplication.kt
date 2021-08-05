@@ -22,7 +22,7 @@ private val pecaplayModule = module {
     single { AppRoomDatabase.createInstance(get(), "pecaplay-5") }
     single<AppPreferences> { DefaultAppPreferences(get()) }
     single { LoadingEventFlow() }
-    viewModel { AppViewModel(get(), get(), get(), get(), get()) }
+    viewModel { AppViewModel(get(), get(), get(), get()) }
 }
 
 

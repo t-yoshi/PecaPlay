@@ -200,6 +200,12 @@ class PecaPlayActivity : AppCompatActivity() {
         viewModel.presenter.stopLoading()
     }
 
+    override fun onStop() {
+        super.onStop()
+       // sendBroadcast(Intent(PecaPlayIntent.ACTION_ACTIVITY_ON_PAUSE))
+
+    }
+
     override fun onResume() {
         super.onResume()
         //前回の読み込みからN分以上経過している場合は読み込む

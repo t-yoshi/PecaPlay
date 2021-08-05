@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.*
 import org.peercast.core.lib.app.BaseClientViewModel
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.chanlist.filter.ChannelFilter
-import org.peercast.pecaplay.core.app.AppActivityLauncher
 import org.peercast.pecaplay.core.io.localizedSystemMessage
 import org.peercast.pecaplay.prefs.AppPreferences
 import org.peercast.pecaplay.worker.LoadingEvent
@@ -22,9 +21,8 @@ class AppViewModel(
     private val appPrefs: AppPreferences,
     database: AppRoomDatabase,
     loadingEvent: LoadingEventFlow,
-    launcher: AppActivityLauncher,
 ) : BaseClientViewModel(a) {
-    val presenter = AppViewModelPresenter(this, appPrefs, database, launcher)
+    val presenter = AppViewModelPresenter(this, appPrefs, database)
 
     /**リスト表示用*/
     val channelFilter = ChannelFilter(viewModelScope, database, appPrefs)

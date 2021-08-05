@@ -20,15 +20,15 @@ import org.peercast.pecaplay.core.app.PecaViewerIntent
 import org.peercast.pecaplay.core.app.Yp4gChannel
 import org.peercast.pecaviewer.chat.ChatViewModel
 import org.peercast.pecaviewer.chat.PostMessageDialogFragment
-import org.peercast.pecaviewer.databinding.MainFragmentBinding
+import org.peercast.pecaviewer.databinding.PecaViewerFragmentBinding
 import org.peercast.pecaviewer.player.PlayerViewModel
 import org.peercast.pecaviewer.service.PlayerService
 import org.peercast.pecaviewer.service.bindPlayerService
 import timber.log.Timber
 
-internal class MainFragment : Fragment(), ServiceConnection {
+internal class PecaViewerFragment : Fragment(), ServiceConnection {
 
-    private lateinit var binding: MainFragmentBinding
+    private lateinit var binding: PecaViewerFragmentBinding
     private val playerViewModel by sharedViewModel<PlayerViewModel>()
     private val chatViewModel by sharedViewModel<ChatViewModel>()
     private val appViewModel by sharedViewModel<PecaViewerViewModel>()
@@ -40,8 +40,9 @@ internal class MainFragment : Fragment(), ServiceConnection {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val intent =
-            checkNotNull(requireArguments().getParcelable<Intent>(PecaViewerActivity.ARG_INTENT))
+        val intent = checkNotNull(
+            requireArguments().getParcelable<Intent>(PecaViewerActivity.ARG_INTENT)
+        )
         val streamUrl = checkNotNull(intent.data)
         channel = checkNotNull(
             intent.getParcelableExtra(PecaViewerIntent.EX_YP4G_CHANNEL)
@@ -67,7 +68,7 @@ internal class MainFragment : Fragment(), ServiceConnection {
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View {
-        return MainFragmentBinding.inflate(layoutInflater).also {
+        return PecaViewerFragmentBinding.inflate(layoutInflater).also {
             binding = it
             it.chatViewModel = chatViewModel
             it.playerViewModel = playerViewModel

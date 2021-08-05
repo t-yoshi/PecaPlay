@@ -1,26 +1,19 @@
 package org.peercast.pecaplay.core.app
 
 import android.content.ComponentName
-import android.content.Context
-import android.content.Intent
-import android.net.Uri
 
 object PecaViewerIntent {
     /**(Yp4gChannel)*/
     const val EX_YP4G_CHANNEL = "yp4g_channel"
 
-    /**(Bitmap)*/
-    const val EX_THUMBNAIL = "thumbnail"
+    /**通知バーの再生ボタン*/
+    const val ACTION_PLAY = "org.peercast.pecaviewer.ACTION_PLAY"
 
-    const val EX_LAUNCHED_FROM = "pevaviewer-launched-from"
+    /**通知バーの一時停止ボタン*/
+    const val ACTION_PAUSE = "org.peercast.pecaviewer.ACTION_PAUSE"
 
-//    fun create(streamUri: Uri, ch: Yp4gChannel): Intent {
-//        return Intent().also {
-//            it.data = streamUri
-//            it.component = COMPONENT_NAME
-//            it.putExtra(EX_YP4G_CHANNEL, ch)
-//        }
-//    }
+    /**通知バーの停止ボタン*/
+    const val ACTION_STOP = "org.peercast.pecaviewer.ACTION_STOP"
 
     internal val COMPONENT_NAME = ComponentName(
         "org.peercast.pecaplay",
