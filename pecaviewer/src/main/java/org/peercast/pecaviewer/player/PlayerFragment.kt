@@ -95,7 +95,6 @@ class PlayerFragment : Fragment(), ServiceConnection, Toolbar.OnMenuItemClickLis
     }
 
     override fun onMenuItemClick(item: MenuItem): Boolean {
-
         when (item.itemId) {
             R.id.menu_enter_fullscreen -> {
                 playerViewModel.isFullScreenMode.value = true

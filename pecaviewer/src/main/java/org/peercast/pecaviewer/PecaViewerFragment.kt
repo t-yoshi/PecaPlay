@@ -162,7 +162,7 @@ internal class PecaViewerFragment : Fragment(), ServiceConnection {
                 if (appViewModel.slidingPanelState.value != newState.ordinal) {
                     appViewModel.slidingPanelState.value = newState.ordinal
                 }
-                if (isPortraitMode.value == true && newState != previousState) {
+                if (isPortraitMode.value && newState != previousState) {
                     viewerPrefs.initPanelState = newState
                 }
             }
@@ -185,6 +185,7 @@ internal class PecaViewerFragment : Fragment(), ServiceConnection {
 //    override fun onConfigurationChanged(newConfig: Configuration) {
 //        super.onConfigurationChanged(newConfig)
 //        isPortraitMode.value = newConfig.isPortraitMode
+//        view?.requestLayout()
 //    }
 
     override fun onDestroy() {
