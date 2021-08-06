@@ -7,8 +7,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.view.*
-import android.widget.ImageView
-import androidx.appcompat.widget.ActionMenuView
+import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.google.android.exoplayer2.ui.PlayerView
@@ -25,7 +24,7 @@ import org.peercast.pecaviewer.util.takeScreenShot
 import timber.log.Timber
 
 @Suppress("unused")
-class PlayerFragment : Fragment(), ServiceConnection {
+class PlayerFragment : Fragment(), ServiceConnection, Toolbar.OnMenuItemClickListener {
 
     private val viewerViewModel by sharedViewModel<PecaViewerViewModel>()
     private val playerViewModel by sharedViewModel<PlayerViewModel>()
@@ -43,41 +42,34 @@ class PlayerFragment : Fragment(), ServiceConnection {
     }
 
     private var vPlayer: PlayerView? = null
-    private lateinit var vPlayerMenu: ActionMenuView
-    private lateinit var vIntoPipMode: ImageView
-    private lateinit var vFullScreen: ImageView
+    private lateinit var vPlayerControlBar: Toolbar
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         vPlayer = view as PlayerView
-        vPlayerMenu = view.findViewById(R.id.vPlayerMenu)
-        vIntoPipMode = view.findViewById(R.id.vIntoPipMode)
-        vFullScreen = view.findViewById(R.id.vFullScreen)
+        vPlayerControlBar = view.findViewById<Toolbar>(R.id.vPlayerControlBar).also {
+            it.menu.clear()
+            it.inflateMenu(R.menu.menu_player_control)
+            it.setOnMenuItemClickListener(this)
+            it.menu.findItem(R.id.menu_background).isChecked = viewerPrefs.isBackgroundPlaying
+        }
 
         playerViewModel.isFullScreenMode.observe(viewLifecycleOwner) {
-            val r = when (it) {
-                true -> R.drawable.ic_fullscreen_exit_white_36dp
-                else -> R.drawable.ic_fullscreen_white_36dp
+            vPlayerControlBar.menu.run {
+                findItem(R.id.menu_enter_fullscreen).isVisible = !it
+                findItem(R.id.menu_exit_fullscreen).isVisible = it
             }
-            vFullScreen.setImageResource(r)
         }
 
         vPlayer?.setControllerVisibilityListener {
             playerViewModel.isControlsViewVisible.value = it == View.VISIBLE
         }
 
-        vPlayerMenu.also {
-            MenuInflater(it.context).inflate(R.menu.menu_player, it.menu)
-            onPrepareOptionsMenu(it.menu)
-            it.setOnMenuItemClickListener(::onOptionsItemSelected)
+        vPlayerControlBar.setNavigationOnClickListener {
+            activity?.onBackPressed()
         }
 
-        vIntoPipMode.setOnClickListener {
-            viewerActivity.requestEnterPipMode()
-        }
-
-        vFullScreen.setOnClickListener(::onFullScreenClicked)
         view.setOnTouchListener(DoubleTabDetector(view, ::onFullScreenClicked))
     }
 
@@ -104,19 +96,23 @@ class PlayerFragment : Fragment(), ServiceConnection {
         }
     }
 
-    override fun onPrepareOptionsMenu(menu: Menu) {
-        menu.findItem(R.id.menu_background).isChecked = viewerPrefs.isBackgroundPlaying
-    }
+    override fun onMenuItemClick(item: MenuItem): Boolean {
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
+            R.id.menu_enter_fullscreen -> {
+                playerViewModel.isFullScreenMode.value = true
+            }
+            R.id.menu_exit_fullscreen -> {
+                playerViewModel.isFullScreenMode.value = false
+            }
+
             R.id.menu_background -> {
                 item.isChecked = !item.isChecked
                 viewerPrefs.isBackgroundPlaying = item.isChecked
             }
         }
 
-        onPrepareOptionsMenu(vPlayerMenu.menu)
+        //onPrepareOptionsMenu(vPlayerMenu.menu)
         return true
     }
 

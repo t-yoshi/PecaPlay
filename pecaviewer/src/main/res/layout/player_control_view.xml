@@ -2,8 +2,7 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:layoutDirection="ltr">
+    android:layout_height="match_parent">
 
     <ImageButton
         android:id="@+id/exo_pause"
@@ -29,31 +28,12 @@
         android:src="@drawable/ic_play_circle_filled_black_96dp"
         android:contentDescription="@null"/>
 
-    <ImageView
-        android:id="@+id/vIntoPipMode"
-        android:layout_width="wrap_content"
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/vPlayerControlBar"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="top|start"
-        android:layout_margin="10dp"
-        android:src="@drawable/ic_expand_more_white_36dp"
-        android:contentDescription="@null"/>
-
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="?android:attr/actionBarSize"
-        android:layout_gravity="top|end"
-        android:gravity="center_vertical">
-
-        <ImageView
-            android:id="@+id/vFullScreen"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:contentDescription="@null"/>
-
-        <androidx.appcompat.widget.ActionMenuView
-            android:id="@+id/vPlayerMenu"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-    </LinearLayout>
+        app:navigationIcon="@drawable/ic_expand_more_white_36dp"
+        app:menu="@menu/menu_player_control"
+        android:background="@android:color/transparent"/>
 
 </FrameLayout>
