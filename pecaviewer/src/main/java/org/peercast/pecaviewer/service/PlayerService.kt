@@ -15,9 +15,7 @@ import com.google.android.exoplayer2.decoder.DecoderReuseEvaluation
 import com.google.android.exoplayer2.ext.okhttp.OkHttpDataSource
 import com.google.android.exoplayer2.source.*
 import com.google.android.exoplayer2.ui.PlayerView
-import com.google.android.exoplayer2.upstream.DefaultLoadErrorHandlingPolicy
 import com.google.android.exoplayer2.upstream.HttpDataSource
-import com.google.android.exoplayer2.upstream.LoadErrorHandlingPolicy
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -25,7 +23,6 @@ import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.peercast.core.lib.PeerCastController
 import org.peercast.core.lib.notify.NotifyMessageType
-import org.peercast.pecaplay.core.app.PecaPlayIntent
 import org.peercast.pecaplay.core.app.PecaViewerIntent
 import org.peercast.pecaplay.core.app.Yp4gChannel
 import org.peercast.pecaplay.core.io.Square
@@ -95,24 +92,29 @@ class PlayerService : LifecycleService() {
 
     private val analyticsListener = object : AnalyticsListener {
         private var jBuf: Job? = null
-        var numReconnect = 0
+        var nMaxReconnect = 0
 
         override fun onPlaybackStateChanged(eventTime: AnalyticsListener.EventTime, state: Int) {
             when (state) {
                 Player.STATE_BUFFERING -> {
                     jBuf = lifecycleScope.launch {
-                        var i = 0
                         while (isActive) {
-                            eventFlow.emit(PlayerBufferingEvent(player.bufferedPercentage))
-                            delay(5_000)
-                            if (++i % 3 == 0 && numReconnect++ < 5) {
+                            for (i in 0..2) {
+                                eventFlow.emit(PlayerBufferingEvent(player.bufferedPercentage))
+                                delay(5_000)
+                            }
+                            if (nMaxReconnect-- > 0) {
                                 //バッファー状態でフリーズすることを防ぐ
-                                Timber.d("call prepare() again.")
+                                Timber.i("try to reconnect.")
                                 player.stop()
                                 player.prepare()
                             }
                         }
                     }
+                }
+                Player.STATE_READY -> {
+                    nMaxReconnect = MAX_RECONNECT / 2
+                    jBuf?.cancel()
                 }
                 else -> {
                     jBuf?.cancel()
@@ -142,6 +144,12 @@ class PlayerService : LifecycleService() {
             eventTime: AnalyticsListener.EventTime,
             error: ExoPlaybackException,
         ) {
+            val se = error.sourceException
+            if (se is HttpDataSource.InvalidResponseCodeException && se.responseCode == 404) {
+                Timber.i("404: stop reconnecting.")
+                nMaxReconnect = 0
+            }
+
             sendPlayerErrorEvent("PlayerError", error)
         }
 
@@ -344,7 +352,7 @@ class PlayerService : LifecycleService() {
     }
 
     fun stop() {
-        analyticsListener.numReconnect = 0
+        analyticsListener.nMaxReconnect = MAX_RECONNECT
         player.stop()
     }
 
@@ -370,14 +378,7 @@ class PlayerService : LifecycleService() {
             .setContentType(C.CONTENT_TYPE_MOVIE)
             .build()
 
-        private val LOAD_CONTROL = DefaultLoadControl.Builder()
-            .setBufferDurationsMs(
-                1_000,//DefaultLoadControl.DEFAULT_MIN_BUFFER_MS,
-                1_000,//30_000,
-                1_000,// DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS,
-                1_000, //DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS,
-            )
-            .build()
+        private const val MAX_RECONNECT = 5
     }
 }
 
