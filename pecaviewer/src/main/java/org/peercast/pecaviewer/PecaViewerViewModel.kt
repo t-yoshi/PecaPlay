@@ -27,7 +27,7 @@ internal class PecaViewerViewModel(
      * 没入モード。フルスクリーンかつコントロール類が表示されていない状態。
      * -> systemUiVisibilityを変える。
      * */
-    val isImmersiveMode: LiveData<Boolean> = MediatorLiveData<Boolean>().also { ld ->
+    val isImmersiveMode: MutableLiveData<Boolean> = MediatorLiveData<Boolean>().also { ld ->
         val o = Observer<Any> {
             ld.value = playerViewModel.isFullScreenMode.value == true &&
                     playerViewModel.isControlsViewVisible.value != true &&

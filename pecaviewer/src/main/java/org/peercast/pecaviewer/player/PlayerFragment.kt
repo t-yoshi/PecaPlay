@@ -14,7 +14,6 @@ import com.google.android.exoplayer2.ui.PlayerView
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
-import org.peercast.pecaviewer.PecaViewerActivity
 import org.peercast.pecaviewer.PecaViewerPreference
 import org.peercast.pecaviewer.PecaViewerViewModel
 import org.peercast.pecaviewer.R
@@ -29,7 +28,6 @@ class PlayerFragment : Fragment(), ServiceConnection, Toolbar.OnMenuItemClickLis
     private val viewerViewModel by sharedViewModel<PecaViewerViewModel>()
     private val playerViewModel by sharedViewModel<PlayerViewModel>()
     private val viewerPrefs by inject<PecaViewerPreference>()
-    private val viewerActivity get() = requireActivity() as PecaViewerActivity
 
     private var service: PlayerService? = null
 
@@ -67,7 +65,7 @@ class PlayerFragment : Fragment(), ServiceConnection, Toolbar.OnMenuItemClickLis
         }
 
         vPlayerControlBar.setNavigationOnClickListener {
-            activity?.onBackPressed()
+            requireActivity().onBackPressed()
         }
 
         view.setOnTouchListener(DoubleTabDetector(view, ::onFullScreenClicked))
@@ -101,9 +99,11 @@ class PlayerFragment : Fragment(), ServiceConnection, Toolbar.OnMenuItemClickLis
         when (item.itemId) {
             R.id.menu_enter_fullscreen -> {
                 playerViewModel.isFullScreenMode.value = true
+                viewerPrefs.isFullScreenMode = true
             }
             R.id.menu_exit_fullscreen -> {
                 playerViewModel.isFullScreenMode.value = false
+                viewerPrefs.isFullScreenMode = false
             }
 
             R.id.menu_background -> {
@@ -112,7 +112,6 @@ class PlayerFragment : Fragment(), ServiceConnection, Toolbar.OnMenuItemClickLis
             }
         }
 
-        //onPrepareOptionsMenu(vPlayerMenu.menu)
         return true
     }
 

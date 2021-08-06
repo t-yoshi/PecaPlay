@@ -39,7 +39,7 @@ fun launchPecaPlay(src: Activity) {
     }
 }
 
-fun backToPecaPlay(src: Activity) {
+fun backToPecaPlay(src: Activity, finish: Boolean) {
     val actMan = src.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
     var isLaunchPlay = true
     //スタックにPecaPlayが残っていれば、フォアグラウンドに持ってくる
@@ -58,7 +58,10 @@ fun backToPecaPlay(src: Activity) {
         launchPecaPlay(src)
     }
 
-    src.finish()
+    if (finish) {
+        src.finish()
+    }
+
     src.overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
 }
 

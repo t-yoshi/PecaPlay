@@ -22,8 +22,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.*
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
-import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.PecaViewerViewModel
+import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.chat.adapter.MessageAdapter
 import org.peercast.pecaviewer.chat.adapter.ThreadAdapter
 import org.peercast.pecaviewer.chat.thumbnail.ImageViewerFragment

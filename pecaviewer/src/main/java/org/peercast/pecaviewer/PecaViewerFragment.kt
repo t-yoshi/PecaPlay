@@ -14,6 +14,9 @@ import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import org.peercast.pecaplay.core.app.PecaViewerIntent
@@ -33,6 +36,8 @@ internal class PecaViewerFragment : Fragment(), ServiceConnection {
     private val chatViewModel by sharedViewModel<ChatViewModel>()
     private val appViewModel by sharedViewModel<PecaViewerViewModel>()
     private val viewerPrefs by inject<PecaViewerPreference>()
+
+    private val isPortraitMode = MutableStateFlow(false)
     private var onServiceConnect: (PlayerService) -> Unit = {}
     private lateinit var channel: Yp4gChannel
     private var service: PlayerService? = null
@@ -56,7 +61,7 @@ internal class PecaViewerFragment : Fragment(), ServiceConnection {
             }
         }
 
-        lifecycleScope.launchWhenCreated {
+        lifecycleScope.launch {
             chatViewModel.presenter.loadUrl(channel.url.toString())
         }
 
@@ -87,18 +92,20 @@ internal class PecaViewerFragment : Fragment(), ServiceConnection {
             f.show(parentFragmentManager, "tag#PostMessageDialogFragment")
         }
 
-        if (isPortraitMode) {
-            resources.getInteger(R.integer.sliding_up_panel_anchor_point_port)
-        } else {
-            resources.getInteger(R.integer.sliding_up_panel_anchor_point_land)
-        }.let {
-            binding.vSlidingUpPanel.anchorPoint = it / 100f
-        }
-
-        if (isPortraitMode) {
-            initPanelState(viewerPrefs.initPanelState)
-        } else {
-            initPanelState(SlidingUpPanelLayout.PanelState.EXPANDED)
+        isPortraitMode.value = resources.configuration.isPortraitMode
+        viewLifecycleOwner.lifecycleScope.launchWhenCreated {
+            isPortraitMode.collect {
+                binding.vSlidingUpPanel.anchorPoint = 0.01f * if (it) {
+                    resources.getInteger(R.integer.sliding_up_panel_anchor_point_port)
+                } else {
+                    resources.getInteger(R.integer.sliding_up_panel_anchor_point_land)
+                }
+                if (it) {
+                    initPanelState(viewerPrefs.initPanelState)
+                } else {
+                    initPanelState(SlidingUpPanelLayout.PanelState.EXPANDED)
+                }
+            }
         }
 
         binding.vSlidingUpPanel.addPanelSlideListener(panelSlideListener)
@@ -155,7 +162,7 @@ internal class PecaViewerFragment : Fragment(), ServiceConnection {
                 if (appViewModel.slidingPanelState.value != newState.ordinal) {
                     appViewModel.slidingPanelState.value = newState.ordinal
                 }
-                if (isPortraitMode && newState != previousState) {
+                if (isPortraitMode.value == true && newState != previousState) {
                     viewerPrefs.initPanelState = newState
                 }
             }
@@ -175,6 +182,11 @@ internal class PecaViewerFragment : Fragment(), ServiceConnection {
         outState.putBoolean(STATE_PLAYING, service?.isPlaying ?: true)
     }
 
+//    override fun onConfigurationChanged(newConfig: Configuration) {
+//        super.onConfigurationChanged(newConfig)
+//        isPortraitMode.value = newConfig.isPortraitMode
+//    }
+
     override fun onDestroy() {
         super.onDestroy()
 
@@ -182,9 +194,10 @@ internal class PecaViewerFragment : Fragment(), ServiceConnection {
             requireContext().unbindService(this)
     }
 
-    private val isPortraitMode get() = resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
-
     companion object {
         private const val STATE_PLAYING = "STATE_PLAYING"
+
+        private val Configuration.isPortraitMode get() = orientation == Configuration.ORIENTATION_PORTRAIT
+
     }
 }
