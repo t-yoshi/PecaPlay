@@ -16,6 +16,7 @@ import androidx.lifecycle.lifecycleScope
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
@@ -38,9 +39,8 @@ internal class PecaViewerFragment : Fragment(), ServiceConnection {
     private val viewerPrefs by inject<PecaViewerPreference>()
 
     private val isPortraitMode = MutableStateFlow(false)
-    private var onServiceConnect: (PlayerService) -> Unit = {}
     private lateinit var channel: Yp4gChannel
-    private var service: PlayerService? = null
+    private val service = MutableStateFlow<PlayerService?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -53,11 +53,13 @@ internal class PecaViewerFragment : Fragment(), ServiceConnection {
             intent.getParcelableExtra(PecaViewerIntent.EX_YP4G_CHANNEL)
         )
 
-        onServiceConnect = {
-            it.prepareFromUri(streamUrl, channel)
-            if (savedInstanceState?.getBoolean(STATE_PLAYING) != false) {
-                Timber.d(" -> play")
-                it.play()
+        lifecycleScope.launch {
+            service.filterNotNull().collect {
+                it.prepareFromUri(streamUrl, channel)
+                if (savedInstanceState?.getBoolean(STATE_PLAYING) != false) {
+                    Timber.d(" -> play")
+                    it.play()
+                }
             }
         }
 
@@ -170,16 +172,16 @@ internal class PecaViewerFragment : Fragment(), ServiceConnection {
     }
 
     override fun onServiceConnected(name: ComponentName, binder: IBinder) {
-        service = (binder as PlayerService.Binder).service.also(onServiceConnect)
+        service.value = (binder as PlayerService.Binder).service
     }
 
     override fun onServiceDisconnected(name: ComponentName?) {
-        service = null
+        service.value = null
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putBoolean(STATE_PLAYING, service?.isPlaying ?: true)
+        outState.putBoolean(STATE_PLAYING, service.value?.isPlaying ?: true)
     }
 
 //    override fun onConfigurationChanged(newConfig: Configuration) {
@@ -191,7 +193,7 @@ internal class PecaViewerFragment : Fragment(), ServiceConnection {
     override fun onDestroy() {
         super.onDestroy()
 
-        if (service != null)
+        if (service.value != null)
             requireContext().unbindService(this)
     }
 

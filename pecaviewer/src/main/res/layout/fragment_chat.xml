@@ -40,7 +40,8 @@
                 android:visibility="@{safeUnbox(viewModel.isThreadListVisible) ? View.VISIBLE : View.GONE}"
                 app:srl_direction="top"
                 peca:colorScheme="@{@color/light_blue_A700}"
-                peca:refreshing="@{safeUnbox(viewModel.isThreadListRefreshing)}">
+                peca:refreshing="@{safeUnbox(viewModel.isThreadListRefreshing)}"
+                android:elevation="10dp">
 
             <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/vThreadList"

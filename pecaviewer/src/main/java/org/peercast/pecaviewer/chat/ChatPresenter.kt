@@ -259,7 +259,7 @@ private class BbsThreadPreference(c: Context) {
         if (isInShelter(thread))
             return
 
-        val expire = System.currentTimeMillis() + TimeUnit.DAYS.toMillis(30)
+        val expire = System.currentTimeMillis() + TimeUnit.DAYS.toMillis(7)
         pref.edit {
             val u = "${thread.url}#!expire=$expire"
 //            Timber.d("${thread.board.url} -> $u")
