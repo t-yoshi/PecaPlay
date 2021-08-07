@@ -1,5 +1,8 @@
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
     <string name="background">バックグラウンド</string>
+    <string name="enter_fullscreen">フルスクリーン</string>
+    <string name="exit_fullscreen">フルスクリーンの終了</string>
+
     <string name="sending">送信しています…</string>
 
     <string name="buffering_p">バッファ中です… % 2d%%</string>

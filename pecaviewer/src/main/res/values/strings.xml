@@ -1,6 +1,8 @@
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
 
     <string name="background">Background</string>
+    <string name="enter_fullscreen">Fullscreen</string>
+    <string name="exit_fullscreen">Exit fullscreen</string>
 
     <string name="et_seconds_fmt"> %ds</string>
     <string name="et_minutes_fmt"> %dm</string>

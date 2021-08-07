@@ -4,13 +4,13 @@
     <item
         android:id="@+id/menu_enter_fullscreen"
         android:icon="@drawable/ic_fullscreen_white_36dp"
-        android:title="Enter fullscreen"
+        android:title="@string/enter_fullscreen"
         app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/menu_exit_fullscreen"
         android:icon="@drawable/ic_fullscreen_exit_white_36dp"
-        android:title="Exit fullscreen"
+        android:title="@string/exit_fullscreen"
         app:showAsAction="ifRoom" />
 
     <item
