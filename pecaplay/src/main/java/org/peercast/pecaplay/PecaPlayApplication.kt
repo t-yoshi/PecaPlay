@@ -51,7 +51,7 @@ class PecaPlayApplication : Application() {
 
         override fun log(priority: Int, tag: String?, message: String, t: Throwable?) {
             super.log(priority, tag, message, t)
-            if (t != null)
+            if (t != null && t !is CancellationException)
                 FirebaseCrashlytics.getInstance().recordException(t)
         }
     }
