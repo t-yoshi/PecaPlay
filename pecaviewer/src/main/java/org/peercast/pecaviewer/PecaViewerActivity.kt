@@ -17,9 +17,8 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.commit
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleObserver
-import androidx.lifecycle.OnLifecycleEvent
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import com.google.android.exoplayer2.video.VideoSize
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.getViewModel
@@ -163,9 +162,8 @@ class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
 
     //PIPモードの終了イベントを得る
     //https://stackoverflow.com/questions/47066517/detect-close-and-maximize-clicked-event-in-picture-in-picture-mode-in-android
-    private val pipWindowCloseObserver = object : LifecycleObserver {
-        @OnLifecycleEvent(Lifecycle.Event.ON_STOP)
-        fun onStop() {
+    private val pipWindowCloseObserver = object : DefaultLifecycleObserver {
+        override fun onStop(owner: LifecycleOwner) {
             Timber.i("PipWindow closed.")
             service?.stop()
             lifecycle.removeObserver(this)
