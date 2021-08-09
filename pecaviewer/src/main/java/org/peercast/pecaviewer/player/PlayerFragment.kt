@@ -68,7 +68,7 @@ class PlayerFragment : Fragment(), ServiceConnection, Toolbar.OnMenuItemClickLis
             requireActivity().onBackPressed()
         }
 
-        view.setOnTouchListener(DoubleTabDetector(view, ::onFullScreenClicked))
+        view.setOnTouchListener(DoubleTapDetector(view, ::onFullScreenClicked))
     }
 
     private fun onFullScreenClicked(v__: View) {
@@ -77,7 +77,7 @@ class PlayerFragment : Fragment(), ServiceConnection, Toolbar.OnMenuItemClickLis
         }
     }
 
-    private class DoubleTabDetector(
+    private class DoubleTapDetector(
         private val view: View,
         private val onDoubleTap: (View) -> Unit,
     ) : View.OnTouchListener, GestureDetector.SimpleOnGestureListener() {
