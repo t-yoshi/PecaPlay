@@ -18,8 +18,8 @@ android {
         minSdkVersion min_sdk_version
         targetSdkVersion target_sdk_version
 
-        versionCode 8_00_00_02
-        versionName '8.0.0-2'
+        versionCode 8_00_00_03
+        versionName '8.0.0-3'
         buildConfigField "long", "TIMESTAMP", System.currentTimeMillis() + "L"
 
         javaCompileOptions {
