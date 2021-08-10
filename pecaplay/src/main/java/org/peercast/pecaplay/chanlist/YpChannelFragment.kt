@@ -12,8 +12,6 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
@@ -26,6 +24,7 @@ import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.Favorite
 import org.peercast.pecaplay.core.app.chatUrl
 import org.peercast.pecaplay.core.app.statisticsUrl
+import org.peercast.pecaplay.databinding.YpChannelFragmentBinding
 import org.peercast.pecaplay.view.MenuableRecyclerView
 import org.peercast.pecaplay.worker.LoadingEvent
 import org.peercast.pecaplay.worker.LoadingEventFlow
@@ -37,20 +36,47 @@ class YpChannelFragment : Fragment() {
     private val favoriteDao
         get() = get<AppRoomDatabase>().favoriteDao
     private val viewModel by sharedViewModel<AppViewModel>()
+    private val loadingEvent by inject<LoadingEventFlow>()
+    private lateinit var binding: YpChannelFragmentBinding
     private lateinit var listAdapter: ChannelListAdapter
 
     //スクロール位置を保存する。
     private lateinit var scrollPositionSaver: ScrollPositionSaver
 
-    private lateinit var vRecycler: RecyclerView
-    private lateinit var vSwipeRefresh: SwipeRefreshLayout
-    private val loadingEvent by inject<LoadingEventFlow>()
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         listAdapter = ChannelListAdapter(get(), listItemEventListener)
+    }
+
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?,
+    ): View {
+        binding = YpChannelFragmentBinding.inflate(layoutInflater, container, false)
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        scrollPositionSaver = ScrollPositionSaver(savedInstanceState, binding.vRecycler)
+
+        registerForContextMenu(binding.vRecycler)
+
+        viewLifecycleOwner.lifecycleScope.launchWhenCreated {
+            loadingEvent.collect { ev ->
+                //Timber.d("ev=$ev")
+                when (ev) {
+                    is LoadingEvent.OnStart -> {
+                        binding.vSwipeRefresh.isRefreshing = true
+                        scrollPositionSaver.clear()
+                    }
+                    else -> {
+                        binding.vSwipeRefresh.isRefreshing = false
+                    }
+                }
+            }
+        }
 
         val viewModelsFlow = combine(
             viewModel.channelFilter.filteredChannel,
@@ -65,47 +91,14 @@ class YpChannelFragment : Fragment() {
             }
         }
 
-        lifecycleScope.launchWhenResumed {
+        viewLifecycleOwner.lifecycleScope.launchWhenCreated {
             viewModelsFlow.collect {
                 listAdapter.items = it
-                //Timber.d("-> $it")
                 scrollPositionSaver.restoreScrollPosition()
             }
         }
 
-        lifecycleScope.launchWhenResumed {
-            loadingEvent.collect { ev ->
-                //Timber.d("ev=$ev")
-                when (ev) {
-                    is LoadingEvent.OnStart -> {
-                        vSwipeRefresh.isRefreshing = true
-                        scrollPositionSaver.clear()
-                    }
-                    else -> {
-                        vSwipeRefresh.isRefreshing = false
-                    }
-                }
-            }
-        }
-    }
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?,
-    ): View? {
-        return inflater.inflate(R.layout.yp_channel_list_fragment, container, false)
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        vRecycler = view.findViewById(R.id.vRecycler)
-        vSwipeRefresh = view.findViewById(R.id.vSwipeRefresh)
-        scrollPositionSaver = ScrollPositionSaver(savedInstanceState, vRecycler)
-
-        registerForContextMenu(vRecycler)
-
-        with(vRecycler) {
+        with(binding.vRecycler) {
             layoutManager = LinearLayoutManager(context)
             adapter = listAdapter
             (itemAnimator as DefaultItemAnimator?)?.let { a ->
@@ -117,11 +110,10 @@ class YpChannelFragment : Fragment() {
             //it.itemAnimator = null
         }
 
-        vSwipeRefresh.setOnRefreshListener {
+        binding.vSwipeRefresh.setOnRefreshListener {
             viewModel.presenter.startLoading()
         }
     }
-
 
     override fun onCreateContextMenu(
         menu: ContextMenu,
