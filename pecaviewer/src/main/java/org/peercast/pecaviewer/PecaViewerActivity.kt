@@ -177,7 +177,6 @@ class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
         //PIPの閉じるボタンのイベントをなんとか得る
         if (isInPictureInPictureMode) {
-            viewerViewModel.isImmersiveMode.value = true
             lifecycle.addObserver(pipWindowCloseObserver)
         } else {
             lifecycle.removeObserver(pipWindowCloseObserver)
