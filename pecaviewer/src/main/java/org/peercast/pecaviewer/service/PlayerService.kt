@@ -18,7 +18,6 @@ import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.HttpDataSource
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.peercast.core.lib.PeerCastController
@@ -97,27 +96,28 @@ class PlayerService : LifecycleService() {
         override fun onPlaybackStateChanged(eventTime: AnalyticsListener.EventTime, state: Int) {
             when (state) {
                 Player.STATE_BUFFERING -> {
+                    jBuf?.cancel()
                     jBuf = lifecycleScope.launch {
-                        while (isActive) {
+                        while (isBuffering) {
                             for (i in 0..2) {
                                 eventFlow.emit(PlayerBufferingEvent(player.bufferedPercentage))
                                 delay(5_000)
                             }
-                            if (nMaxReconnect-- > 0) {
-                                //バッファー状態でフリーズすることを防ぐ
+                            if (isBuffering && nMaxReconnect-- > 0) {
                                 Timber.i("try to reconnect.")
+                                //バッファー状態でフリーズすることを防ぐ
                                 player.stop()
+                                delay(100)
                                 player.prepare()
+                                break
                             }
                         }
                     }
                 }
                 Player.STATE_READY -> {
-                    nMaxReconnect = MAX_RECONNECT / 2
-                    jBuf?.cancel()
+                    nMaxReconnect = MAX_RECONNECT
                 }
                 else -> {
-                    jBuf?.cancel()
                 }
             }
 
@@ -380,7 +380,7 @@ class PlayerService : LifecycleService() {
             .setContentType(C.CONTENT_TYPE_MOVIE)
             .build()
 
-        private const val MAX_RECONNECT = 5
+        private const val MAX_RECONNECT = 3
     }
 }
 
