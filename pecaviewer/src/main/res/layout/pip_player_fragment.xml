@@ -1,38 +1,49 @@
-<?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
-
-    <com.google.android.exoplayer2.ui.PlayerView
-        android:id="@+id/vPlayer"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/grey_1000b"
-        app:use_controller="false"/>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <data>
+        <variable
+            name="isVisibleTitleBar"
+            type="kotlinx.coroutines.flow.StateFlow&lt;Boolean&gt;" />
+        <variable
+            name="title"
+            type="String" />
+        <import type="android.view.View"/>
+    </data>
 
     <FrameLayout
-        android:id="@+id/vTitleBar"
         android:layout_width="match_parent"
-        android:layout_height="36dp"
-        android:layout_gravity="bottom"
-        android:background="#D0212121"
-        android:padding="3dp">
+        android:layout_height="match_parent">
 
-        <TextView
-            android:id="@+id/vTitle"
-            android:layout_width="wrap_content"
+        <com.google.android.exoplayer2.ui.PlayerView
+            android:id="@+id/vPlayer"
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:ellipsize="end"
-            android:gravity="center_vertical"
-            android:singleLine="true"
-            android:textAppearance="?android:attr/textAppearanceMedium"
-            android:textColor="@color/green_700"
-            android:textStyle="normal" />
+            android:background="@color/grey_1000b"
+            app:use_controller="false"/>
+
+        <FrameLayout
+            android:id="@+id/vTitleBar"
+            android:layout_width="match_parent"
+            android:layout_height="36dp"
+            android:layout_gravity="bottom"
+            android:background="#D0212121"
+            android:visibility="@{isVisibleTitleBar ? View.VISIBLE : View.GONE}"
+            android:padding="3dp">
+
+            <TextView
+                android:text="@{title}"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:ellipsize="end"
+                android:gravity="center_vertical"
+                android:singleLine="true"
+                android:textAppearance="?android:attr/textAppearanceMedium"
+                android:textColor="@color/green_700"
+                android:textStyle="normal" />
+
+        </FrameLayout>
+
 
     </FrameLayout>
 
-
-</FrameLayout>
-
-
+</layout>
