@@ -61,10 +61,6 @@ class PipPlayerFragment : Fragment(), ServiceConnection {
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             isVisibleTitleBar.filter { it }.collect {
                 delay(6_000)
-                binding?.vTitleBar?.startAnimation(AlphaAnimation(1f, 0f).apply {
-                    duration = 200
-                    fillAfter = true
-                })
                 isVisibleTitleBar.value = false
             }
         }

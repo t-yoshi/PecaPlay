@@ -62,17 +62,17 @@ internal object BindAdapter {
     fun bindVisibleAnimate(view: View, visibility: Boolean) {
         when {
             visibility && !view.isVisible -> {
-                val a = AlphaAnimation(0.2f, 1f)
-                a.duration = 100
+                val a = AlphaAnimation(0f, 1f).apply {
+                    duration = 100
+                    fillAfter = true
+                }
                 view.startAnimation(a)
-                view.isVisible = true
             }
             !visibility && !view.isGone -> {
-                val a = AlphaAnimation(1f, 0.2f)
-                a.duration = 100
-                a.setAnimationListener(org.peercast.pecaviewer.BindAdapter.SimpleAnimationListener {
-                    view.isGone = true
-                })
+                val a = AlphaAnimation(1f, 0f).apply {
+                    duration = 200
+                    fillAfter = true
+                }
                 view.startAnimation(a)
             }
         }
