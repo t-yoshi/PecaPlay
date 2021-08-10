@@ -1,0 +1,51 @@
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <androidx.drawerlayout.widget.DrawerLayout
+        android:id="@+id/vDrawerLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <androidx.coordinatorlayout.widget.CoordinatorLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <com.google.android.material.appbar.AppBarLayout
+                android:id="@+id/vAppBarLayout"
+                android:theme="@style/AppTheme.AppBarOverlay"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <androidx.appcompat.widget.Toolbar
+                    android:id="@+id/vToolbar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:layout_scrollFlags="scroll|enterAlways|snap"
+                    app:popupTheme="@style/AppTheme.PopupOverlay" />
+            </com.google.android.material.appbar.AppBarLayout>
+
+            <androidx.fragment.app.FragmentContainerView
+                android:id="@+id/vYpChannelFragmentContainer"
+                android:name="org.peercast.pecaplay.chanlist.YpChannelFragment"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                app:layout_behavior="@string/appbar_scrolling_view_behavior" />
+
+        </androidx.coordinatorlayout.widget.CoordinatorLayout>
+
+        <org.peercast.pecaplay.navigation.PecaNaviView
+            android:id="@+id/vNavigation"
+            android:layout_width="@dimen/navigation_width"
+            android:layout_height="match_parent"
+            android:layout_gravity="start"
+            android:layout_marginTop="?android:attr/actionBarSize"
+            android:paddingTop="35dp"
+            app:headerLayout="@null"
+            app:itemIconTint="@color/navigation_item"
+            app:itemTextColor="@color/navigation_item"
+            app:itemBackground="@android:color/transparent"/>
+        <!---->
+
+    </androidx.drawerlayout.widget.DrawerLayout>
+
+</layout>

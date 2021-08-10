@@ -15,12 +15,11 @@ import android.view.View
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
-import androidx.appcompat.widget.Toolbar
 import androidx.core.view.ActionProvider
 import androidx.core.view.GravityCompat
 import androidx.core.view.MenuItemCompat
+import androidx.databinding.DataBindingUtil
 import androidx.drawerlayout.widget.DrawerLayout
-import androidx.fragment.app.FragmentContainerView
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.snackbar.Snackbar
@@ -30,10 +29,10 @@ import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.peercast.pecaplay.chanlist.filter.YpChannelSource
 import org.peercast.pecaplay.core.app.PecaPlayIntent
+import org.peercast.pecaplay.databinding.PecaPlayActivityBinding
 import org.peercast.pecaplay.navigation.NavigationHistoryItem
 import org.peercast.pecaplay.navigation.NavigationNewItem
 import org.peercast.pecaplay.navigation.NavigationNotifiedItem
-import org.peercast.pecaplay.navigation.PecaNaviView
 import org.peercast.pecaplay.prefs.AppPreferences
 import org.peercast.pecaplay.prefs.SettingsActivity
 import org.peercast.pecaplay.worker.LoadingEvent
@@ -57,29 +56,20 @@ class PecaPlayActivity : AppCompatActivity() {
     private var drawerToggle: ActionBarDrawerToggle? = null //縦長時のみ
     private var lastLoadedET = 0L
 
-    private lateinit var vToolbar: Toolbar
-    private var vDrawerLayout: DrawerLayout? = null
-    private lateinit var vNavigation: PecaNaviView
-    private lateinit var vAppBarLayout: AppBarLayout
-    private lateinit var vYpChannelFragmentContainer: FragmentContainerView
+    private lateinit var binding: PecaPlayActivityBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         lastLoadedET = savedInstanceState?.getLong(STATE_LAST_LOADED_ER_TIME) ?: 0L
 
-        setContentView(R.layout.pecaplay_activity)
-        vToolbar = findViewById(R.id.vToolbar)
-        vDrawerLayout = findViewById(R.id.vDrawerLayout)
-        vNavigation = findViewById(R.id.vNavigation)
-        vAppBarLayout = findViewById(R.id.vAppBarLayout)
-        vYpChannelFragmentContainer = findViewById(R.id.vYpChannelFragmentContainer)
+        binding = DataBindingUtil.setContentView(this, R.layout.peca_play_activity)
 
         setTitle(R.string.app_name)
 
-        setSupportActionBar(vToolbar)
+        setSupportActionBar(binding.vToolbar)
         invalidateOptionsMenu()
 
-        vDrawerLayout?.let { drawer ->
+        binding.vDrawerLayout?.let { drawer ->
             drawerToggle = ActionBarDrawerToggle(
                 this, drawer,
                 R.string.drawer_open,
@@ -89,21 +79,22 @@ class PecaPlayActivity : AppCompatActivity() {
             supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
             // AppBarLayoutのオフセット変化からドロワーの表示位置を調節する
-            val defaultTopMargin = (vNavigation.layoutParams as DrawerLayout.LayoutParams).topMargin
-            vAppBarLayout.addOnOffsetChangedListener(AppBarLayout.OnOffsetChangedListener { _, verticalOffset ->
-                val p = vNavigation.layoutParams as DrawerLayout.LayoutParams
+            val defaultTopMargin =
+                (binding.vNavigation.layoutParams as DrawerLayout.LayoutParams).topMargin
+            binding.vAppBarLayout.addOnOffsetChangedListener(AppBarLayout.OnOffsetChangedListener { _, verticalOffset ->
+                val p = binding.vNavigation.layoutParams as DrawerLayout.LayoutParams
                 p.setMargins(
                     p.leftMargin,
                     defaultTopMargin + verticalOffset,
                     p.rightMargin,
                     p.bottomMargin
                 )
-                vNavigation.layoutParams = p
+                binding.vNavigation.layoutParams = p
             })
             drawer.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START)
         }
 
-        vNavigation.onItemClick = { item ->
+        binding.vNavigation.onItemClick = { item ->
             viewModel.channelFilter.apply {
                 displayOrder = when (item) {
                     is NavigationHistoryItem -> YpDisplayOrder.NONE
@@ -122,7 +113,7 @@ class PecaPlayActivity : AppCompatActivity() {
                 }
             }
 
-            vDrawerLayout?.let {
+            binding.vDrawerLayout?.let {
                 it.closeDrawers()
                 supportActionBar?.title = when {
                     item.title.isEmpty() -> getString(R.string.app_name)
@@ -134,9 +125,8 @@ class PecaPlayActivity : AppCompatActivity() {
         }
 
         lifecycleScope.launchWhenResumed {
-            val content = findViewById<View>(android.R.id.content)
             viewModel.message.filter { it.isNotEmpty() }.onEach {
-                Snackbar.make(content, it, Snackbar.LENGTH_LONG).show()
+                Snackbar.make(binding.root, it, Snackbar.LENGTH_LONG).show()
                 viewModel.message.emit("")
             }.collect()
         }
@@ -165,7 +155,7 @@ class PecaPlayActivity : AppCompatActivity() {
             }
         }
 
-        vNavigation.model.repository.collectIn(lifecycleScope)
+        binding.vNavigation.model.repository.collectIn(lifecycleScope)
 
         viewModel.bindService()
     }
@@ -189,7 +179,7 @@ class PecaPlayActivity : AppCompatActivity() {
             intent.getBooleanExtra(PecaPlayIntent.EX_SELECT_NOTIFIED, false)
         ) {
             removeNotification()
-            vNavigation.navigate { it is NavigationNotifiedItem }
+            binding.vNavigation.navigate { it is NavigationNotifiedItem }
         }
 
         drawerToggle?.syncState()
@@ -200,12 +190,6 @@ class PecaPlayActivity : AppCompatActivity() {
         viewModel.presenter.stopLoading()
     }
 
-    override fun onStop() {
-        super.onStop()
-       // sendBroadcast(Intent(PecaPlayIntent.ACTION_ACTIVITY_ON_PAUSE))
-
-    }
-
     override fun onResume() {
         super.onResume()
         //前回の読み込みからN分以上経過している場合は読み込む
@@ -214,7 +198,7 @@ class PecaPlayActivity : AppCompatActivity() {
 
         //縦長、resume時にツールバーを表示する
         if (drawerToggle != null) {
-            vAppBarLayout.setExpanded(true)
+            binding.vAppBarLayout.setExpanded(true)
         }
     }
 
@@ -317,10 +301,10 @@ class PecaPlayActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        if (vNavigation.onBackPressed())
+        if (binding.vNavigation.onBackPressed())
             return
 
-        vDrawerLayout?.let { v ->
+        binding.vDrawerLayout?.let { v ->
             if (v.isDrawerOpen(GravityCompat.START)) {
                 v.closeDrawers()
                 return
