@@ -28,14 +28,12 @@ class ChannelFilter(
         db.ypHistoryDao.query()
     ) { channels, histories ->
         withContext(Dispatchers.Default) {
-            histories.map { his ->
+            histories.forEach { his ->
                 //現在存在して再生可能か
-                async {
-                    his.isPlayable = channels.any(his::equalsIdName)
-                }
-            }.awaitAll()
-            histories
+                his.isPlayable = channels.any(his::equalsIdName)
+            }
         }
+        histories
     }
 
     private var j: Job? = null

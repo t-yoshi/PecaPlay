@@ -23,16 +23,6 @@ abstract class YpChannel : Yp4gChannel {
         return name == other.name && id == other.id
     }
 
-    override fun equals(other: Any?): Boolean {
-        return other is YpChannel &&
-                other.javaClass === javaClass &&
-                equalsIdName(other)
-    }
-
-    override fun hashCode(): Int {
-        return Objects.hash(javaClass, name, id)
-    }
-
     @Ignore
     private val tag = HashMap<String, Any?>()
 
