@@ -18,6 +18,7 @@ import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.HttpDataSource
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.peercast.core.lib.PeerCastController
@@ -97,28 +98,31 @@ class PlayerService : LifecycleService() {
         override fun onPlaybackStateChanged(eventTime: AnalyticsListener.EventTime, state: Int) {
             when (state) {
                 Player.STATE_BUFFERING -> {
-                    jBuf?.cancel()
                     jBuf = lifecycleScope.launch {
-                        while (isBuffering) {
+                        while (isActive) {
                             for (i in 0..2) {
                                 eventFlow.emit(PlayerBufferingEvent(player.bufferedPercentage))
                                 delay(5_000)
                             }
-                            if (isBuffering && nMaxReconnect-- > 0) {
+                            if (nMaxReconnect-- > 0) {
                                 Timber.i("try to reconnect.")
-                                //バッファー状態でフリーズすることを防ぐ
-                                player.stop()
-                                delay(100)
-                                player.prepare()
+                                lifecycleScope.launch {
+                                    //バッファー状態でフリーズすることを防ぐ
+                                    player.stop()
+                                    delay(500)
+                                    player.prepare()
+                                }
                                 break
                             }
                         }
                     }
                 }
                 Player.STATE_READY -> {
+                    jBuf?.cancel()
                     nMaxReconnect = MAX_RECONNECT
                 }
                 else -> {
+                    jBuf?.cancel()
                 }
             }
 
@@ -131,7 +135,6 @@ class PlayerService : LifecycleService() {
                 else -> {
                 }
             }
-
             //Timber.d("state -> $state")
         }
 
@@ -358,6 +361,7 @@ class PlayerService : LifecycleService() {
         if (u.host in listOf("localhost", "127.0.0.1"))
             bindPeerCastService()
 
+        analyticsListener.nMaxReconnect = MAX_RECONNECT
         player.prepare()
     }
 
