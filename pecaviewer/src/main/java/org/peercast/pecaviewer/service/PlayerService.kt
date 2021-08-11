@@ -29,6 +29,7 @@ import org.peercast.pecaviewer.PecaViewerActivity
 import org.peercast.pecaviewer.PecaViewerPreference
 import timber.log.Timber
 import java.io.IOException
+import java.lang.ref.WeakReference
 import java.util.*
 
 
@@ -290,12 +291,27 @@ class PlayerService : LifecycleService() {
     }
 
     fun attachPlayerView(view: PlayerView) {
-        //pauseボタンの挙動をstopに変更する。
-        view.player = object : Player by player {
+        val wrView = WeakReference(view)
+        view.player = object : Player by player, Player.Listener {
+            //pauseボタンの挙動をstopに変更する。
             override fun setPlayWhenReady(playWhenReady: Boolean) {
                 if (!playWhenReady)
                     this@PlayerService.stop()
                 player.playWhenReady = playWhenReady
+            }
+
+            //再生中は消灯しない
+            override fun onPlaybackStateChanged(state: Int) {
+                val v = wrView.get()
+                if (v != null && v.player == this) {
+                    v.keepScreenOn = state == Player.STATE_READY
+                } else {
+                    player.removeListener(this)
+                }
+            }
+
+            init {
+                player.addListener(this)
             }
         }
     }
