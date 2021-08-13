@@ -1,32 +1,27 @@
 package org.peercast.pecaviewer
 
-import android.content.ComponentName
 import android.content.Intent
-import android.content.ServiceConnection
 import android.content.res.Configuration
 import android.os.Bundle
-import android.os.IBinder
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.animation.AlphaAnimation
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
+import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import org.peercast.pecaplay.core.app.PecaViewerIntent
 import org.peercast.pecaplay.core.app.Yp4gChannel
 import org.peercast.pecaviewer.databinding.PipPlayerFragmentBinding
-import org.peercast.pecaviewer.service.PlayerService
-import org.peercast.pecaviewer.service.bindPlayerService
-import timber.log.Timber
+import org.peercast.pecaviewer.service.PlayerService.Companion.setPlayerService
 
-class PipPlayerFragment : Fragment(), ServiceConnection {
+class PipPlayerFragment : Fragment() {
 
-    private var service: PlayerService? = null
-    private var binding: PipPlayerFragmentBinding? = null
+    private val viewerViewModel by sharedViewModel<PecaViewerViewModel>()
+    private lateinit var binding: PipPlayerFragmentBinding
     private lateinit var channel: Yp4gChannel
     private val isVisibleTitleBar = MutableStateFlow(true)
 
@@ -59,6 +54,12 @@ class PipPlayerFragment : Fragment(), ServiceConnection {
         super.onViewCreated(view, savedInstanceState)
 
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
+            viewerViewModel.playerService.collect {
+                binding.vPlayer.setPlayerService(it)
+            }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             isVisibleTitleBar.filter { it }.collect {
                 delay(6_000)
                 isVisibleTitleBar.value = false
@@ -71,38 +72,8 @@ class PipPlayerFragment : Fragment(), ServiceConnection {
         isVisibleTitleBar.value = true
     }
 
-
-    override fun onServiceConnected(name: ComponentName?, binder: IBinder) {
-        Timber.d("onServiceConnected")
-        service = (binder as PlayerService.Binder).service.also {
-            binding?.vPlayer?.let(it::attachPlayerView)
-        }
-    }
-
-    override fun onServiceDisconnected(name: ComponentName?) {
-        Timber.d("onServiceDisconnected")
-        service = null
-        binding?.vPlayer?.player = null
-    }
-
-    override fun onStart() {
-        super.onStart()
-
-        requireContext().bindPlayerService(this)
-    }
-
     override fun onStop() {
         super.onStop()
-
-        if (service != null) {
-            requireContext().unbindService(this)
-            onServiceDisconnected(null)
-        }
+        binding.vPlayer.setPlayerService(null)
     }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        binding = null
-    }
-
 }

@@ -1,35 +1,30 @@
 package org.peercast.pecaviewer.player
 
 import android.annotation.SuppressLint
-import android.content.ComponentName
-import android.content.ServiceConnection
 import android.os.Build
 import android.os.Bundle
-import android.os.IBinder
 import android.view.*
 import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.google.android.exoplayer2.ui.PlayerView
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import org.peercast.pecaviewer.PecaViewerPreference
 import org.peercast.pecaviewer.PecaViewerViewModel
 import org.peercast.pecaviewer.R
-import org.peercast.pecaviewer.service.PlayerService
-import org.peercast.pecaviewer.service.bindPlayerService
+import org.peercast.pecaviewer.service.PlayerService.Companion.setPlayerService
 import org.peercast.pecaviewer.util.takeScreenShot
 import timber.log.Timber
 
 @Suppress("unused")
-class PlayerFragment : Fragment(), ServiceConnection, Toolbar.OnMenuItemClickListener {
+class PlayerFragment : Fragment(), Toolbar.OnMenuItemClickListener {
 
     private val viewerViewModel by sharedViewModel<PecaViewerViewModel>()
     private val playerViewModel by sharedViewModel<PlayerViewModel>()
     private val viewerPrefs by inject<PecaViewerPreference>()
-
-    private var service: PlayerService? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -39,13 +34,12 @@ class PlayerFragment : Fragment(), ServiceConnection, Toolbar.OnMenuItemClickLis
         return inflater.inflate(R.layout.fragment_player, container, false)
     }
 
-    private var vPlayer: PlayerView? = null
+    private val vPlayer: PlayerView get() = requireView() as PlayerView
     private lateinit var vPlayerControlBar: Toolbar
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        vPlayer = view as PlayerView
         vPlayerControlBar = view.findViewById<Toolbar>(R.id.vPlayerControlBar).also {
             it.menu.clear()
             it.inflateMenu(R.menu.menu_player_control)
@@ -60,7 +54,7 @@ class PlayerFragment : Fragment(), ServiceConnection, Toolbar.OnMenuItemClickLis
             }
         }
 
-        vPlayer?.setControllerVisibilityListener {
+        vPlayer.setControllerVisibilityListener {
             playerViewModel.isControlsViewVisible.value = it == View.VISIBLE
         }
 
@@ -69,6 +63,12 @@ class PlayerFragment : Fragment(), ServiceConnection, Toolbar.OnMenuItemClickLis
         }
 
         view.setOnTouchListener(DoubleTapDetector(view, ::onFullScreenClicked))
+
+        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
+            viewerViewModel.playerService.collect {
+                vPlayer.setPlayerService(it)
+            }
+        }
     }
 
     private fun onFullScreenClicked(v__: View) {
@@ -114,53 +114,25 @@ class PlayerFragment : Fragment(), ServiceConnection, Toolbar.OnMenuItemClickLis
         return true
     }
 
-    override fun onResume() {
-        super.onResume()
-        if (service == null)
-            requireContext().bindPlayerService(this)
-    }
-
-    private fun unbindPlayerService() {
-        if (service != null) {
-            requireContext().unbindService(this@PlayerFragment)
-            onServiceDisconnected(null)
-        }
-    }
-
     override fun onPause() {
         super.onPause()
 
-        val sv = service ?: return
+        val sv = viewerViewModel.playerService.value ?: return
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && sv.isPlaying) {
             lifecycleScope.launch {
                 kotlin.runCatching {
-                    takeScreenShot(vPlayer?.videoSurfaceView as SurfaceView, 256)
+                    takeScreenShot(vPlayer.videoSurfaceView as SurfaceView, 256)
                 }.onSuccess {
                     sv.setThumbnail(it)
                 }.onFailure(Timber::w)
             }
         }
-
-        unbindPlayerService()
     }
 
-    override fun onServiceConnected(name: ComponentName, binder: IBinder) {
-        //Timber.d("$binder")
-        service = (binder as PlayerService.Binder).service.also { s ->
-            vPlayer?.let(s::attachPlayerView)
-        }
-    }
-
-    override fun onServiceDisconnected(name: ComponentName?) {
-        service = null
-        vPlayer?.player = null
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        unbindPlayerService()
-        vPlayer = null
+    override fun onStop() {
+        super.onStop()
+        vPlayer.setPlayerService(null)
     }
 
 }

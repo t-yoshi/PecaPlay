@@ -30,17 +30,16 @@ import org.peercast.pecaviewer.service.PlayerService
 import org.peercast.pecaviewer.service.bindPlayerService
 import timber.log.Timber
 
-internal class PecaViewerFragment : Fragment(), ServiceConnection {
+internal class PecaViewerFragment : Fragment() {
 
     private lateinit var binding: PecaViewerFragmentBinding
     private val playerViewModel by sharedViewModel<PlayerViewModel>()
     private val chatViewModel by sharedViewModel<ChatViewModel>()
-    private val appViewModel by sharedViewModel<PecaViewerViewModel>()
+    private val viewerViewModel by sharedViewModel<PecaViewerViewModel>()
     private val viewerPrefs by inject<PecaViewerPreference>()
 
     private val isPortraitMode = MutableStateFlow(false)
     private lateinit var channel: Yp4gChannel
-    private val service = MutableStateFlow<PlayerService?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,7 +53,7 @@ internal class PecaViewerFragment : Fragment(), ServiceConnection {
         )
 
         lifecycleScope.launch {
-            service.filterNotNull().collect {
+            viewerViewModel.playerService.filterNotNull().collect {
                 it.prepareFromUri(streamUrl, channel)
                 if (savedInstanceState?.getBoolean(STATE_PLAYING) != false) {
                     Timber.d(" -> play")
@@ -66,8 +65,6 @@ internal class PecaViewerFragment : Fragment(), ServiceConnection {
         lifecycleScope.launch {
             chatViewModel.presenter.loadUrl(channel.url.toString())
         }
-
-        requireContext().bindPlayerService(this)
     }
 
     override fun onCreateView(
@@ -79,7 +76,7 @@ internal class PecaViewerFragment : Fragment(), ServiceConnection {
             binding = it
             it.chatViewModel = chatViewModel
             it.playerViewModel = playerViewModel
-            it.appViewModel = appViewModel
+            it.appViewModel = viewerViewModel
             it.lifecycleOwner = viewLifecycleOwner
         }.root
     }
@@ -161,8 +158,8 @@ internal class PecaViewerFragment : Fragment(), ServiceConnection {
                     SlidingUpPanelLayout.PanelState.ANCHORED
                 )
             ) {
-                if (appViewModel.slidingPanelState.value != newState.ordinal) {
-                    appViewModel.slidingPanelState.value = newState.ordinal
+                if (viewerViewModel.slidingPanelState.value != newState.ordinal) {
+                    viewerViewModel.slidingPanelState.value = newState.ordinal
                 }
                 if (isPortraitMode.value && newState != previousState) {
                     viewerPrefs.initPanelState = newState
@@ -171,17 +168,9 @@ internal class PecaViewerFragment : Fragment(), ServiceConnection {
         }
     }
 
-    override fun onServiceConnected(name: ComponentName, binder: IBinder) {
-        service.value = (binder as PlayerService.Binder).service
-    }
-
-    override fun onServiceDisconnected(name: ComponentName?) {
-        service.value = null
-    }
-
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putBoolean(STATE_PLAYING, service.value?.isPlaying ?: true)
+        outState.putBoolean(STATE_PLAYING, viewerViewModel.playerService.value?.isPlaying ?: true)
     }
 
 //    override fun onConfigurationChanged(newConfig: Configuration) {
@@ -190,12 +179,6 @@ internal class PecaViewerFragment : Fragment(), ServiceConnection {
 //        view?.requestLayout()
 //    }
 
-    override fun onDestroy() {
-        super.onDestroy()
-
-        if (service.value != null)
-            requireContext().unbindService(this)
-    }
 
     companion object {
         private const val STATE_PLAYING = "STATE_PLAYING"

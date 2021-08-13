@@ -293,32 +293,6 @@ class PlayerService : LifecycleService() {
         }
     }
 
-    fun attachPlayerView(view: PlayerView) {
-        val wrView = WeakReference(view)
-        view.player = object : Player by player, Player.Listener {
-            //pauseボタンの挙動をstopに変更する。
-            override fun setPlayWhenReady(playWhenReady: Boolean) {
-                if (!playWhenReady)
-                    this@PlayerService.stop()
-                player.playWhenReady = playWhenReady
-            }
-
-            //再生中は消灯しない
-            override fun onPlaybackStateChanged(state: Int) {
-                val v = wrView.get()
-                if (v != null && v.player == this) {
-                    v.keepScreenOn = state == Player.STATE_READY
-                } else {
-                    player.removeListener(this)
-                }
-            }
-
-            init {
-                player.addListener(this)
-            }
-        }
-    }
-
     private val progressiveFactory = ProgressiveMediaSource.Factory(
         OkHttpDataSource.Factory(square.okHttpClient)
     ).also { f ->
@@ -394,7 +368,42 @@ class PlayerService : LifecycleService() {
         player.release()
     }
 
+    private inner class DelegatedPlayer(view: PlayerView) : Player by player,
+        Player.Listener {
+        //pauseボタンの挙動をstopに変更する。
+        override fun setPlayWhenReady(playWhenReady: Boolean) {
+            if (!playWhenReady)
+                this@PlayerService.stop()
+            player.playWhenReady = playWhenReady
+        }
+
+        private val weakView = WeakReference(view)
+
+        //再生中は消灯しない
+        override fun onPlaybackStateChanged(state: Int) {
+            weakView.get()?.keepScreenOn = state == Player.STATE_READY
+        }
+
+        fun removeListenerMyself() {
+            removeListener(this)
+        }
+
+        init {
+            addListener(this)
+        }
+    }
+
     companion object {
+        fun PlayerView.setPlayerService(service: PlayerService?) {
+            if (service != null) {
+                player = service.DelegatedPlayer(this)
+            } else {
+                (player as DelegatedPlayer?)?.removeListenerMyself()
+                player = null
+                keepScreenOn = false
+            }
+        }
+
         private val AA_MEDIA_MOVIE = AudioAttributes.Builder()
             .setUsage(C.USAGE_MEDIA)
             .setContentType(C.CONTENT_TYPE_MOVIE)

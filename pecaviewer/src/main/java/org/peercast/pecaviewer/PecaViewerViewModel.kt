@@ -1,12 +1,19 @@
 package org.peercast.pecaviewer
 
 import android.app.Application
+import android.content.ComponentName
+import android.content.ServiceConnection
+import android.os.IBinder
 import androidx.lifecycle.*
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.peercast.pecaviewer.chat.ChatViewModel
 import org.peercast.pecaviewer.player.PlayerViewModel
+import org.peercast.pecaviewer.service.PlayerService
+import org.peercast.pecaviewer.service.bindPlayerService
 
 
 internal class PecaViewerViewModel(
@@ -71,4 +78,32 @@ internal class PecaViewerViewModel(
             }
 
         }
+
+    private val playerService_ = MutableStateFlow<PlayerService?>(null)
+
+    val playerService: StateFlow<PlayerService?> get() = playerService_
+
+    private val playerServiceConnection = object : ServiceConnection {
+        override fun onServiceConnected(name: ComponentName, binder: IBinder) {
+            playerService_.value = (binder as PlayerService.Binder).service
+        }
+
+        override fun onServiceDisconnected(name: ComponentName?) {
+            playerService_.value = null
+        }
+    }
+
+    fun bindPlayerService(){
+        a.bindPlayerService(playerServiceConnection)
+    }
+
+    fun unbindPlayerService(){
+        if (playerService_.value != null) {
+            a.unbindService(playerServiceConnection)
+            playerService_.value = null
+        }
+    }
+
+
+
 }

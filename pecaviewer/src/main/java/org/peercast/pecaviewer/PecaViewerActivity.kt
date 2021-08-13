@@ -1,15 +1,12 @@
 package org.peercast.pecaviewer
 
 import android.app.PictureInPictureParams
-import android.content.ComponentName
 import android.content.Intent
-import android.content.ServiceConnection
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
-import android.os.IBinder
 import android.util.Rational
 import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.appcompat.app.AppCompatActivity
@@ -21,7 +18,7 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import com.google.android.exoplayer2.video.VideoSize
 import org.koin.android.ext.android.inject
-import org.koin.androidx.viewmodel.ext.android.getViewModel
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import org.peercast.pecaplay.core.app.PecaViewerIntent
 import org.peercast.pecaplay.core.app.Yp4gChannel
@@ -29,33 +26,30 @@ import org.peercast.pecaplay.core.app.backToPecaPlay
 import org.peercast.pecaviewer.chat.ChatViewModel
 import org.peercast.pecaviewer.player.PlayerViewModel
 import org.peercast.pecaviewer.service.PlayerService
-import org.peercast.pecaviewer.service.bindPlayerService
 import timber.log.Timber
 
-class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
+class PecaViewerActivity : AppCompatActivity() {
 
-    private lateinit var playerViewModel: PlayerViewModel
-    private lateinit var chatViewModel: ChatViewModel
-    private lateinit var viewerViewModel: PecaViewerViewModel
+    private val playerViewModel by viewModel<PlayerViewModel>()
+    private val chatViewModel by viewModel<ChatViewModel>()
+    private val viewerViewModel by viewModel<PecaViewerViewModel> {
+        parametersOf(
+            playerViewModel,
+            chatViewModel
+        )
+    }
     private val viewerPrefs by inject<PecaViewerPreference>()
-    private var service: PlayerService? = null
+    private val service: PlayerService? get() = viewerViewModel.playerService.value
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        playerViewModel = getViewModel()
-        chatViewModel = getViewModel()
-        viewerViewModel = getViewModel {
-            parametersOf(
-                playerViewModel,
-                chatViewModel
-            )
-        }
 
         requestedOrientation = when (viewerPrefs.isFullScreenMode) {
             true -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
             else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         }
+
+        viewerViewModel.toString() // instantiate
 
         if (savedInstanceState == null) {
             replaceMainFragment()
@@ -81,8 +75,6 @@ class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
                 controller?.show(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
             }
         }
-
-        bindPlayerService(this)
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -90,6 +82,11 @@ class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
         setIntent(intent)
 
         replaceMainFragment()
+    }
+
+    override fun onPostCreate(savedInstanceState: Bundle?) {
+        super.onPostCreate(savedInstanceState)
+        viewerViewModel.bindPlayerService()
     }
 
     private fun replaceMainFragment() {
@@ -183,21 +180,9 @@ class PecaViewerActivity : AppCompatActivity(), ServiceConnection {
         }
     }
 
-    override fun onServiceConnected(name: ComponentName?, binder: IBinder) {
-        service = (binder as PlayerService.Binder).service
-    }
-
-    override fun onServiceDisconnected(name: ComponentName?) {
-        service = null
-    }
-
     override fun onDestroy() {
         super.onDestroy()
-
-        if (service != null) {
-            unbindService(this)
-            onServiceDisconnected(null)
-        }
+        viewerViewModel.unbindPlayerService()
     }
 
 
