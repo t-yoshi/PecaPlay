@@ -30,7 +30,7 @@ class ChannelFilter(
         withContext(Dispatchers.Default) {
             histories.map { h ->
                 //現在存在して再生可能か
-                h.copy(isPlayable = channels.any(h::equalsIdName))
+                h.copy(liveChannel = channels.firstOrNull(h::equalsIdName))
             }
         }
     }

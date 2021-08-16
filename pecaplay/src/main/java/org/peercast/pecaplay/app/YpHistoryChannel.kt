@@ -43,7 +43,7 @@ data class YpHistoryChannel @JvmOverloads constructor(
 
     @Ignore
     /**現在もYPに掲載されていて再生可能か*/
-    override val isPlayable: Boolean = false,
+    val liveChannel: YpLiveChannel? = null,
 ) : YpChannel() {
 
     constructor(ch: YpChannel, lastPlay: Date = Date()) : this(
@@ -70,4 +70,6 @@ data class YpHistoryChannel @JvmOverloads constructor(
         ypUrl = ch.ypUrl,
         lastPlay = lastPlay
     )
+
+    override val isPlayable get() = liveChannel != null && super.isPlayable
 }

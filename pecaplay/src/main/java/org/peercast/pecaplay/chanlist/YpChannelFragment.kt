@@ -22,6 +22,7 @@ import org.peercast.pecaplay.AppViewModel
 import org.peercast.pecaplay.R
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.Favorite
+import org.peercast.pecaplay.app.YpHistoryChannel
 import org.peercast.pecaplay.core.app.chatUrl
 import org.peercast.pecaplay.core.app.statisticsUrl
 import org.peercast.pecaplay.databinding.YpChannelFragmentBinding
@@ -197,7 +198,11 @@ class YpChannelFragment : Fragment() {
 
         override fun onItemClick(m: ListItemViewModel, position: Int) {
             if (m.ch.isPlayable && !m.isNg) {
-                viewModel.presenter.startPlay(requireActivity(), m.ch)
+                val ch = when (m.ch){
+                    is YpHistoryChannel -> checkNotNull(m.ch.liveChannel)
+                    else -> m.ch
+                }
+                viewModel.presenter.startPlay(requireActivity(), ch)
             }
         }
 
