@@ -74,6 +74,7 @@ class PlayerFragment : Fragment(), Toolbar.OnMenuItemClickListener {
     private fun onFullScreenClicked(v__: View) {
         playerViewModel.isFullScreenMode.let {
             it.value = it.value != true
+            viewerPrefs.isFullScreenMode = it.value == true
         }
     }
 
