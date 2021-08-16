@@ -1,9 +1,11 @@
 package org.peercast.pecaviewer
 
+import android.animation.Animator
+import android.animation.AnimatorListenerAdapter
 import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
-import android.view.animation.AlphaAnimation
+import android.view.ViewPropertyAnimator
 import android.view.animation.Animation
 import android.view.animation.Transformation
 import android.widget.FrameLayout
@@ -56,24 +58,30 @@ internal object BindAdapter {
         view.setColorSchemeColors(color)
     }
 
+    private fun ViewPropertyAnimator.onEnd(action: (Animator) -> Unit) {
+        setListener(object : AnimatorListenerAdapter() {
+            override fun onAnimationEnd(animation: Animator) = action(animation)
+        })
+    }
+
     @JvmStatic
     @BindingAdapter("visibleAnimate")
             /**アニメーションしながら visible<->gone*/
     fun bindVisibleAnimate(view: View, visibility: Boolean) {
         when {
             visibility && !view.isVisible -> {
-                val a = AlphaAnimation(0f, 1f).apply {
-                    duration = 100
-                    fillAfter = true
-                }
-                view.startAnimation(a)
+                view.animate()
+                    .setDuration(100)
+                    .translationY(0f)
+                    .alpha(1f)
+                    .onEnd { view.isVisible = true }
             }
             !visibility && !view.isGone -> {
-                val a = AlphaAnimation(1f, 0f).apply {
-                    duration = 200
-                    fillAfter = true
-                }
-                view.startAnimation(a)
+                view.animate()
+                    .setDuration(150)
+                    .translationY(view.height.toFloat())
+                    .alpha(0f)
+                    .onEnd { view.isVisible = false }
             }
         }
     }
@@ -100,11 +108,4 @@ internal object BindAdapter {
         view.startAnimation(anim)
     }
 
-
-    private class SimpleAnimationListener(private val onEnd: (Animation) -> Unit) :
-        Animation.AnimationListener {
-        override fun onAnimationRepeat(animation: Animation) = Unit
-        override fun onAnimationEnd(animation: Animation) = onEnd(animation)
-        override fun onAnimationStart(animation: Animation) = Unit
-    }
 }
