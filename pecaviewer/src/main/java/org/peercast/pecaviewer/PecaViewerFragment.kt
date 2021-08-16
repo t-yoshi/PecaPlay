@@ -1,11 +1,9 @@
 package org.peercast.pecaviewer
 
-import android.content.ComponentName
 import android.content.Intent
-import android.content.ServiceConnection
 import android.content.res.Configuration
+import android.net.Uri
 import android.os.Bundle
-import android.os.IBinder
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -26,8 +24,6 @@ import org.peercast.pecaviewer.chat.ChatViewModel
 import org.peercast.pecaviewer.chat.PostMessageDialogFragment
 import org.peercast.pecaviewer.databinding.PecaViewerFragmentBinding
 import org.peercast.pecaviewer.player.PlayerViewModel
-import org.peercast.pecaviewer.service.PlayerService
-import org.peercast.pecaviewer.service.bindPlayerService
 import timber.log.Timber
 
 internal class PecaViewerFragment : Fragment() {
@@ -39,7 +35,9 @@ internal class PecaViewerFragment : Fragment() {
     private val viewerPrefs by inject<PecaViewerPreference>()
 
     private val isPortraitMode = MutableStateFlow(false)
+    private lateinit var streamUrl: Uri
     private lateinit var channel: Yp4gChannel
+    private val statePlaying get() = "STATE_PLAYING#${streamUrl}"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,7 +45,7 @@ internal class PecaViewerFragment : Fragment() {
         val intent = checkNotNull(
             requireArguments().getParcelable<Intent>(PecaViewerActivity.ARG_INTENT)
         )
-        val streamUrl = checkNotNull(intent.data)
+        streamUrl = checkNotNull(intent.data)
         channel = checkNotNull(
             intent.getParcelableExtra(PecaViewerIntent.EX_YP4G_CHANNEL)
         )
@@ -55,7 +53,7 @@ internal class PecaViewerFragment : Fragment() {
         lifecycleScope.launch {
             viewerViewModel.playerService.filterNotNull().collect {
                 it.prepareFromUri(streamUrl, channel)
-                if (savedInstanceState?.getBoolean(STATE_PLAYING) != false) {
+                if (savedInstanceState?.getBoolean(statePlaying) != false) {
                     Timber.d(" -> play")
                     it.play()
                 }
@@ -170,7 +168,7 @@ internal class PecaViewerFragment : Fragment() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putBoolean(STATE_PLAYING, viewerViewModel.playerService.value?.isPlaying ?: true)
+        outState.putBoolean(statePlaying, viewerViewModel.playerService.value?.isPlaying ?: true)
     }
 
 //    override fun onConfigurationChanged(newConfig: Configuration) {
@@ -181,7 +179,6 @@ internal class PecaViewerFragment : Fragment() {
 
 
     companion object {
-        private const val STATE_PLAYING = "STATE_PLAYING"
 
         private val Configuration.isPortraitMode get() = orientation == Configuration.ORIENTATION_PORTRAIT
 
