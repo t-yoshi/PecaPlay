@@ -1,91 +1,102 @@
 package org.peercast.pecaplay.chanlist.filter
 
-import kotlinx.coroutines.*
+import android.content.Context
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import org.peercast.pecaplay.app.AppRoomDatabase
+import org.peercast.pecaplay.chanlist.ListItemViewModel
+import org.peercast.pecaplay.navigation.NavigationHistoryItem
+import org.peercast.pecaplay.navigation.NavigationItem
+import org.peercast.pecaplay.navigation.NavigationNewItem
+import org.peercast.pecaplay.navigation.NavigationNotifiedItem
 import org.peercast.pecaplay.prefs.AppPreferences
 import org.peercast.pecaplay.util.TextUtils.normalize
 import org.peercast.pecaplay.yp4g.YpChannel
 import org.peercast.pecaplay.yp4g.YpDisplayOrder
 
 class ChannelFilter(
-    private val scope: CoroutineScope,
     private val db: AppRoomDatabase,
-    private val prefs: AppPreferences,
+    appPrefs: AppPreferences,
 ) {
-    var params: FilterParams = MutableFilterParams(
-        YpChannelSource.LIVE, YpChannelPredicates.TRUE, prefs.displayOrder, ""
-    )
-        private set
 
-    val filteredChannel: StateFlow<FilteredChannelList> = MutableStateFlow(
-        FilteredChannelList(emptyList(), params)
-    )
+    /**検索文字列*/
+    val searchQuery = MutableStateFlow("")
 
-    private val liveChannel = db.ypChannelDao.query()
-    private val historyChannel = combine(
+    /**表示順*/
+    val displayOrder = MutableStateFlow(appPrefs.displayOrder)
+
+    /***/
+    val navigationItem = MutableSharedFlow<NavigationItem>(1, 0, BufferOverflow.DROP_OLDEST)
+
+    private val selectedChannels = combine(
+        navigationItem,
         db.ypChannelDao.query(),
-        db.ypHistoryDao.query()
-    ) { liveChannels, histories ->
-        withContext(Dispatchers.Default) {
-            histories.map {
-                //現在配信中ならそれを表示する
-                liveChannels.firstOrNull(it::equalsIdName) ?: it
+        db.ypHistoryDao.query(),
+        searchQuery,
+        displayOrder,
+    ) { item, lives, histories, query, _order ->
+        //メニューで選択した表示順よりも優先
+        val order = when (item) {
+            is NavigationHistoryItem -> YpDisplayOrder.NONE
+            is NavigationNotifiedItem,
+            is NavigationNewItem,
+            -> {
+                YpDisplayOrder.AGE_ASC
             }
+            else -> _order
         }
-    }
 
-    private var j: Job? = null
-
-    private fun onFilterParamsChanged(params: FilterParams) {
-        j?.cancel()
-        j = scope.launch(Dispatchers.Default) {
-            //Timber.d("onFilterParamsChanged: $params")
-            when (params.source) {
-                YpChannelSource.LIVE -> liveChannel
-                YpChannelSource.HISTORY -> historyChannel
-            }.onEach { channels ->
-                //Timber.d("-> channels $channels")
-                var l = channels.filter(params.selector)
-
-                if (params.searchQuery.isNotBlank()) {
-                    val constraints = params.searchQuery.normalize().split(RE_SPACE)
-                    l = l.filter { ch ->
-                        constraints.all { ch.searchText.contains(it) }
-                    }
+        //Timber.d("--> $item ${Thread.currentThread()}")
+        when (item) {
+            is NavigationHistoryItem -> {
+                histories.map {
+                    //現在配信中ならそれを表示する
+                    lives.firstOrNull(it::equalsIdName) ?: it
                 }
+            }
+            else -> lives
+        }
+            .filter(item.selector)
+            .filterQuery(query)
+            .sortedWithDisplayOrder(order)
+            .let { TaggedList("${item.key}#$order", it) }
+    }
 
-                l = when (params.displayOrder) {
-                    YpDisplayOrder.NONE -> l
-                    else -> l.sortedWith(params.displayOrder.comparator)
-                }
 
-                (filteredChannel as MutableStateFlow).value = FilteredChannelList(l, params)
-            }.collect()
+    private fun List<YpChannel>.filterQuery(query: String): List<YpChannel> {
+        if (query.isBlank())
+            return this
+        val constraints = query.normalize().split(RE_SPACE)
+        return filter { ch ->
+            constraints.all { ch.searchText.contains(it) }
         }
     }
 
-    init {
-        onFilterParamsChanged(params)
-    }
-
-    /**変更後に適用する*/
-    fun apply(action: MutableFilterParams.() -> Unit) {
-        val copy = (params as MutableFilterParams).copy()
-        copy.action()
-        //Timber.d(" -> $params")
-        if (copy != params) {
-            params = copy
-            onFilterParamsChanged(copy)
+    private fun List<YpChannel>.sortedWithDisplayOrder(order: YpDisplayOrder): List<YpChannel> {
+        return when (order) {
+            YpDisplayOrder.NONE -> this
+            else -> sortedWith(order.comparator)
         }
     }
 
-    data class MutableFilterParams(
-        override var source: YpChannelSource,
-        override var selector: (YpChannel) -> Boolean,
-        override var displayOrder: YpDisplayOrder,
-        override var searchQuery: String,
-    ) : FilterParams()
+
+    fun toListItemViewModels(c: Context): Flow<TaggedList<ListItemViewModel>> {
+        return combine(
+            selectedChannels, db.favoriteDao.query()
+        ) { channels, favorites ->
+            val (favNg, favo) = favorites.partition { it.flags.isNG }
+            channels.map { ch ->
+                val star = favo.firstOrNull { it.isStar && it.matches(ch) }
+                val isNg = star == null && favNg.any { it.matches(ch) }
+                val isNotification =
+                    favo.filter { it.flags.isNotification }.any { it.matches(ch) }
+                ListItemViewModel(c, ch, star, isNg, isNotification)
+            }.let {
+                TaggedList(channels.tag, it)
+            }
+        }.flowOn(Dispatchers.Default)
+    }
 
 
     companion object {

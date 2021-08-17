@@ -27,11 +27,8 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.peercast.pecaplay.chanlist.filter.YpChannelSource
 import org.peercast.pecaplay.core.app.PecaPlayIntent
 import org.peercast.pecaplay.databinding.PecaPlayActivityBinding
-import org.peercast.pecaplay.navigation.NavigationHistoryItem
-import org.peercast.pecaplay.navigation.NavigationNewItem
 import org.peercast.pecaplay.navigation.NavigationNotifiedItem
 import org.peercast.pecaplay.prefs.AppPreferences
 import org.peercast.pecaplay.prefs.SettingsActivity
@@ -95,23 +92,7 @@ class PecaPlayActivity : AppCompatActivity() {
         }
 
         binding.vNavigation.onItemClick = { item ->
-            viewModel.channelFilter.apply {
-                displayOrder = when (item) {
-                    is NavigationHistoryItem -> YpDisplayOrder.NONE
-                    is NavigationNotifiedItem,
-                    is NavigationNewItem,
-                    -> {
-                        removeNotification()
-                        YpDisplayOrder.AGE_ASC
-                    }
-                    else -> appPrefs.displayOrder
-                }
-                selector = item.predicate
-                source = when (item) {
-                    is NavigationHistoryItem -> YpChannelSource.HISTORY
-                    else -> YpChannelSource.LIVE
-                }
-            }
+            viewModel.channelFilter.navigationItem.tryEmit(item)
 
             binding.vDrawerLayout?.let {
                 it.closeDrawers()
@@ -258,9 +239,7 @@ class PecaPlayActivity : AppCompatActivity() {
             R.id.menu_sort_listener_asc,
             -> {
                 val order = YpDisplayOrder.fromOrdinal(item.order)
-                viewModel.channelFilter.apply {
-                    displayOrder = order
-                }
+                viewModel.channelFilter.displayOrder.value = order
                 appPrefs.displayOrder = order
                 item.isChecked = true
             }
@@ -350,9 +329,7 @@ class PecaPlayActivity : AppCompatActivity() {
         }
 
         override fun onQueryTextChange(newText: String): Boolean {
-            viewModel.channelFilter.apply {
-                searchQuery = newText
-            }
+            viewModel.channelFilter.searchQuery.value = newText
             return true
         }
 

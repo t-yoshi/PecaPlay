@@ -105,7 +105,7 @@ class NavigationModel(private val c: Context) : KoinComponent {
             items.filterIsInstance<BadgeableNavigationItem>().map { item ->
                 async {
                     val n = channels.filter {
-                        !it.isEmptyId && ngPredicate(it) && item.predicate(it)
+                        !it.isEmptyId && ngPredicate(it) && item.selector(it)
                     }.count()
                     item.badge = when {
                         n > 99 -> "99+"

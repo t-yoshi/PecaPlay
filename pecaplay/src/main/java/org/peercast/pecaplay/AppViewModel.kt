@@ -24,14 +24,13 @@ class AppViewModel(
 ) : BaseClientViewModel(a) {
     val presenter = AppViewModelPresenter(this, appPrefs, database)
 
-    /**リスト表示用*/
-    val channelFilter = ChannelFilter(viewModelScope, database, appPrefs)
-
     /**通知アイコン(ベルのマーク)の有効/無効*/
     val existsNotification = MutableStateFlow(false)
 
     /**Snackbarで表示するメッセージ*/
     val message = MutableSharedFlow<CharSequence>(1, 0, BufferOverflow.DROP_OLDEST)
+
+    val channelFilter = ChannelFilter(database, appPrefs)
 
     init {
         database.favoriteDao.query().map { favorites ->

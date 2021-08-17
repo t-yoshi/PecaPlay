@@ -3,6 +3,7 @@ package org.peercast.pecaplay.chanlist
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.os.Parcelable
 import android.view.ContextMenu
 import android.view.LayoutInflater
 import android.view.View
@@ -13,7 +14,6 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
@@ -22,7 +22,6 @@ import org.peercast.pecaplay.AppViewModel
 import org.peercast.pecaplay.R
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.app.Favorite
-import org.peercast.pecaplay.app.YpHistoryChannel
 import org.peercast.pecaplay.core.app.chatUrl
 import org.peercast.pecaplay.core.app.statisticsUrl
 import org.peercast.pecaplay.databinding.YpChannelFragmentBinding
@@ -31,21 +30,20 @@ import org.peercast.pecaplay.worker.LoadingEvent
 import org.peercast.pecaplay.worker.LoadingEventFlow
 import timber.log.Timber
 
-@Suppress("unused")
 class YpChannelFragment : Fragment() {
 
-    private val favoriteDao
-        get() = get<AppRoomDatabase>().favoriteDao
-    private val viewModel by sharedViewModel<AppViewModel>()
+    private val db by inject<AppRoomDatabase>()
+    private val appViewModel by sharedViewModel<AppViewModel>()
     private val loadingEvent by inject<LoadingEventFlow>()
     private lateinit var binding: YpChannelFragmentBinding
     private lateinit var listAdapter: ChannelListAdapter
 
     //スクロール位置を保存する。
-    private lateinit var scrollPositionSaver: ScrollPositionSaver
+    private lateinit var scrollStates: Bundle
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        scrollStates = savedInstanceState?.getBundle(STATE_SCROLL_STATES) ?: Bundle()
         listAdapter = ChannelListAdapter(get(), listItemEventListener)
     }
 
@@ -59,10 +57,28 @@ class YpChannelFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        scrollPositionSaver = ScrollPositionSaver(savedInstanceState, binding.vRecycler)
-
         registerForContextMenu(binding.vRecycler)
+
+        val listItemViewModels = appViewModel.channelFilter.toListItemViewModels(requireContext())
+
+        viewLifecycleOwner.lifecycleScope.launchWhenCreated {
+            var scrollStateKey: String? = null
+            listItemViewModels.collect { list ->
+                scrollStateKey?.let {
+                    scrollStates.putParcelable(
+                        it, binding.vRecycler.layoutManager?.onSaveInstanceState()
+                    )
+                }
+
+                listAdapter.items = list
+                Timber.d("--> ${list.tag} ${scrollStates.size()}")
+
+                scrollStateKey = list.tag
+                scrollStates.getParcelable<Parcelable>(list.tag)?.let {
+                    binding.vRecycler.layoutManager?.onRestoreInstanceState(it)
+                }
+            }
+        }
 
         viewLifecycleOwner.lifecycleScope.launchWhenCreated {
             loadingEvent.collect { ev ->
@@ -70,32 +86,12 @@ class YpChannelFragment : Fragment() {
                 when (ev) {
                     is LoadingEvent.OnStart -> {
                         binding.vSwipeRefresh.isRefreshing = true
-                        scrollPositionSaver.clear()
+                        scrollStates.clear()
                     }
                     else -> {
                         binding.vSwipeRefresh.isRefreshing = false
                     }
                 }
-            }
-        }
-
-        val viewModelsFlow = combine(
-            viewModel.channelFilter.filteredChannel,
-            favoriteDao.query()
-        ) { channels, favorites ->
-            val (favNg, favo) = favorites.partition { it.flags.isNG }
-            channels.map { ch ->
-                val star = favo.firstOrNull { it.isStar && it.matches(ch) }
-                val isNg = star == null && favNg.any { it.matches(ch) }
-                val isNotification = favo.filter { it.flags.isNotification }.any { it.matches(ch) }
-                ListItemViewModel(requireContext(), ch, star, isNg, isNotification)
-            }
-        }
-
-        viewLifecycleOwner.lifecycleScope.launchWhenCreated {
-            viewModelsFlow.collect {
-                listAdapter.items = it
-                scrollPositionSaver.restoreScrollPosition()
             }
         }
 
@@ -112,7 +108,7 @@ class YpChannelFragment : Fragment() {
         }
 
         binding.vSwipeRefresh.setOnRefreshListener {
-            viewModel.presenter.startLoading()
+            appViewModel.presenter.startLoading()
         }
     }
 
@@ -123,21 +119,18 @@ class YpChannelFragment : Fragment() {
     ) {
         val info = menuInfo as MenuableRecyclerView.ContextMenuInfo? ?: return
         val item = listAdapter.items[info.position]
-        val ch = item.ch
-
         menu.setHeaderTitle(item.ch.name)
         ContextMenuBuilder(menu).run {
             addNotificationItem(item)
-            addItem(R.string.contact, ch.url)
-            addItem(R.string.yp4g_chat, ch.chatUrl(), !ch.isEmptyId)
-            addItem(R.string.yp4g_statistics, ch.statisticsUrl(), !ch.isEmptyId)
+            addItem(R.string.contact, item.ch.url)
+            addItem(R.string.yp4g_chat, item.ch.chatUrl(), !item.ch.isEmptyId)
+            addItem(R.string.yp4g_statistics, item.ch.statisticsUrl(), !item.ch.isEmptyId)
         }
     }
 
-
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        scrollPositionSaver.onSaveInstanceState(outState)
+        outState.putBundle(STATE_SCROLL_STATES, scrollStates)
     }
 
     private inner class ContextMenuBuilder(val menu: ContextMenu) {
@@ -153,7 +146,7 @@ class YpChannelFragment : Fragment() {
                     menu.add(R.string.notification_delete)
                         .setOnMenuItemClickListener { mi ->
                             lifecycleScope.launchWhenResumed {
-                                favoriteDao.update(star.copyFlags { it.copy(isNotification = false) })
+                                db.favoriteDao.update(star.copyFlags { it.copy(isNotification = false) })
                             }
                             false
                         }
@@ -162,7 +155,7 @@ class YpChannelFragment : Fragment() {
                     menu.add(R.string.notification_add)
                         .setOnMenuItemClickListener { mi ->
                             lifecycleScope.launchWhenResumed {
-                                favoriteDao.update(star.copyFlags { it.copy(isNotification = true) })
+                                db.favoriteDao.update(star.copyFlags { it.copy(isNotification = true) })
                             }
                             false
                         }
@@ -189,16 +182,16 @@ class YpChannelFragment : Fragment() {
             Timber.d("onStarClicked(%s, %s)", m, isChecked)
             lifecycleScope.launch {
                 m.star?.let {
-                    favoriteDao.remove(it)
+                    db.favoriteDao.remove(it)
                 } ?: Favorite.Star(m.ch).let {
-                    favoriteDao.add(it)
+                    db.favoriteDao.add(it)
                 }
             }
         }
 
         override fun onItemClick(m: ListItemViewModel, position: Int) {
             if (m.ch.isPlayable && !m.isNg) {
-                viewModel.presenter.startPlay(requireActivity(), m.ch)
+                appViewModel.presenter.startPlay(requireActivity(), m.ch)
             }
         }
 
@@ -215,7 +208,7 @@ class YpChannelFragment : Fragment() {
 
     companion object {
         private const val TAG = "YpChannelFragment"
-        private const val STATE_SCROLL_POSITIONS = "$TAG#scroll-positions"
+        private const val STATE_SCROLL_STATES = "$TAG#scrollStates"
     }
 
 }

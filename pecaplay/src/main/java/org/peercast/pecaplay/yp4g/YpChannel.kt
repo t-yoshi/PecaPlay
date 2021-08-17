@@ -2,8 +2,6 @@ package org.peercast.pecaplay.yp4g
 
 import androidx.room.Ignore
 import org.peercast.pecaplay.core.app.Yp4gChannel
-import java.util.*
-import kotlin.collections.HashMap
 
 /**
  * YP4G/index.txtのChannel情報です。

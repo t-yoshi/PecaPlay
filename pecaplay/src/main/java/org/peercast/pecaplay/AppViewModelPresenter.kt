@@ -49,7 +49,7 @@ class AppViewModelPresenter(
     fun startPlay(a: Activity, ch: YpChannel) {
         Timber.i("startPlay(%s)", ch)
 
-        val searchQuery = viewModel.channelFilter.params.searchQuery
+        val searchQuery = viewModel.channelFilter.searchQuery.value
         if (searchQuery.isNotBlank()) {
             saveRecentQuery(a, searchQuery)
         }
