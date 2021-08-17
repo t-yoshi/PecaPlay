@@ -2,7 +2,6 @@ package org.peercast.pecaplay.app
 
 import android.net.Uri
 import androidx.room.Entity
-import androidx.room.Ignore
 import kotlinx.parcelize.Parcelize
 import org.peercast.pecaplay.yp4g.YpChannel
 import java.util.*
@@ -14,7 +13,7 @@ import java.util.*
 @Parcelize
 @Entity(tableName = "YpHistoryChannel",
     primaryKeys = ["name", "id"])
-data class YpHistoryChannel @JvmOverloads constructor(
+data class YpHistoryChannel constructor(
     override val name: String,
     override val id: String,
     override val ip: String,
@@ -41,10 +40,7 @@ data class YpHistoryChannel @JvmOverloads constructor(
     /**最終再生日*/
     val lastPlay: Date,
 
-    @Ignore
-    /**現在もYPに掲載されていて再生可能か*/
-    val liveChannel: YpLiveChannel? = null,
-) : YpChannel() {
+    ) : YpChannel() {
 
     constructor(ch: YpChannel, lastPlay: Date = Date()) : this(
         name = ch.name,
@@ -71,5 +67,5 @@ data class YpHistoryChannel @JvmOverloads constructor(
         lastPlay = lastPlay
     )
 
-    override val isPlayable get() = liveChannel != null && super.isPlayable
+    override val isPlayable get() = false
 }

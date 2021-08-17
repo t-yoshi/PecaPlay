@@ -26,11 +26,11 @@ class ChannelFilter(
     private val historyChannel = combine(
         db.ypChannelDao.query(),
         db.ypHistoryDao.query()
-    ) { channels, histories ->
+    ) { liveChannels, histories ->
         withContext(Dispatchers.Default) {
-            histories.map { h ->
-                //現在存在して再生可能か
-                h.copy(liveChannel = channels.firstOrNull(h::equalsIdName))
+            histories.map {
+                //現在配信中ならそれを表示する
+                liveChannels.firstOrNull(it::equalsIdName) ?: it
             }
         }
     }

@@ -198,11 +198,7 @@ class YpChannelFragment : Fragment() {
 
         override fun onItemClick(m: ListItemViewModel, position: Int) {
             if (m.ch.isPlayable && !m.isNg) {
-                val ch = when (m.ch){
-                    is YpHistoryChannel -> checkNotNull(m.ch.liveChannel)
-                    else -> m.ch
-                }
-                viewModel.presenter.startPlay(requireActivity(), ch)
+                viewModel.presenter.startPlay(requireActivity(), m.ch)
             }
         }
 

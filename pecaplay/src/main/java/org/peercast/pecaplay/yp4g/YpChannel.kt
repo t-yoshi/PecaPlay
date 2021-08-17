@@ -10,6 +10,7 @@ import kotlin.collections.HashMap
  */
 abstract class YpChannel : Yp4gChannel {
 
+    /**再生可能か*/
     open val isPlayable get() = !isEmptyId
 
     val isEmptyId get() = id == EMPTY_ID
