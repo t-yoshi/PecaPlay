@@ -368,8 +368,7 @@ class PlayerService : LifecycleService() {
         player.release()
     }
 
-    private inner class DelegatedPlayer(view: PlayerView) : Player by player,
-        Player.Listener {
+    private inner class DelegatedPlayer(view: PlayerView) : Player by player, Player.Listener {
         //pauseボタンの挙動をstopに変更する。
         override fun setPlayWhenReady(playWhenReady: Boolean) {
             if (!playWhenReady)
@@ -381,27 +380,22 @@ class PlayerService : LifecycleService() {
 
         //再生中は消灯しない
         override fun onPlaybackStateChanged(state: Int) {
-            weakView.get()?.keepScreenOn = state == Player.STATE_READY
-        }
-
-        fun removeListenerMyself() {
-            removeListener(this)
+            val v = weakView.get()
+            if (v != null && v.player == this) {
+                v.keepScreenOn = state == Player.STATE_READY
+            } else {
+                player.removeListener(this)
+            }
         }
 
         init {
-            addListener(this)
+            player.addListener(this)
         }
     }
 
     companion object {
         fun PlayerView.setPlayerService(service: PlayerService?) {
-            if (service != null) {
-                player = service.DelegatedPlayer(this)
-            } else {
-                (player as DelegatedPlayer?)?.removeListenerMyself()
-                player = null
-                keepScreenOn = false
-            }
+            player = service?.DelegatedPlayer(this)
         }
 
         private val AA_MEDIA_MOVIE = AudioAttributes.Builder()
