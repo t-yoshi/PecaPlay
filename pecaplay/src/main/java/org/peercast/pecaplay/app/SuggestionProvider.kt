@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.SearchRecentSuggestionsProvider
 import android.provider.SearchRecentSuggestions
 
-private const val AUTHORITY = "org.peercast.pecaplay.core.app.SuggestionProvider"
+private const val AUTHORITY = "org.peercast.pecaplay.app.SuggestionProvider"
 
 class SuggestionProvider : SearchRecentSuggestionsProvider() {
     init {
