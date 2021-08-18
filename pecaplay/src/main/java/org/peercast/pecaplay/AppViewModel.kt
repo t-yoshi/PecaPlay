@@ -24,8 +24,11 @@ class AppViewModel(
 ) : BaseClientViewModel(a) {
     val presenter = AppViewModelPresenter(this, appPrefs, database)
 
-    /**通知アイコン(ベルのマーク)の有効/無効*/
-    val existsNotification = MutableStateFlow(false)
+    /**通知アイコン(ベルのマーク)ボタンの有効/無効*/
+    val notificationIconEnabled = database.favoriteDao.query().map { favorites ->
+        favorites.firstOrNull { it.flags.run { !isNG && isNotification } } != null
+    }.stateIn(viewModelScope, SharingStarted.Lazily,false)
+
 
     /**Snackbarで表示するメッセージ*/
     val message = MutableSharedFlow<CharSequence>(1, 0, BufferOverflow.DROP_OLDEST)
@@ -33,11 +36,6 @@ class AppViewModel(
     val channelFilter = ChannelFilter(database, appPrefs)
 
     init {
-        database.favoriteDao.query().map { favorites ->
-            favorites.firstOrNull { it.flags.run { !isNG && isNotification } } != null
-        }.onEach { existsNotification.value = it }
-            .launchIn(viewModelScope)
-
         loadingEvent.filterIsInstance<LoadingEvent.OnException>().onEach { ev ->
             val s = when (ev.e) {
                 is HttpException -> ev.e.response()?.message()

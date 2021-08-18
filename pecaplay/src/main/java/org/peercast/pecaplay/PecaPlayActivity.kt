@@ -124,7 +124,7 @@ class PecaPlayActivity : AppCompatActivity() {
         }
 
         lifecycleScope.launchWhenResumed {
-            viewModel.existsNotification.collect {
+            viewModel.notificationIconEnabled.collect {
                 invalidateOptionsMenu()
             }
         }
@@ -192,7 +192,7 @@ class PecaPlayActivity : AppCompatActivity() {
         menuInflater.inflate(R.menu.main_menu, menu)
 
         menu.findItem(R.id.menu_notification).let {
-            it.isEnabled = viewModel.existsNotification.value
+            it.isEnabled = viewModel.notificationIconEnabled.value
             val b = appPrefs.isNotificationEnabled
             it.setIcon(
                 when (b) {
