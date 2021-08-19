@@ -79,17 +79,17 @@ internal class PecaViewerViewModel(
 
         }
 
-    private val playerService_ = MutableStateFlow<PlayerService?>(null)
+    private val _playerService = MutableStateFlow<PlayerService?>(null)
 
-    val playerService: StateFlow<PlayerService?> get() = playerService_
+    val playerService: StateFlow<PlayerService?> get() = _playerService
 
     private val playerServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName, binder: IBinder) {
-            playerService_.value = (binder as PlayerService.Binder).service
+            _playerService.value = (binder as PlayerService.Binder).service
         }
 
         override fun onServiceDisconnected(name: ComponentName?) {
-            playerService_.value = null
+            _playerService.value = null
         }
     }
 
@@ -98,9 +98,9 @@ internal class PecaViewerViewModel(
     }
 
     fun unbindPlayerService(){
-        if (playerService_.value != null) {
+        if (_playerService.value != null) {
             a.unbindService(playerServiceConnection)
-            playerService_.value = null
+            _playerService.value = null
         }
     }
 

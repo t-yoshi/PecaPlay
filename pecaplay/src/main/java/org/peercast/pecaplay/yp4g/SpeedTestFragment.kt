@@ -9,10 +9,10 @@ import android.widget.Button
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDialogFragment
 import androidx.core.content.res.ResourcesCompat
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Observer
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
@@ -44,9 +44,11 @@ class SpeedTestFragment : AppCompatDialogFragment() {
                 .let(adapter::addAll)
         }
 
-        viewModel.isStartButtonEnabled.observe(this, Observer {
-            dialog?.startButton?.isEnabled = it
-        })
+        lifecycleScope.launchWhenStarted {
+            viewModel.isStartButtonEnabled.collect {
+                dialog?.startButton?.isEnabled = it
+            }
+        }
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
@@ -77,9 +79,9 @@ class SpeedTestFragment : AppCompatDialogFragment() {
     }
 
     class ViewModel {
-        val status = MutableLiveData<CharSequence>("")
-        val progress = MutableLiveData(0)
-        val isStartButtonEnabled = MutableLiveData(false)
+        val status = MutableStateFlow<CharSequence>("")
+        val progress = MutableStateFlow(0)
+        val isStartButtonEnabled = MutableStateFlow(false)
     }
 
     private inner class Presenter {
@@ -100,7 +102,7 @@ class SpeedTestFragment : AppCompatDialogFragment() {
             lifecycleScope.launchWhenResumed {
                 tester.startTest {
                     //Timber.d("progress=$progress")
-                    viewModel.progress.postValue(it)
+                    viewModel.progress.value = it
                 }
                 viewModel.status.value = tester.status
             }

@@ -6,9 +6,8 @@ import android.view.LayoutInflater
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import androidx.appcompat.app.AlertDialog
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.asFlow
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -19,12 +18,11 @@ import org.peercast.pecaplay.databinding.PrefYellowpageEditorBinding
 class YellowPageEditorDialogFragment : BaseEntityEditDialogFragment<YellowPage>() {
 
     class ViewModel {
-        val name = MutableLiveData("NewYP")
-        val url = MutableLiveData("http://")
+        val name = MutableStateFlow("NewYP")
+        val url = MutableStateFlow("http://")
 
         fun toYellowPage() = YellowPage(
-            requireNotNull(name.value),
-            requireNotNull(url.value)
+            name.value, url.value
         )
     }
 
@@ -42,8 +40,7 @@ class YellowPageEditorDialogFragment : BaseEntityEditDialogFragment<YellowPage>(
 
         combine(
             database.yellowPageDao.query(false),
-            viewModel.name.asFlow(),
-            viewModel.url.asFlow(),
+            viewModel.name, viewModel.url,
         ) { yellowPages, name, url ->
             val existsNames = yellowPages.map { it.name }
             val existsUrls = yellowPages.map { it.url }
@@ -65,7 +62,7 @@ class YellowPageEditorDialogFragment : BaseEntityEditDialogFragment<YellowPage>(
             val adapter = AutoCompleteAdapter(context)
             setAdapter(adapter)
             onItemClickListener = AdapterView.OnItemClickListener { _, _, _, _ ->
-                adapter.getUrl(viewModel.name.value!!)?.let {
+                adapter.getUrl(viewModel.name.value)?.let {
                     viewModel.url.value = it
                 }
             }

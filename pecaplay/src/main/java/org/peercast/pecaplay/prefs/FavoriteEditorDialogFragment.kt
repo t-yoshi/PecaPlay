@@ -7,8 +7,8 @@ import androidx.appcompat.app.AlertDialog
 import androidx.databinding.BaseObservable
 import androidx.databinding.Bindable
 import androidx.databinding.Observable
-import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.peercast.pecaplay.BR
@@ -70,7 +70,7 @@ class FavoriteEditorDialogFragment : BaseEntityEditDialogFragment<Favorite>() {
         super.onSaveInstanceState(outState)
         //編集途中を保存
         outState.putParcelable(STATE_EDITING_ITEM, viewModel.fav)
-        outState.putBoolean(STATE_ADVANCE_MODE, viewModel.isAdvancedMode.value!!)
+        outState.putBoolean(STATE_ADVANCE_MODE, viewModel.isAdvancedMode.value)
     }
 
 
@@ -79,16 +79,18 @@ class FavoriteEditorDialogFragment : BaseEntityEditDialogFragment<Favorite>() {
 
         //詳細<->戻る
         dialog.neutralButton.setOnClickListener {
-            viewModel.isAdvancedMode.value = !viewModel.isAdvancedMode.value!!
+            viewModel.isAdvancedMode.value = !viewModel.isAdvancedMode.value
         }
 
-        viewModel.isAdvancedMode.observe(this) {
-            if (it) {
-                dialog.neutralButton.setText(R.string.manageable_editor_back)
-                dialog.cancelButton.isEnabled = false
-            } else {
-                dialog.neutralButton.setText(R.string.manageable_editor_options)
-                dialog.cancelButton.isEnabled = true
+        lifecycleScope.launchWhenStarted {
+            viewModel.isAdvancedMode.collect {
+                if (it) {
+                    dialog.neutralButton.setText(R.string.manageable_editor_back)
+                    dialog.cancelButton.isEnabled = false
+                } else {
+                    dialog.neutralButton.setText(R.string.manageable_editor_options)
+                    dialog.cancelButton.isEnabled = true
+                }
             }
         }
     }
@@ -98,7 +100,7 @@ class FavoriteEditorDialogFragment : BaseEntityEditDialogFragment<Favorite>() {
     }
 
     override fun onBackPressed(): Boolean {
-        if (viewModel.isAdvancedMode.value!!) {
+        if (viewModel.isAdvancedMode.value) {
             viewModel.isAdvancedMode.value = false
             return true
         }
@@ -227,6 +229,6 @@ class FavoriteEditorDialogFragment : BaseEntityEditDialogFragment<Favorite>() {
                     validRegExp()
             }
 
-        val isAdvancedMode = MutableLiveData(false)
+        val isAdvancedMode = MutableStateFlow(false)
     }
 }
