@@ -6,7 +6,6 @@ import okhttp3.ResponseBody
 import org.peercast.pecaplay.app.YellowPage
 import retrofit2.Converter
 import retrofit2.Retrofit
-import retrofit2.converter.simplexml.SimpleXmlConverterFactory
 import timber.log.Timber
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
@@ -36,6 +35,11 @@ private class Yp4gChannelBinderConverter(
     }
 }
 
+private class Yp4gConfigConverter : Converter<ResponseBody, Yp4gConfig> {
+    override fun convert(value: ResponseBody): Yp4gConfig {
+        return value.byteStream().use(Yp4gConfig::parse)
+    }
+}
 
 private object YpConverterFactory : Converter.Factory() {
     override fun responseBodyConverter(
@@ -47,6 +51,9 @@ private object YpConverterFactory : Converter.Factory() {
             getParameterUpperBound(0, type) === Yp4gChannelBinder::class.java
         ) {
             return Yp4gChannelBinderConverter(retrofit.baseUrl())
+        }
+        if (type === Yp4gConfig::class.java) {
+            return Yp4gConfigConverter()
         }
         return null
     }
@@ -61,7 +68,6 @@ fun createYp4gService(httpClient: OkHttpClient, baseUrl: String): Yp4gService {
         .client(httpClient)
         .baseUrl(baseUrl)
         .addConverterFactory(YpConverterFactory)
-        .addConverterFactory(SimpleXmlConverterFactory.create())
         .build()
         .create(Yp4gService::class.java)
 }

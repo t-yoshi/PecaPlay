@@ -99,16 +99,7 @@ dependencies {
     implementation "androidx.work:work-runtime:$work_version"
     implementation "androidx.work:work-runtime-ktx:$work_version"
 
-
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
-    implementation('com.squareup.retrofit2:converter-simplexml:2.9.0') {
-        exclude module: 'stax'
-        exclude module: 'stax-api'
-        exclude module: 'xpp3'
-    }
-//    implementation 'com.squareup.moshi:moshi:1.12.0'
-//    kapt 'com.squareup.moshi:moshi-kotlin-codegen:1.12.0'
-//    implementation 'com.squareup.moshi:moshi-kotlin:1.12.0'
 
     implementation "com.squareup.okhttp3:okhttp:$okhttp_version"
     implementation "com.squareup.okhttp3:logging-interceptor:$okhttp_version"
@@ -125,6 +116,7 @@ dependencies {
 
     implementation project(":pecaviewer")
 
+    testImplementation  'net.sf.kxml:kxml2:2.3.0'
     testImplementation 'junit:junit:4.13.2'
     testImplementation "android.arch.core:core-testing:1.1.1"
     androidTestImplementation 'androidx.test:runner:1.4.0'

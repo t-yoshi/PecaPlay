@@ -2,8 +2,7 @@ package org.peercast.pecaplay
 
 import org.junit.Test
 import org.peercast.pecaplay.app.YellowPage
-import org.peercast.pecaplay.yp4g.Yp4gField
-import org.peercast.pecaplay.yp4g.createYp4gService
+import org.peercast.pecaplay.yp4g.net.Yp4gConfig
 import timber.log.Timber
 
 
@@ -22,153 +21,34 @@ class YpTest {
         })
     }
 
-
     @Test
-    fun print_Yp4gField_field_name() {
+    fun testYpConfig() {
+        val s = """
+            <yp4g>
+            <yp name="Xxx yellow Pages"/>
+            <host ip="123.145.167.189" port_open="0" speed="0" over="0"/>
+            <uptest checkable="0" remain="0"/>
+            <uptest_srv addr="xxx.orz.abc" port="443" object="/uptest.cgi" post_size="250" limit="4500" interval="15" enabled="0"/>
+            </yp4g>
+        """.trimIndent()
+        val config = Yp4gConfig.parse(s.byteInputStream())
 
-        val parameters = Yp4gField::class.constructors.first().parameters
-        var s = parameters.joinToString(
-            prefix = "val NAMES = listOf(\"",
-            separator = "\",\"",
-            postfix = "\")",
-            transform = { it.name!! }
-        )
-        println(s)
+//        --> /yp4g/host@ip=123.145.167.189
+//        --> /yp4g/host@over=0
+//        --> /yp4g/host@port_open=0
+//        --> /yp4g/host@speed=0
+//        --> /yp4g/uptest@checkable=0
+//        --> /yp4g/uptest@remain=0
+//        --> /yp4g/uptest_srv@addr=xxx.orz.abc
+//        --> /yp4g/uptest_srv@enabled=0
+//        --> /yp4g/uptest_srv@interval=15
+//        --> /yp4g/uptest_srv@limit=4500
+//        --> /yp4g/uptest_srv@object=/uptest.cgi
+//        --> /yp4g/uptest_srv@port=443
+//        --> /yp4g/uptest_srv@post_size=250
+//        --> /yp4g/yp@name=Xxx yellow Pages
 
-
-
-        s = parameters.joinToString(
-            prefix = "fun toStringValues() = listOf(",
-            separator = ", ",
-            postfix = ")",
-            transform = {
-                when {
-                    it.type.javaType == String::class.java -> "${it.name}"
-                    else -> "${it.name}.toString()"
-                }
-            }
-        )
-        println(s)
+        println(config)
     }
 
-    @Test
-    fun loadYpTest() {
-        createYp4gService(fakeYp)
-            .getIndex("localhost:7144")
-            .execute().body()?.forEach {
-                println(it.toString())
-            }
-    }
-
-    @Test
-    fun rxLoadYpTest() {
-/*
-        listOf(errYp, fakeYp, sp, tp).map { yp->
-            createYp4gService(yp).getIndexRx("localhost:7144")
-                .subscribeOn(Schedulers.io())
-                .map {res->
-                    val u = res.raw().request().url().toString()
-                    res.body()?.map { it.create(yp, u) } ?: emptyList()
-                }
-                .onErrorReturn {th->
-                    println("error: $yp")
-                    th.printStackTrace()
-                    //errorHandler
-                    emptyList()
-                }
-        }.let {singles->
-            Single.zip(singles){a->
-                @Suppress("unchecked_cast")
-                a.map { it as List<Yp4gRawField>  }
-                    .flatten()
-            }
-        }.let {
-            it.subscribe { lines->
-                println("OK:")
-                lines.forEach {
-                    println(it)
-                }
-            }
-        }
-/ *
-        val x1 = createYp4gService(fakeYp)
-            .getIndexRx("localhost:7144").map {
-                val u = it.raw().request().url().toString()
-                it.body()?.map { it.create(fakeYp, u) } ?: emptyList()
-            }
-        val x2 = createYp4gService(sp)
-            .getIndexRx("localhost:7144").map {
-                val u = it.raw().request().url().toString()
-                it.body()?.map { it.create(sp, u) } ?: emptyList()
-            }
-            .onErrorReturn { emptyList() }
-        Single.zip<List<Yp4gRawField>, List<Yp4gRawField>>(listOf(x1, x2)){
-            println("xx ${it.toList()}")
-            it.map{ it as List<Yp4gRawField> }.flatten()
-        }.subscribe ({
-            println(it)
-        }){
-            it.printStackTrace()
-        }
-
-        Observable.combineLatest(
-            x1.toObservable(),
-            x2.toObservable(),
-            BiFunction<List<Yp4gRawField>, List<Yp4gRawField>, List<Yp4gRawField>> { t1, t2 -> t1+t2 })
-            .onErrorReturn {
-                it.printStackTrace()
-                emptyList()
-            }
-            .subscribe({
-                it.forEach {
-                    println(it)
-                }
-            }){
-                it.printStackTrace()
-            }
-*/
-
-/*
-        createYp4gService(fakeYp)
-            .getIndexRx("localhost:7144")
-//            .subscribeOn(
-//                Schedulers.io()
-//            )
-
-            .subscribe({
-                val u = it.raw().request().url().toString()
-                val channels = it.body()?.map { it.create(fakeYp, u) }
-                println(channels)
-            }){
-                it.printStackTrace()
-            }
-*/
-    }
-
-    @Test
-    fun uploadTest() {
-        /*
-        val tester = Yp4gSpeedTester(fakeYp)
-        var isFinish = false
-
-        tester.loadConfig {
-            println("loadConfig $it: ${tester.config}")
-
-            if (it) {
-                tester.startTest({
-                    println("progress=$it")
-
-                }) {
-                    println("success=$it")
-                    isFinish = true
-                }
-            } else {
-                isFinish = true
-            }
-        }
-
-        while (!isFinish)
-            Thread.sleep(100)
-            */
-    }
 }

@@ -6,6 +6,7 @@ import okhttp3.OkHttpClient
 import org.peercast.pecaplay.R
 import org.peercast.pecaplay.app.YellowPage
 import org.peercast.pecaplay.yp4g.net.RandomDataBody
+import org.peercast.pecaplay.yp4g.net.Yp4gConfig
 import org.peercast.pecaplay.yp4g.net.createYp4gService
 import timber.log.Timber
 import java.io.IOException
