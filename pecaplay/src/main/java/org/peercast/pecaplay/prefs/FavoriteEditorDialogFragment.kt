@@ -10,7 +10,8 @@ import androidx.databinding.Observable
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import org.peercast.pecaplay.BR
 import org.peercast.pecaplay.R
 import org.peercast.pecaplay.app.Favorite
@@ -20,17 +21,9 @@ import java.util.regex.PatternSyntaxException
 
 class FavoriteEditorDialogFragment : BaseEntityEditDialogFragment<Favorite>() {
     private lateinit var viewModel: ViewModel
-    private var existsNames = emptyList<String>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        lifecycleScope.launch {
-            database.favoriteDao.query(false)
-                .collect {
-                    existsNames = it.map { it.name }
-                }
-        }
 
         //編集途中 or 編集 or 新規
         viewModel = ViewModel(
@@ -41,6 +34,11 @@ class FavoriteEditorDialogFragment : BaseEntityEditDialogFragment<Favorite>() {
         )
 
         viewModel.isAdvancedMode.value = savedInstanceState?.getBoolean(STATE_ADVANCE_MODE) ?: false
+
+        var existsNames = emptyList<String>()
+        database.favoriteDao.query(false)
+            .onEach { existsNames = it.map { it.name } }
+            .launchIn(lifecycleScope)
 
         viewModel.run {
             addOnPropertyChangedCallback(object : Observable.OnPropertyChangedCallback() {
