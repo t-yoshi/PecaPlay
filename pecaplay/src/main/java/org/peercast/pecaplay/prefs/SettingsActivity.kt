@@ -3,7 +3,7 @@ package org.peercast.pecaplay.prefs
 import android.os.Bundle
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.Fragment
+import androidx.fragment.app.commit
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 
@@ -13,20 +13,17 @@ class SettingsActivity : AppCompatActivity(),
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        supportActionBar?.let {
-            it.setDisplayHomeAsUpEnabled(true)
-        }
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-        when (intent.action) {
-            ACTION_FAVORITE_PREFS -> replaceFragment(FavoritePrefsFragment())
-            else -> replaceFragment(GeneralPrefsFragment())
+        if (savedInstanceState == null) {
+            val f = when (intent.action) {
+                ACTION_FAVORITE_PREFS -> FavoritePrefsFragment()
+                else -> GeneralPrefsFragment()
+            }
+            supportFragmentManager.commit {
+                replace(android.R.id.content, f)
+            }
         }
-    }
-
-    private fun replaceFragment(frag: Fragment) {
-        supportFragmentManager.beginTransaction()
-            .replace(android.R.id.content, frag)
-            .commit()
     }
 
     override fun onPreferenceStartFragment(
@@ -34,11 +31,11 @@ class SettingsActivity : AppCompatActivity(),
         pref: Preference,
     ): Boolean {
         val f = supportFragmentManager.fragmentFactory.instantiate(classLoader, pref.fragment)
-        supportFragmentManager.beginTransaction()
-            .addToBackStack(null)
-            //.setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
-            .replace(android.R.id.content, f)
-            .commit()
+        supportFragmentManager.commit {
+            addToBackStack(null)
+            //setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+            replace(android.R.id.content, f)
+        }
         return true
     }
 
@@ -58,10 +55,7 @@ class SettingsActivity : AppCompatActivity(),
 
     companion object {
         const val ACTION_FAVORITE_PREFS =
-            "org.peercast.pecaplay.core.prefs.ACTION_FAVORITE_PREFS"
-
-        /**夜間モードが変更された(lollipop only)*/
-        const val RESULT_NIGHT_MODE_CHANGED = RESULT_FIRST_USER
+            "org.peercast.pecaplay.prefs.ACTION_FAVORITE_PREFS"
     }
 }
 

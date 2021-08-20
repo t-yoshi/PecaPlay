@@ -1,13 +1,10 @@
 package org.peercast.pecaplay.prefs
 
-import android.app.Activity
-import android.app.Instrumentation
 import android.content.Context
 import android.content.Intent
 import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Bundle
-import androidx.activity.result.ActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -30,12 +27,14 @@ class GeneralPrefsFragment : PreferenceFragmentCompat() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){ res->
-            val u: Uri? = res.data?.extras?.getParcelable(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
-            val prefs = checkNotNull(findPreference("pref_notification_sound"))
-            prefs.summary = u.toRingtoneTitle()
-            appPrefs.notificationSoundUrl = u
-        }
+        launcher =
+            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
+                val u: Uri? =
+                    res.data?.extras?.getParcelable(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+                val prefs = checkNotNull(findPreference("pref_notification_sound"))
+                prefs.summary = u.toRingtoneTitle()
+                appPrefs.notificationSoundUrl = u
+            }
     }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
