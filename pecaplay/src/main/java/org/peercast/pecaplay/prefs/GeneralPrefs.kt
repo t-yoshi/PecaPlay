@@ -1,10 +1,15 @@
 package org.peercast.pecaplay.prefs
 
 import android.app.Activity
+import android.app.Instrumentation
+import android.content.Context
 import android.content.Intent
 import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Bundle
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.EditTextPreference
@@ -21,6 +26,17 @@ import java.util.*
 class GeneralPrefsFragment : PreferenceFragmentCompat() {
     private val appPrefs: AppPreferences by inject()
     private val appDatabase: AppRoomDatabase by inject()
+    private lateinit var launcher: ActivityResultLauncher<Intent>
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()){ res->
+            val u: Uri? = res.data?.extras?.getParcelable(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+            val prefs = checkNotNull(findPreference("pref_notification_sound"))
+            prefs.summary = u.toRingtoneTitle()
+            appPrefs.notificationSoundUrl = u
+        }
+    }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         addPreferencesFromResource(R.xml.pref_general)
@@ -29,87 +45,69 @@ class GeneralPrefsFragment : PreferenceFragmentCompat() {
     override fun onResume() {
         super.onResume()
 
-        with(findPreference<EditTextPreference>(DefaultAppPreferences.KEY_PEERCAST_SERVER_URL) as EditTextPreference) {
-            setOnPreferenceChangeListener { _, newValue ->
+        checkNotNull(findPreference<EditTextPreference>(DefaultAppPreferences.KEY_PEERCAST_SERVER_URL)).let {
+            it.setOnPreferenceChangeListener { _, newValue ->
                 val ok = newValue == "" || Uri.parse(newValue as String).run {
                     scheme == "http" &&
                             host?.isNotEmpty() == true &&
                             port > 1024 && path == "/"
                 }
                 if (ok)
-                    summary = newValue.toString()
+                    it.summary = newValue.toString()
                 ok
             }
-            summary = appPrefs.peerCastUrl.toString()
+            it.summary = appPrefs.peerCastUrl.toString()
         }
 
-        with(findPreference<Preference>("pref_header_yellow_page")!!) {
+        checkNotNull(findPreference("pref_header_yellow_page")).let {
             lifecycleScope.launchWhenResumed {
-                summary = appDatabase.yellowPageDao.query(true)
+                it.summary = appDatabase.yellowPageDao.query(true)
                     .first().map { it.name }.toString()
             }
         }
 
-        findPreference<Preference>("pref_about")!!.let {
+        checkNotNull(findPreference("pref_about")).let {
             it.title = "${getString(R.string.app_name)} v${BuildConfig.VERSION_NAME}"
             it.summary = "Build: ${Date(BuildConfig.TIMESTAMP)}"
         }
 
-        findPreference<Preference>("pref_notification_sound")!!.let {
+        checkNotNull(findPreference("pref_notification_sound")).let {
             it.onPreferenceClickListener = Preference.OnPreferenceClickListener {
-                startActivityForResult(Intent().apply {
+                val i = Intent().apply {
                     action = RingtoneManager.ACTION_RINGTONE_PICKER
                     putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_NOTIFICATION)
                     putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI,
                         appPrefs.notificationSoundUrl)
                     putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE,
                         getString(R.string.notification_sound))
-                }, REQ_SOUND_PICKER)
+                }
+                launcher.launch(i)
                 true
             }
-            it.summary = getNotificationSoundTitle(appPrefs.notificationSoundUrl)
+            it.summary = appPrefs.notificationSoundUrl.toRingtoneTitle()
         }
 
-        with(findPreference<Preference>("pref_oss_license")!!) {
-            setOnPreferenceClickListener {
+        checkNotNull(findPreference("pref_oss_license")).let {
+            it.setOnPreferenceClickListener {
                 startActivity(Intent(context, OssLicensesMenuActivity::class.java))
                 true
             }
         }
     }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
         (activity as AppCompatActivity?)?.supportActionBar?.title =
             getString(R.string.pref_header_general)
     }
 
-    private fun getNotificationSoundTitle(u: Uri?): String {
-        val c = context
+    private fun Uri?.toRingtoneTitle(): String {
+        val c = requireContext()
         return when {
-            u != null && u != Uri.EMPTY ->
-                RingtoneManager.getRingtone(c, u)?.getTitle(c)
-            else -> null
+            this == null || this == Uri.EMPTY -> null
+            else -> RingtoneManager.getRingtone(c, this)?.getTitle(c)
         } ?: getString(R.string.none)
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (resultCode != Activity.RESULT_OK || data == null)
-            return
-
-        when (requestCode) {
-            REQ_SOUND_PICKER -> {
-                val u: Uri? = data.extras?.getParcelable(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
-                //Timber.d("${data.extras.keySet().toList()}")
-                findPreference<Preference>("pref_notification_sound")!!.summary =
-                    getNotificationSoundTitle(u)
-                appPrefs.notificationSoundUrl = u
-            }
-        }
-    }
-
-    companion object {
-        private const val REQ_SOUND_PICKER = 1
-    }
 }
 
