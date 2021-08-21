@@ -108,9 +108,9 @@
     <string name="notified">Notified</string>
     <string name="notification_add">Add Notification</string>
     <string name="notification_delete">Remove Notification</string>
-    <string name="notification_sound">Notification Sound</string>
     <string name="notification_new_channels">PecaPlay: now %dchannels found</string>
-
+    <string name="notification_channel_new_channels_found">New Channels</string>
+    <string name="notification_settings">Notification settings</string>
     <!--
     <string name="notification_types">Notification types</string>
     <string name="notification_sound">Sound</string>

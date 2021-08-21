@@ -43,17 +43,6 @@ class DefaultAppPreferences(c: Context) : AppPreferences() {
             prefs.edit { putBoolean(KEY_NOTIFICATION_ENABLED, value) }
         }
 
-    override var notificationSoundUrl: Uri?
-        set(value) {
-            when (value) {
-                null, Uri.EMPTY ->
-                    prefs.edit { remove(KEY_NOTIFICATION_SOUND_URL) }
-                else ->
-                    prefs.edit { putString(KEY_NOTIFICATION_SOUND_URL, value.toString()) }
-            }
-        }
-        get() = prefs.getString(KEY_NOTIFICATION_SOUND_URL, null)?.let(Uri::parse) ?: Uri.EMPTY
-
     override var notificationNewlyChannelsId: List<String>
         get() = prefs.getStringSet(KEY_NOTIFICATION_NEWLY_CHANNELS_ID, null)?.toList()
             ?: emptyList()

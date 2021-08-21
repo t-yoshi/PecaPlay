@@ -1,12 +1,12 @@
 package org.peercast.pecaplay.prefs
 
+import android.annotation.TargetApi
 import android.content.Context
 import android.content.Intent
-import android.media.RingtoneManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
-import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
+import android.provider.Settings
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.EditTextPreference
@@ -18,24 +18,12 @@ import org.koin.android.ext.android.inject
 import org.peercast.pecaplay.BuildConfig
 import org.peercast.pecaplay.R
 import org.peercast.pecaplay.app.AppRoomDatabase
+import org.peercast.pecaplay.worker.NotificationTask
 import java.util.*
 
 class GeneralPrefsFragment : PreferenceFragmentCompat() {
     private val appPrefs: AppPreferences by inject()
     private val appDatabase: AppRoomDatabase by inject()
-    private lateinit var launcher: ActivityResultLauncher<Intent>
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        launcher =
-            registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
-                val u: Uri? =
-                    res.data?.extras?.getParcelable(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
-                val prefs = checkNotNull(findPreference("pref_notification_sound"))
-                prefs.summary = u.toRingtoneTitle()
-                appPrefs.notificationSoundUrl = u
-            }
-    }
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         addPreferencesFromResource(R.xml.pref_general)
@@ -71,19 +59,17 @@ class GeneralPrefsFragment : PreferenceFragmentCompat() {
         }
 
         checkNotNull(findPreference("pref_notification_sound")).let {
-            it.onPreferenceClickListener = Preference.OnPreferenceClickListener {
-                val i = Intent().apply {
-                    action = RingtoneManager.ACTION_RINGTONE_PICKER
-                    putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_NOTIFICATION)
-                    putExtra(RingtoneManager.EXTRA_RINGTONE_EXISTING_URI,
-                        appPrefs.notificationSoundUrl)
-                    putExtra(RingtoneManager.EXTRA_RINGTONE_TITLE,
-                        getString(R.string.notification_sound))
-                }
-                launcher.launch(i)
+            it.isEnabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+
+            @TargetApi(Build.VERSION_CODES.O)
+            it.onPreferenceClickListener = Preference.OnPreferenceClickListener { _ ->
+                NotificationTask.createNotificationChannel(it.context)
+                val i = Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
+                i.putExtra(Settings.EXTRA_APP_PACKAGE, it.context.packageName)
+                i.putExtra(Settings.EXTRA_CHANNEL_ID, NotificationTask.NOTIFICATION_CHANNEL_ID)
+                startActivity(i)
                 true
             }
-            it.summary = appPrefs.notificationSoundUrl.toRingtoneTitle()
         }
 
         checkNotNull(findPreference("pref_oss_license")).let {
@@ -98,14 +84,6 @@ class GeneralPrefsFragment : PreferenceFragmentCompat() {
         super.onAttach(context)
         (activity as AppCompatActivity?)?.supportActionBar?.title =
             getString(R.string.pref_header_general)
-    }
-
-    private fun Uri?.toRingtoneTitle(): String {
-        val c = requireContext()
-        return when {
-            this == null || this == Uri.EMPTY -> null
-            else -> RingtoneManager.getRingtone(c, this)?.getTitle(c)
-        } ?: getString(R.string.none)
     }
 
 }

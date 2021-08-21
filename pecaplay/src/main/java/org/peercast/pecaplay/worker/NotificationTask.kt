@@ -7,7 +7,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.Typeface
-import android.net.Uri
 import android.os.Build
 import android.text.SpannableStringBuilder
 import android.text.style.StyleSpan
@@ -35,14 +34,6 @@ class NotificationTask(worker: ListenableWorker) : LoadingWorker.Task(worker), K
         Context.NOTIFICATION_SERVICE
     ) as NotificationManager
 
-    @TargetApi(Build.VERSION_CODES.O)
-    private fun createNotificationChannel() {
-        val channel = NotificationChannel(
-            NOTIFICATION_CHANNEL_ID, "PecaPlay",
-            NotificationManager.IMPORTANCE_DEFAULT
-        )
-        manager.createNotificationChannel(channel)
-    }
 
     private fun createActivityIntent(): PendingIntent {
         val i = Intent().also {
@@ -52,7 +43,7 @@ class NotificationTask(worker: ListenableWorker) : LoadingWorker.Task(worker), K
         }
         return PendingIntent.getActivity(
             c, 0, i,
-            PendingIntent.FLAG_UPDATE_CURRENT
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
     }
 
@@ -129,20 +120,30 @@ class NotificationTask(worker: ListenableWorker) : LoadingWorker.Task(worker), K
             .setGroup("pacaplay")
             .setContentIntent(createActivityIntent())
 
-        appPrefs.notificationSoundUrl.let {
-            if (it != Uri.EMPTY)
-                builder.setSound(it)
-        }
-
         //.setDeleteIntent(createDeleteIntent())
         //builder.addAction(R.drawable.ic_notifications_white_24dp, "Disable", createDisableIntent())
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
-            createNotificationChannel()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            createNotificationChannel(c)
+        }
         manager.notify(NOTIFY_ID, builder.build())
     }
 
     companion object {
-        private const val NOTIFICATION_CHANNEL_ID = "pecaplay_id"
+        @TargetApi(Build.VERSION_CODES.O)
+        fun createNotificationChannel(c: Context) {
+            val manager = c.getSystemService(
+                Context.NOTIFICATION_SERVICE
+            ) as NotificationManager
+
+            val channel = NotificationChannel(
+                NOTIFICATION_CHANNEL_ID, c.getString(R.string.notification_channel_new_channels_found),
+                NotificationManager.IMPORTANCE_DEFAULT
+            )
+            manager.createNotificationChannel(channel)
+        }
+
+        /**新着*/
+        const val NOTIFICATION_CHANNEL_ID = "pecaplay_id"
         private const val NOTIFY_ID = 7145
     }
 }

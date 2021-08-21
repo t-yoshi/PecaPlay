@@ -79,7 +79,6 @@
     <string name="notified">通知済み</string>
     <string name="notification_add">通知する</string>
     <string name="notification_delete">通知しない</string>
-    <string name="notification_sound">通知音</string>
     <string name="notification_new_channels">PecaPlay: %d件の新着</string>
     <!--
         <string name="notification_sound">サウンド</string>
@@ -92,6 +91,8 @@
 
     <string name="disabled">無効</string>
     <string name="enabled">有効</string>
+    <string name="notification_settings">通知の設定</string>
+    <string name="notification_channel_new_channels_found">新着チャンネル</string>
 
 
 </resources>

@@ -28,7 +28,7 @@
 
     <Preference
         android:key="pref_notification_sound"
-        android:title="@string/notification_sound" />
+        android:title="@string/notification_settings" />
 
     <Preference android:selectable="false" />
 
