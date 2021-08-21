@@ -389,6 +389,7 @@ class PlayerService : LifecycleService() {
         }
 
         init {
+            view.keepScreenOn = this@PlayerService.run { isBuffering || isPlaying }
             player.addListener(this)
         }
     }
