@@ -23,6 +23,7 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.snackbar.Snackbar
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
@@ -92,7 +93,14 @@ class PecaPlayActivity : AppCompatActivity() {
         }
 
         binding.vNavigation.onItemClick = { item ->
-            viewModel.channelFilter.navigationItem.tryEmit(item)
+            Timber.d("--> onItemClick: $item")
+            viewModel.channelFilter.navigationItem.value = item
+
+            if (item is NavigationNotifiedItem) {
+                appPrefs.notificationNewlyChannelsId = emptyList()
+                val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                manager.cancelAll()
+            }
 
             binding.vDrawerLayout?.let {
                 it.closeDrawers()
@@ -136,7 +144,10 @@ class PecaPlayActivity : AppCompatActivity() {
             }
         }
 
-        binding.vNavigation.model.repository.collectIn(lifecycleScope)
+        navigateFromIntent()
+        lifecycleScope.launchWhenStarted {
+            binding.vNavigation.model.repository.collect()
+        }
 
         viewModel.bindService()
     }
@@ -144,33 +155,23 @@ class PecaPlayActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
         setIntent(intent)
-    }
 
-    private fun removeNotification() {
-        appPrefs.notificationNewlyChannelsId = emptyList()
-        val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        manager.cancelAll()
+        navigateFromIntent()
     }
 
     override fun onPostCreate(savedInstanceState: Bundle?) {
         super.onPostCreate(savedInstanceState)
 
-        Timber.d("intent=$intent, extras=${intent.extras?.keySet()?.toList()}")
-        if (intent.action == PecaPlayIntent.ACTION_VIEW_NOTIFIED ||
-            intent.getBooleanExtra(PecaPlayIntent.EX_SELECT_NOTIFIED, false)
-        ) {
-            removeNotification()
-            binding.vNavigation.navigate { it is NavigationNotifiedItem }
-        }
-
         drawerToggle?.syncState()
     }
 
-    override fun onPause() {
-        super.onPause()
-
-        if (!appPrefs.isNotificationEnabled)
-            viewModel.presenter.stopLoading()
+    private fun navigateFromIntent() {
+        //Timber.d("intent=$intent, extras=${intent.extras?.keySet()?.toList()}")
+        val naviKey = intent.getStringExtra(PecaPlayIntent.EX_NAVIGATION_ITEM)
+        if (!naviKey.isNullOrBlank()) {
+            intent.removeExtra(PecaPlayIntent.EX_NAVIGATION_ITEM)
+            binding.vNavigation.navigate { it.key == naviKey }
+        }
     }
 
     override fun onResume() {
@@ -183,6 +184,13 @@ class PecaPlayActivity : AppCompatActivity() {
         if (drawerToggle != null) {
             binding.vAppBarLayout.setExpanded(true)
         }
+    }
+
+    override fun onPause() {
+        super.onPause()
+
+        if (!appPrefs.isNotificationEnabled)
+            viewModel.presenter.stopLoading()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

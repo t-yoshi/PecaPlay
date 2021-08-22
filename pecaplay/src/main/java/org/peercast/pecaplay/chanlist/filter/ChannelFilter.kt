@@ -14,6 +14,7 @@ import org.peercast.pecaplay.prefs.AppPreferences
 import org.peercast.pecaplay.util.TextUtils.normalize
 import org.peercast.pecaplay.yp4g.YpChannel
 import org.peercast.pecaplay.yp4g.YpDisplayOrder
+import timber.log.Timber
 
 class ChannelFilter(
     private val db: AppRoomDatabase,
@@ -27,7 +28,7 @@ class ChannelFilter(
     val displayOrder = MutableStateFlow(appPrefs.displayOrder)
 
     /***/
-    val navigationItem = MutableSharedFlow<NavigationItem>(1, 0, BufferOverflow.DROP_OLDEST)
+    val navigationItem = MutableStateFlow<NavigationItem?>(null)
 
     private val selectedChannels = combine(
         navigationItem,
@@ -36,6 +37,10 @@ class ChannelFilter(
         searchQuery,
         displayOrder,
     ) { item, lives, histories, query, _order ->
+        //Timber.d("--> $item, ${lives.size}, ${histories.size}, $query, $_order")
+        if (item == null)
+            return@combine TaggedList("", emptyList())
+
         //メニューで選択した表示順よりも優先
         val order = when (item) {
             is NavigationHistoryItem -> YpDisplayOrder.NONE

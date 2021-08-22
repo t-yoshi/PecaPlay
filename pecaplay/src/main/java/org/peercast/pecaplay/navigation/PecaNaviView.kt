@@ -13,6 +13,7 @@ import androidx.core.view.forEach
 import com.google.android.material.navigation.NavigationView
 import kotlinx.parcelize.Parcelize
 import org.peercast.pecaplay.R
+import timber.log.Timber
 
 class PecaNaviView : NavigationView {
     constructor(context: Context) : super(context)
@@ -37,17 +38,16 @@ class PecaNaviView : NavigationView {
         private set
 
     init {
-        val homeItem = model.items[0]
-        //初回だけ選択の復元
+        //起動時だけ選択の復元
         model.onChanged = {
             rebuildMenu()
-            selectNavigationItem(prefs.getInt(KEY_SELECTED, homeItem.itemId))
+            selectNavigationItem(prefs.getInt(KEY_SELECTED, 0))
             //2回目以降
             model.onChanged = ::rebuildMenuAndReselect
         }
     }
 
-    private fun selectNavigationItem(item: NavigationItem) {
+    private fun selectNavigationItem(item: NavigationItem, isFireEvent: Boolean = true) {
         setCheckedItem(item.itemId)
         prefs.edit {
             putInt(KEY_SELECTED, item.itemId)
@@ -56,15 +56,16 @@ class PecaNaviView : NavigationView {
         menu.forEach { (it.actionView as? TextView)?.isSelected = false }
         (menu.findItem(item.itemId)?.actionView as? TextView)?.isSelected = true
 
-        onItemClick(item)
+        if (isFireEvent)
+            onItemClick(item)
     }
 
-    private fun selectNavigationItem(itemId: Int) {
+    private fun selectNavigationItem(itemId: Int, isFireEvent: Boolean = true) {
         val item = model.items.firstOrNull {
             it.itemId == itemId
         } ?: model.items[0] //home
 
-        selectNavigationItem(item)
+        selectNavigationItem(item, isFireEvent)
     }
 
     private fun addMenu(item: NavigationItem) {
@@ -155,7 +156,7 @@ class PecaNaviView : NavigationView {
     private fun rebuildMenuAndReselect() {
         val checkedId = checkedItem?.itemId ?: 0
         rebuildMenu()
-        selectNavigationItem(checkedId)
+        selectNavigationItem(checkedId, false)
     }
 
     private fun inflateBadge(mi: MenuItem, it: BadgeableNavigationItem) {
@@ -169,7 +170,18 @@ class PecaNaviView : NavigationView {
 
     /**選択するアイテム*/
     fun navigate(predicate: (NavigationItem) -> Boolean) {
-        model.items.firstOrNull(predicate)?.let(::selectNavigationItem)
+        model.items.firstOrNull(predicate)?.let {
+            model.onChanged = ::rebuildMenuAndReselect
+            selectNavigationItem(it)
+            return
+        }
+
+        //選択したいアイテムが未作成の場合、次のイベント時に選択を試みる
+        model.onChanged = {
+            rebuildMenu()
+            model.onChanged = ::rebuildMenuAndReselect
+            model.items.firstOrNull(predicate)?.let(::selectNavigationItem)
+        }
     }
 
     override fun onRestoreInstanceState(savedState: Parcelable) {

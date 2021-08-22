@@ -1,6 +1,7 @@
 package org.peercast.pecaplay.worker
 
 import android.annotation.TargetApi
+import android.app.ActivityManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -15,6 +16,7 @@ import androidx.work.ListenableWorker
 import kotlinx.coroutines.flow.first
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import org.peercast.pecaplay.BuildConfig
 import org.peercast.pecaplay.PecaPlayActivity
 import org.peercast.pecaplay.R
 import org.peercast.pecaplay.app.AppRoomDatabase
@@ -38,8 +40,7 @@ class NotificationTask(worker: ListenableWorker) : LoadingWorker.Task(worker), K
     private fun createActivityIntent(): PendingIntent {
         val i = Intent().also {
             it.setClass(c, PecaPlayActivity::class.java)
-            it.action = PecaPlayIntent.ACTION_VIEW_NOTIFIED
-            it.putExtra(PecaPlayIntent.EX_SELECT_NOTIFIED, true)
+            it.putExtra(PecaPlayIntent.EX_NAVIGATION_ITEM, "notified")
         }
         return PendingIntent.getActivity(
             c, 0, i,
@@ -47,7 +48,21 @@ class NotificationTask(worker: ListenableWorker) : LoadingWorker.Task(worker), K
         )
     }
 
+    private val isForegrounded: Boolean
+        get() {
+            val info = ActivityManager.RunningAppProcessInfo()
+            ActivityManager.getMyMemoryState(info)
+            return when (info.importance) {
+                ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND,
+                ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE,
+                -> true
+                else -> false
+            }
+        }
+
     override suspend fun invoke(): Boolean {
+        if (isForegrounded && !BuildConfig.DEBUG)
+            return true
         if (!appPrefs.isNotificationEnabled)
             return true
 
@@ -137,7 +152,8 @@ class NotificationTask(worker: ListenableWorker) : LoadingWorker.Task(worker), K
             ) as NotificationManager
 
             val channel = NotificationChannel(
-                NOTIFICATION_CHANNEL_ID, c.getString(R.string.notification_channel_new_channels_found),
+                NOTIFICATION_CHANNEL_ID,
+                c.getString(R.string.notification_channel_new_channels_found),
                 NotificationManager.IMPORTANCE_DEFAULT
             )
             manager.createNotificationChannel(channel)

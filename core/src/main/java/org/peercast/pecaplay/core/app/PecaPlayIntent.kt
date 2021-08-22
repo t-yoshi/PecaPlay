@@ -5,10 +5,7 @@ import android.content.Intent
 import android.net.Uri
 
 object PecaPlayIntent {
-    @Deprecated("")
-    const val ACTION_VIEW_NOTIFIED = "ACTION_VIEW_NOTIFIED"
-
-    const val EX_SELECT_NOTIFIED = "select-notified" //boolean
+    const val EX_NAVIGATION_ITEM = "navigation-item" //String
 
     internal val COMPONENT_NAME = ComponentName(
         "org.peercast.pecaplay",

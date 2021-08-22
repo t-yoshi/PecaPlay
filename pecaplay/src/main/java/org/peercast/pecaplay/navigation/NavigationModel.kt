@@ -31,7 +31,7 @@ class NavigationModel(private val c: Context) : KoinComponent {
     private val prefs by inject<AppPreferences>()
 
     init {
-        items = createNavigationItems(emptyList(), emptyList(), emptyList())
+        items = listOf(NavigationHomeItem(c, 0))
     }
 
     private fun parseGenre(channels: List<YpChannel>): List<String> {

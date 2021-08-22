@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import org.peercast.pecaplay.BuildConfig
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.core.io.Square
 import org.peercast.pecaplay.prefs.AppPreferences
@@ -25,7 +26,7 @@ class LoadingTask(worker: ListenableWorker) : LoadingWorker.Task(worker), KoinCo
     private val eventFlow by inject<LoadingEventFlow>()
 
     override suspend fun invoke(): Boolean {
-        if (database.ypChannelDao.getLastLoadedSince() < 15) {
+        if (database.ypChannelDao.getLastLoadedSince() < 15 && !BuildConfig.DEBUG) {
             return false
         }
 
