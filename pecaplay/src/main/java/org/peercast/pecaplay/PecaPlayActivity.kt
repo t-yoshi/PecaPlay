@@ -168,7 +168,9 @@ class PecaPlayActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        viewModel.presenter.stopLoading()
+
+        if (!appPrefs.isNotificationEnabled)
+            viewModel.presenter.stopLoading()
     }
 
     override fun onResume() {

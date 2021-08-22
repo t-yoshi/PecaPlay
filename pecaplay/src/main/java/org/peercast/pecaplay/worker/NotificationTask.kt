@@ -80,7 +80,7 @@ class NotificationTask(worker: ListenableWorker) : LoadingWorker.Task(worker), K
         Timber.d("onNewChannels(%s)", channels)
 
         val title = c.getString(
-            R.string.notification_new_channels,
+            R.string.notification_new_channels_were_found,
             channels.size
         )
         var content = ""
@@ -119,6 +119,7 @@ class NotificationTask(worker: ListenableWorker) : LoadingWorker.Task(worker), K
             .setStyle(inbox)
             .setGroup("pacaplay")
             .setContentIntent(createActivityIntent())
+            .setDefaults(NotificationCompat.DEFAULT_SOUND)
 
         //.setDeleteIntent(createDeleteIntent())
         //builder.addAction(R.drawable.ic_notifications_white_24dp, "Disable", createDisableIntent())

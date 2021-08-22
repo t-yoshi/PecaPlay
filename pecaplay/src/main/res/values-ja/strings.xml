@@ -79,7 +79,7 @@
     <string name="notified">通知済み</string>
     <string name="notification_add">通知する</string>
     <string name="notification_delete">通知しない</string>
-    <string name="notification_new_channels">PecaPlay: %d件の新着</string>
+    <string name="notification_new_channels_were_found">PecaPlay: %d件の新着</string>
     <!--
         <string name="notification_sound">サウンド</string>
         <string name="notification_vibration">バイブレーション</string>
