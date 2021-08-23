@@ -42,6 +42,7 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
             Timber.d("threads=$threads")
             chatViewModel.threadLiveData.postValue(threads)
         } catch (e: IOException) {
+            chatViewModel.threadLiveData.postValue(emptyList())
             threadSelect(null)
             postSnackErrorMessage(e)
         } finally {
@@ -83,7 +84,8 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
     suspend fun loadUrl(url: String, isForce: Boolean = false) {
         Timber.d("loadUrl=$url, isForce=$isForce")
         when {
-            url.isEmpty() -> {
+            url.isBlank() -> {
+                chatViewModel.threadLiveData.value = emptyList()
             }
             !url.matches("""^https?://.+""".toRegex()) -> {
                 Timber.w("invalid url: $url")
@@ -145,6 +147,7 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
         if (info == null) {
             //boardConn = null
             chatViewModel.selectedThreadPoster.postValue(null)
+            chatViewModel.messageLiveData.postValue(emptyList())
             Timber.w("Thread not selected: $contactUrl")
             return
         }

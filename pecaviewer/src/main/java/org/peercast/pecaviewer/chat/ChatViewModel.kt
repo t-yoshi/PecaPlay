@@ -12,8 +12,8 @@ class ChatViewModel(a: Application) : AndroidViewModel(a) {
     val presenter = ChatPresenter(this)
 
     /**n秒後に自動的にfalse*/
-    val isToolbarVisible = MutableLiveData<Boolean>(true)
-    val isThreadListVisible = MutableLiveData<Boolean>(false)
+    val isToolbarVisible = MutableLiveData(true)
+    val isThreadListVisible = MutableLiveData(false)
 
     val chatToolbarTitle = MutableLiveData<CharSequence>("")
     val chatToolbarSubTitle = MutableLiveData<CharSequence>("")
@@ -43,13 +43,6 @@ class ChatViewModel(a: Application) : AndroidViewModel(a) {
         isThreadListVisible.observeForever {
             presenter.updateChatToolbarTitle()
         }
-//        isToolbarVisible.observeForever {
-//            if (it) {
-//
-////                handler.removeCallbacks(invisibleToolbarRunnable)
-////                handler.postDelayed(invisibleToolbarRunnable, 8000)
-//            }
-//        }
     }
 }
 
