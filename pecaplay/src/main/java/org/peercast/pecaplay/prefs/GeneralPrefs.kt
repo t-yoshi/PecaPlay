@@ -14,6 +14,7 @@ import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.google.android.gms.oss.licenses.OssLicensesMenuActivity
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.peercast.pecaplay.BuildConfig
 import org.peercast.pecaplay.R
@@ -47,7 +48,7 @@ class GeneralPrefsFragment : PreferenceFragmentCompat() {
         }
 
         checkNotNull(findPreference("pref_header_yellow_page")).let {
-            lifecycleScope.launchWhenResumed {
+            lifecycleScope.launch {
                 it.summary = appDatabase.yellowPageDao.query(true)
                     .first().map { it.name }.toString()
             }

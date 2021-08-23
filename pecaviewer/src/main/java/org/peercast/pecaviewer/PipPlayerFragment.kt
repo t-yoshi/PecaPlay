@@ -12,11 +12,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.launch
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import org.peercast.pecaplay.core.app.PecaViewerIntent
 import org.peercast.pecaplay.core.app.Yp4gChannel
 import org.peercast.pecaviewer.databinding.PipPlayerFragmentBinding
-import org.peercast.pecaviewer.service.PlayerService.Companion.setPlayerService
+import org.peercast.pecaviewer.service.bindPlayerView
 
 class PipPlayerFragment : Fragment() {
 
@@ -53,27 +54,18 @@ class PipPlayerFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
-            viewerViewModel.playerService.collect {
-                binding.vPlayer.setPlayerService(it)
-            }
-        }
-
-        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
+        viewLifecycleOwner.lifecycleScope.launch {
             isVisibleTitleBar.filter { it }.collect {
                 delay(6_000)
                 isVisibleTitleBar.value = false
             }
         }
+
+        viewerViewModel.playerService.bindPlayerView(binding.vPlayer)
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         isVisibleTitleBar.value = true
-    }
-
-    override fun onStop() {
-        super.onStop()
-        binding.vPlayer.setPlayerService(null)
     }
 }

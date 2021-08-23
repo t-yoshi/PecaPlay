@@ -11,6 +11,7 @@ import androidx.lifecycle.ViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import org.peercast.pecaviewer.BR
 import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.chat.ChatFragment
@@ -27,7 +28,7 @@ class MessageAdapter(private val fragment: ChatFragment) :
     RecyclerView.Adapter<MessageAdapter.ViewHolder>(),
     PopupSpan.SupportAdapter {
 
-    var messages by Delegates.observable(emptyList<IMessage>()) { _, old, new->
+    var messages by Delegates.observable(emptyList<IMessage>()) { _, old, new ->
         if (old.isEmpty() || new.isEmpty() || old.size > new.size || old != new.take(old.size)) {
             lastMessageCount = -1
         } else {

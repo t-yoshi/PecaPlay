@@ -75,7 +75,7 @@ class YpChannelFragment : Fragment() {
 
                 scrollStateKey = list.tag
                 val scrollState = scrollStates.getParcelable<Parcelable>(list.tag)
-                if (scrollState != null){
+                if (scrollState != null) {
                     binding.vRecycler.layoutManager?.onRestoreInstanceState(scrollState)
                 } else if (list.isNotEmpty()) {
                     binding.vRecycler.layoutManager?.scrollToPosition(0)
@@ -148,7 +148,7 @@ class YpChannelFragment : Fragment() {
                 true -> {
                     menu.add(R.string.notification_delete)
                         .setOnMenuItemClickListener { mi ->
-                            lifecycleScope.launchWhenResumed {
+                            lifecycleScope.launch {
                                 db.favoriteDao.update(star.copyFlags { it.copy(isNotification = false) })
                             }
                             false
@@ -157,7 +157,7 @@ class YpChannelFragment : Fragment() {
                 false -> {
                     menu.add(R.string.notification_add)
                         .setOnMenuItemClickListener { mi ->
-                            lifecycleScope.launchWhenResumed {
+                            lifecycleScope.launch {
                                 db.favoriteDao.update(star.copyFlags { it.copy(isNotification = true) })
                             }
                             false

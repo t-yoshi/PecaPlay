@@ -93,7 +93,7 @@ abstract class BaseEntityEditDialogFragment<ME : ManageableEntity>
 
     @CallSuper
     override fun onShow(d: DialogInterface) {
-        lifecycleScope.launchWhenResumed {
+        lifecycleScope.launchWhenStarted {
             isOkButtonEnabled.collect {
                 dialog.okButton.isEnabled = it
             }

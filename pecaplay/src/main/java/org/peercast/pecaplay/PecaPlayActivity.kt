@@ -23,7 +23,6 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
@@ -113,14 +112,14 @@ class PecaPlayActivity : AppCompatActivity() {
             }
         }
 
-        lifecycleScope.launchWhenResumed {
+        lifecycleScope.launchWhenCreated {
             viewModel.message.filter { it.isNotEmpty() }.onEach {
                 Snackbar.make(binding.root, it, Snackbar.LENGTH_LONG).show()
                 viewModel.message.emit("")
             }.collect()
         }
 
-        lifecycleScope.launchWhenResumed {
+        lifecycleScope.launchWhenCreated {
             viewModel.rpcClient.filterNotNull().collect {
                 //PeerCastの起動を知らせる。プレーヤーからの復帰時は表示しない。
                 if (savedInstanceState == null && intent.hasCategory(Intent.CATEGORY_LAUNCHER)) {
@@ -131,7 +130,7 @@ class PecaPlayActivity : AppCompatActivity() {
             }
         }
 
-        lifecycleScope.launchWhenResumed {
+        lifecycleScope.launchWhenCreated {
             viewModel.notificationIconEnabled.collect {
                 invalidateOptionsMenu()
             }
@@ -145,7 +144,7 @@ class PecaPlayActivity : AppCompatActivity() {
         }
 
         navigateFromIntent()
-        lifecycleScope.launchWhenStarted {
+        lifecycleScope.launchWhenCreated {
             binding.vNavigation.model.repository.collect()
         }
 

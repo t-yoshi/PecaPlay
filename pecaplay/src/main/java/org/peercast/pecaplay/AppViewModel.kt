@@ -27,7 +27,7 @@ class AppViewModel(
     /**通知アイコン(ベルのマーク)ボタンの有効/無効*/
     val notificationIconEnabled = database.favoriteDao.query().map { favorites ->
         favorites.firstOrNull { it.flags.run { !isNG && isNotification } } != null
-    }.stateIn(viewModelScope, SharingStarted.Lazily,false)
+    }.stateIn(viewModelScope, SharingStarted.Lazily, false)
 
 
     /**Snackbarで表示するメッセージ*/

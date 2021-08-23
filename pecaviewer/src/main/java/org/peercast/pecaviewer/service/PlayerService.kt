@@ -396,6 +396,7 @@ class PlayerService : LifecycleService() {
 
     companion object {
         fun PlayerView.setPlayerService(service: PlayerService?) {
+            Timber.d("--> $this $service")
             player = service?.DelegatedPlayer(this)
         }
 

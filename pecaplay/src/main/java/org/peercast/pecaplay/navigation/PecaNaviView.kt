@@ -13,7 +13,6 @@ import androidx.core.view.forEach
 import com.google.android.material.navigation.NavigationView
 import kotlinx.parcelize.Parcelize
 import org.peercast.pecaplay.R
-import timber.log.Timber
 
 class PecaNaviView : NavigationView {
     constructor(context: Context) : super(context)

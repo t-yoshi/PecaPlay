@@ -8,14 +8,13 @@ import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.google.android.exoplayer2.ui.PlayerView
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import org.peercast.pecaviewer.PecaViewerPreference
 import org.peercast.pecaviewer.PecaViewerViewModel
 import org.peercast.pecaviewer.R
-import org.peercast.pecaviewer.service.PlayerService.Companion.setPlayerService
+import org.peercast.pecaviewer.service.bindPlayerView
 import org.peercast.pecaviewer.util.takeScreenShot
 import timber.log.Timber
 
@@ -64,15 +63,7 @@ class PlayerFragment : Fragment(), Toolbar.OnMenuItemClickListener {
 
         view.setOnTouchListener(DoubleTapDetector(view, ::onFullScreenClicked))
 
-        viewLifecycleOwner.lifecycleScope.launchWhenCreated {
-            try {
-                viewerViewModel.playerService.collect {
-                    vPlayer.setPlayerService(it)
-                }
-            } finally {
-                vPlayer.setPlayerService(null)
-            }
-        }
+        viewerViewModel.playerService.bindPlayerView(vPlayer)
     }
 
     private fun onFullScreenClicked(v__: View) {
@@ -134,5 +125,4 @@ class PlayerFragment : Fragment(), Toolbar.OnMenuItemClickListener {
             }
         }
     }
-
 }

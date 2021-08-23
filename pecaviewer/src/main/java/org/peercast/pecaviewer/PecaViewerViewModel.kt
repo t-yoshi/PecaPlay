@@ -93,17 +93,16 @@ internal class PecaViewerViewModel(
         }
     }
 
-    fun bindPlayerService(){
+    fun bindPlayerService() {
         a.bindPlayerService(playerServiceConnection)
     }
 
-    fun unbindPlayerService(){
+    fun unbindPlayerService() {
         if (_playerService.value != null) {
             a.unbindService(playerServiceConnection)
             _playerService.value = null
         }
     }
-
 
 
 }

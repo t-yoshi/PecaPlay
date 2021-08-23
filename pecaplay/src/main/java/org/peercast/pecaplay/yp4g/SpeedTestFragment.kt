@@ -43,12 +43,6 @@ class SpeedTestFragment : AppCompatDialogFragment() {
                 .map { Yp4gSpeedTester(requireContext(), square.okHttpClient, it) }
                 .let(adapter::addAll)
         }
-
-        lifecycleScope.launchWhenStarted {
-            viewModel.isStartButtonEnabled.collect {
-                dialog?.startButton?.isEnabled = it
-            }
-        }
     }
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
@@ -74,6 +68,12 @@ class SpeedTestFragment : AppCompatDialogFragment() {
                     }
                     binding.viewModel = viewModel
                     binding.lifecycleOwner = this
+
+                    lifecycleScope.launchWhenStarted {
+                        viewModel.isStartButtonEnabled.collect {
+                            d.startButton?.isEnabled = it
+                        }
+                    }
                 }
             }
     }
@@ -90,7 +90,7 @@ class SpeedTestFragment : AppCompatDialogFragment() {
         fun setTester(t: Yp4gSpeedTester) {
             viewModel.status.value = ""
             tester = t
-            lifecycleScope.launchWhenResumed {
+            lifecycleScope.launchWhenCreated {
                 viewModel.isStartButtonEnabled.value =
                     tester.loadConfig() && tester.config.uptest.isCheckable
                 viewModel.status.value = tester.status

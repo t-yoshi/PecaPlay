@@ -2,7 +2,6 @@ package org.peercast.pecaplay.chanlist.filter
 
 import android.content.Context
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.*
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.chanlist.ListItemViewModel
@@ -14,7 +13,6 @@ import org.peercast.pecaplay.prefs.AppPreferences
 import org.peercast.pecaplay.util.TextUtils.normalize
 import org.peercast.pecaplay.yp4g.YpChannel
 import org.peercast.pecaplay.yp4g.YpDisplayOrder
-import timber.log.Timber
 
 class ChannelFilter(
     private val db: AppRoomDatabase,
