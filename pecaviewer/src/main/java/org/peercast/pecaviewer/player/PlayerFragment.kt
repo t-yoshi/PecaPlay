@@ -64,9 +64,13 @@ class PlayerFragment : Fragment(), Toolbar.OnMenuItemClickListener {
 
         view.setOnTouchListener(DoubleTapDetector(view, ::onFullScreenClicked))
 
-        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
-            viewerViewModel.playerService.collect {
-                vPlayer.setPlayerService(it)
+        viewLifecycleOwner.lifecycleScope.launchWhenCreated {
+            try {
+                viewerViewModel.playerService.collect {
+                    vPlayer.setPlayerService(it)
+                }
+            } finally {
+                vPlayer.setPlayerService(null)
             }
         }
     }
@@ -129,11 +133,6 @@ class PlayerFragment : Fragment(), Toolbar.OnMenuItemClickListener {
                 }.onFailure(Timber::w)
             }
         }
-    }
-
-    override fun onStop() {
-        super.onStop()
-        vPlayer.setPlayerService(null)
     }
 
 }
