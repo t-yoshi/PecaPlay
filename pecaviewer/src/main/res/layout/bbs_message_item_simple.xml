@@ -22,10 +22,11 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentTop="true"
                 android:minWidth="30sp"
-                android:paddingRight="3dp"
+                android:paddingEnd="3dp"
                 android:text="@{viewModel.number}"
                 android:textAppearance="?attr/textAppearanceListItem"
                 android:textStyle="bold"
+                app:underline="@{viewModel.isNew}"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
@@ -46,7 +47,7 @@
                 android:id="@+id/vThumbnail"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginRight="30sp"
+                android:layout_marginEnd="30sp"
                 app:flexWrap="wrap"
                 app:layout_constraintTop_toBottomOf="@+id/vBody"
                 app:layout_constraintStart_toEndOf="@id/vNumber"

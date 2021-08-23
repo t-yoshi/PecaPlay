@@ -18,8 +18,8 @@ class ChatViewModel(a: Application) : AndroidViewModel(a) {
     val chatToolbarTitle = MutableLiveData<CharSequence>("")
     val chatToolbarSubTitle = MutableLiveData<CharSequence>("")
 
-    val isThreadListRefreshing = MutableLiveData(false)
-    val isMessageListRefreshing = MutableLiveData(false)
+    val isThreadListLoading = MutableLiveData(false)
+    val isMessageListLoading = MutableLiveData(false)
 
     val messageLiveData = MutableLiveData<List<IMessage>>()
     val threadLiveData = MutableLiveData<List<IThreadInfo>>()

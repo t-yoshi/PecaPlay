@@ -2,6 +2,7 @@ package org.peercast.pecaviewer
 
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
+import android.graphics.Paint
 import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
@@ -10,6 +11,7 @@ import android.view.animation.Animation
 import android.view.animation.Transformation
 import android.widget.FrameLayout
 import android.widget.ImageView
+import android.widget.TextView
 import androidx.annotation.AttrRes
 import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
@@ -57,6 +59,17 @@ internal object BindAdapter {
     fun bindColorScheme(view: SwipyRefreshLayout, @ColorInt color: Int) {
         view.setColorSchemeColors(color)
     }
+
+    @JvmStatic
+    @BindingAdapter("underline")
+    fun bindUnderline(view: TextView, b: Boolean) {
+        if (b) {
+            view.paintFlags = view.paintFlags or Paint.UNDERLINE_TEXT_FLAG
+        } else {
+            view.paintFlags = view.paintFlags and Paint.UNDERLINE_TEXT_FLAG.inv()
+        }
+    }
+
 
     private fun ViewPropertyAnimator.onEnd(action: (Animator) -> Unit) {
         setListener(object : AnimatorListenerAdapter() {

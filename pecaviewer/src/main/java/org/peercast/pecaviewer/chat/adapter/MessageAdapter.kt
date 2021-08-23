@@ -1,12 +1,11 @@
 package org.peercast.pecaviewer.chat.adapter
 
-import android.os.Bundle
+import android.annotation.SuppressLint
 import android.text.method.LinkMovementMethod
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import androidx.annotation.MainThread
 import androidx.databinding.ViewDataBinding
 import androidx.lifecycle.ViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
@@ -15,74 +14,36 @@ import kotlinx.coroutines.flow.collect
 import org.peercast.pecaviewer.BR
 import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.chat.ChatFragment
-import org.peercast.pecaviewer.chat.net.IBrowsable
 import org.peercast.pecaviewer.chat.net.IMessage
-import org.peercast.pecaviewer.chat.net.PostMessage
 import org.peercast.pecaviewer.chat.thumbnail.ThumbnailView
 import org.peercast.pecaviewer.databinding.BbsMessageItemBasicBinding
-import org.peercast.pecaviewer.databinding.BbsMessageItemSeparatorBinding
 import org.peercast.pecaviewer.databinding.BbsMessageItemSimpleBinding
 import timber.log.Timber
 import kotlin.properties.Delegates
 
 
+@SuppressLint("NotifyDataSetChanged")
 class MessageAdapter(private val fragment: ChatFragment) :
     RecyclerView.Adapter<MessageAdapter.ViewHolder>(),
     PopupSpan.SupportAdapter {
 
-    private var itemsOrigin = emptyList<IMessage>()
-    private var itemsHolder = object : ItemsHolder<IMessage>() {
-        override fun areContentsTheSame(oldItem: IMessage, newItem: IMessage): Boolean {
-            //"n分前"の表示は更新したい
-            if (defaultViewType == SIMPLE)
-                return false
-            return super.areContentsTheSame(oldItem, newItem)
+    var messages by Delegates.observable(emptyList<IMessage>()) { _, old, new->
+        if (old.isEmpty() || new.isEmpty() || old.size > new.size || old != new.take(old.size)) {
+            lastMessageCount = -1
+        } else {
+            lastMessageCount = old.size
         }
-
-        override fun getChangePayload(oldItem: IMessage, newItem: IMessage): Any? {
-            if (defaultViewType == SIMPLE)
-                return 1
-            return null
-        }
-    }
-
-    //前回最後尾のurl
-    private var prevLastItem: String? = null
-
-    @MainThread
-    suspend fun setItems(newItems: List<IMessage>) {
-        val items = newItems.toMutableList()
-        val threadChanged = newItems.firstOrNull()?.threadInfo !=
-                itemsOrigin.firstOrNull()?.threadInfo
-        itemsOrigin = newItems
-
-        //前回の最後尾にスペーサーを入れる
-        when (val i = items.indexOfLast { (it as? IBrowsable)?.url == prevLastItem }) {
-            -1 -> items.add(ITEM_SPACER)
-            else -> items.add(i + 1, ITEM_SPACER)
-        }
-
-        if (prevLastItem == null)
-            markAlreadyAllRead()
-
-        if (threadChanged)
-            itemsHolder.clear(this)
-
-        itemsHolder.asyncUpdate(items, this)
-    }
-
-    /**全て既読のフラグ*/
-    fun markAlreadyAllRead() {
-        prevLastItem = (itemsOrigin.lastOrNull() as? IBrowsable)?.url
+        notifyDataSetChanged()
     }
 
     /**簡易表示、または詳細表示。*/
-    var defaultViewType by Delegates.observable(SIMPLE) { _, oldVal, newVal ->
-        if (newVal !in arrayOf(SIMPLE, BASIC))
-            throw IllegalArgumentException("not support viewType: $newVal")
-        if (newVal != oldVal)
+    var viewType by Delegates.observable(SIMPLE) { _, old, new ->
+        require(new in arrayOf(SIMPLE, BASIC)) { "not support viewType: $new" }
+        if (new != old)
             notifyDataSetChanged()
     }
+
+    private var lastMessageCount = -1
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val inflater = LayoutInflater.from(parent.context)
@@ -103,7 +64,7 @@ class MessageAdapter(private val fragment: ChatFragment) :
             }
 
             if (!binding.setVariable(BR.viewModel, viewModel))
-                throw RuntimeException("Nothing defined viewModel in layout.")
+                throw RuntimeException("Not defined viewModel in layout.")
             vBody?.run {
                 movementMethod = LinkMovementMethod.getInstance()
                 //長押しでテキスト選択可能にする
@@ -122,65 +83,43 @@ class MessageAdapter(private val fragment: ChatFragment) :
             }
         }
 
-        fun bind(m: IMessage) {
+        fun bind(m: IMessage, position: Int) {
             vBody?.setTextIsSelectable(false)
             viewModel.setMessage(m, binding is BbsMessageItemSimpleBinding)
+            viewModel.isNew.value = position >= lastMessageCount && lastMessageCount != -1
             binding.executePendingBindings()
         }
     }
 
     override fun createViewForPopupWindow(resNumber: Int, parent: ViewGroup): View? {
-        val m = itemsOrigin.lastOrNull { it.number == resNumber }
+        val m = messages.lastOrNull { it.number == resNumber }
         if (m == null) {
-            Timber.w("#$resNumber is not found")
+            Timber.w("#$resNumber is not found.")
             return null
         }
 
-        val vh = onCreateViewHolder(parent, defaultViewType)
+        val vh = onCreateViewHolder(parent, viewType)
         vh.viewModel.setMessage(m)
         return vh.itemView
     }
 
-    override fun getItemCount(): Int = itemsHolder.size
-
-    override fun getItemViewType(position: Int): Int {
-        val item = itemsHolder[position]
-        if (item === ITEM_SPACER)
-            return SEPARATOR
-        return defaultViewType
-    }
+    override fun getItemCount() = messages.size
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.bind(itemsHolder[position])
-    }
-
-    fun saveInstanceState(outState: Bundle) {
-        outState.putString(STATE_LAST_ITEM_URL, prevLastItem)
-    }
-
-    fun restoreInstanceState(inState: Bundle) {
-        prevLastItem = inState.getString(STATE_LAST_ITEM_URL)
+        holder.bind(messages[position], position)
     }
 
     companion object {
-        private val ITEM_SPACER: IMessage = PostMessage("", "", "")
-
         /**簡易表示*/
         const val SIMPLE = 0
 
         /**詳細表示*/
         const val BASIC = 1
 
-        private const val SEPARATOR = 2
-
         private val DATA_BINDING_INFLATES = listOf<ViewDataBinding_inflate>(
             BbsMessageItemSimpleBinding::inflate,
             BbsMessageItemBasicBinding::inflate,
-            BbsMessageItemSeparatorBinding::inflate
         )
-
-        private const val STATE_LAST_ITEM_URL =
-            "org.peercast.pecaviewer.chat.adapter.MessageAdapter#LAST_ITEM_URL"
     }
 }
 

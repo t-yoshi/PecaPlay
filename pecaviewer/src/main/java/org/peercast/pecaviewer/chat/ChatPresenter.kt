@@ -34,7 +34,7 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
     /**スレッドのリストを再読込する*/
     suspend fun reloadThreadList() {
         try {
-            chatViewModel.isThreadListRefreshing.postValue(true)
+            chatViewModel.isThreadListLoading.postValue(true)
             clearSnackMessage()
 
             val conn = boardConn ?: return
@@ -45,7 +45,7 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
             threadSelect(null)
             postSnackErrorMessage(e)
         } finally {
-            chatViewModel.isThreadListRefreshing.postValue(false)
+            chatViewModel.isThreadListLoading.postValue(false)
         }
     }
 
@@ -53,12 +53,12 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
      * スレッドのメッセージを再読込する。
      * */
     suspend fun reloadThread() {
-        if (chatViewModel.isMessageListRefreshing.value == true) {
+        if (chatViewModel.isMessageListLoading.value == true) {
             Timber.w("already loading.")
             return
         }
 
-        chatViewModel.isMessageListRefreshing.postValue(true)
+        chatViewModel.isMessageListLoading.postValue(true)
         clearSnackMessage()
         try {
             val conn = boardConn
@@ -73,7 +73,7 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
         } catch (e: IOException) {
             postSnackErrorMessage(e)
         } finally {
-            chatViewModel.isMessageListRefreshing.postValue(false)
+            chatViewModel.isMessageListLoading.postValue(false)
         }
     }
 
@@ -104,7 +104,7 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
         Timber.d("doLoadUrl: $url")
 
         try {
-            chatViewModel.isThreadListRefreshing.postValue(true)
+            chatViewModel.isThreadListLoading.postValue(true)
             clearSnackMessage()
 
             val conn = openBoardConnection(url)
@@ -135,7 +135,7 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
             Timber.w(t)
             throw t
         } finally {
-            chatViewModel.isThreadListRefreshing.postValue(false)
+            chatViewModel.isThreadListLoading.postValue(false)
         }
     }
 

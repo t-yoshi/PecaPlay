@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layout xmlns:android="http://schemas.android.com/apk/res/android"
+<layout xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:app="http://schemas.android.com/apk/res-auto"
         xmlns:peca="http://schemas.android.com/apk/res-auto">
 
@@ -32,24 +33,26 @@
                 app:titleTextColor="@color/grey_1000b" />
 
 
-        <com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout
-                android:id="@+id/vThreadListRefresh"
+        <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="@integer/vThreadListRefresh_layout_weight"
-                android:visibility="@{safeUnbox(viewModel.isThreadListVisible) ? View.VISIBLE : View.GONE}"
-                app:srl_direction="top"
-                peca:colorScheme="@{@color/light_blue_A700}"
-                peca:refreshing="@{safeUnbox(viewModel.isThreadListRefreshing)}"
-                android:elevation="10dp">
-
+                android:layout_weight="@integer/thread_list_layout_weight"
+                android:visibility="@{safeUnbox(viewModel.isThreadListVisible) ? View.VISIBLE : View.GONE}">
             <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/vThreadList"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:scrollbarStyle="outsideInset"
                     android:scrollbars="vertical" />
-        </com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout>
+
+            <androidx.core.widget.ContentLoadingProgressBar
+                android:id="@+id/vThreadListLoading"
+                style="?android:attr/progressBarStyleLarge"
+                android:layout_gravity="center"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:visibility="@{safeUnbox(viewModel.isThreadListLoading) ? View.VISIBLE : View.GONE}"/>
+        </FrameLayout>
 
         <View
                 android:layout_width="match_parent"
@@ -63,24 +66,20 @@
         <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="0dp"
-                android:layout_weight="@integer/vMessageListRefresh_layout_weight">
+                android:layout_weight="@integer/message_list_layout_weight">
 
             <ProgressBar
                     style="?android:progressBarStyleHorizontal"
                     android:layout_width="16dp"
                     android:layout_height="2dp"
-                    android:layout_gravity="right|top"
+                    android:layout_gravity="end|top"
                     android:alpha="0.8"
                     android:progress="@{viewModel.reloadRemain}"
                     android:visibility="@{viewModel.reloadRemain > 0 ? View.VISIBLE : View.INVISIBLE}" />
 
-            <com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout
-                    android:id="@+id/vMessageListRefresh"
+            <FrameLayout
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    app:srl_direction="bottom"
-                    peca:colorScheme="@{@color/light_blue_A700}"
-                    peca:refreshing="@{safeUnbox(viewModel.isMessageListRefreshing)}">
+                    android:layout_height="match_parent">
 
                 <androidx.recyclerview.widget.RecyclerView
                         android:id="@+id/vMessageList"
@@ -91,7 +90,15 @@
                         android:scrollbars="vertical"
                         app:layout_behavior="@string/appbar_scrolling_view_behavior" />
 
-            </com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout>
+                <androidx.core.widget.ContentLoadingProgressBar
+                    android:id="@+id/vMessageListLoading"
+                    android:layout_gravity="center"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    style="?android:attr/progressBarStyleLarge"
+                    android:visibility="@{safeUnbox(viewModel.isMessageListLoading) ? View.VISIBLE : View.GONE}"/>
+
+            </FrameLayout>
         </FrameLayout>
 
     </LinearLayout>

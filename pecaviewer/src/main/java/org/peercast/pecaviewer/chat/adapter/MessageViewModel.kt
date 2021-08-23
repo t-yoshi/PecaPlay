@@ -29,11 +29,14 @@ class MessageViewModel {
 
     val thumbnails = MutableStateFlow<List<ThumbnailUrl>>(emptyList())
 
+    val isNew = MutableStateFlow(false)
+
     fun setMessage(m: IMessage, isShowElapsedTime: Boolean = true) {
         number.value = "${m.number}"
         name.value = m.name
         date.value = m.date
         id.value = m.id
+        isNew.value = false
 
         thumbnails.value = when (val b = m.body) {
             is Spannable -> {
