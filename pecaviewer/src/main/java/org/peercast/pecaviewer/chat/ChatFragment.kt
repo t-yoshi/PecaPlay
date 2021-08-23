@@ -139,15 +139,15 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener,
 //                chatViewModel.presenter.loadUrl(u)
 //            }
 //        })
-        chatViewModel.threadLiveData.observe(viewLifecycleOwner, Observer {
+        chatViewModel.threadLiveData.observe(viewLifecycleOwner) {
             threadAdapter.items = it
-        })
-        chatViewModel.selectedThread.observe(viewLifecycleOwner, Observer {
+        }
+        chatViewModel.selectedThread.observe(viewLifecycleOwner) {
             threadAdapter.selected = it
             if (it == null)
                 chatViewModel.isThreadListVisible.postValue(true)
-        })
-        chatViewModel.messageLiveData.observe(viewLifecycleOwner, Observer {
+        }
+        chatViewModel.messageLiveData.observe(viewLifecycleOwner) {
             val b = isAlreadyRead
             Timber.d("isAlreadyRead=$isAlreadyRead")
             if (b)
@@ -159,14 +159,14 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener,
                     scrollToBottom()
             }
             autoReload.scheduleRun()
-        })
+        }
 
         chatViewModel.snackbarMessage.observe(
             viewLifecycleOwner,
             SnackbarObserver(view, activity?.findViewById(R.id.vPostDialogButton))
         )
 
-        chatViewModel.isThreadListVisible.observe(viewLifecycleOwner, Observer {
+        chatViewModel.isThreadListVisible.observe(viewLifecycleOwner) {
             binding.vChatToolbar.menu.clear()
             if (it) {
                 binding.vChatToolbar.inflateMenu(R.menu.menu_chat_board)
@@ -177,14 +177,14 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener,
             } else {
                 binding.vChatToolbar.inflateMenu(R.menu.menu_chat_thread)
             }
-        })
+        }
 
-        loadingLiveData.observe(viewLifecycleOwner, Observer {
+        loadingLiveData.observe(viewLifecycleOwner) {
             with(binding.vChatToolbar.menu) {
                 findItem(R.id.menu_reload).isVisible = !it
                 findItem(R.id.menu_abort).isVisible = it
             }
-        })
+        }
 
         savedInstanceState?.let(messageAdapter::restoreInstanceState)
     }
