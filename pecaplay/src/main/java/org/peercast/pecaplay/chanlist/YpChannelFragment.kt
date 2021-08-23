@@ -74,8 +74,11 @@ class YpChannelFragment : Fragment() {
                 Timber.d("--> ${list.tag} ${scrollStates.size()}")
 
                 scrollStateKey = list.tag
-                scrollStates.getParcelable<Parcelable>(list.tag)?.let {
-                    binding.vRecycler.layoutManager?.onRestoreInstanceState(it)
+                val scrollState = scrollStates.getParcelable<Parcelable>(list.tag)
+                if (scrollState != null){
+                    binding.vRecycler.layoutManager?.onRestoreInstanceState(scrollState)
+                } else if (list.isNotEmpty()) {
+                    binding.vRecycler.layoutManager?.scrollToPosition(0)
                 }
             }
         }
