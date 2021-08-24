@@ -62,19 +62,16 @@ class YpChannelFragment : Fragment() {
         val listItemViewModels = appViewModel.channelFilter.toListItemViewModels(requireContext())
 
         viewLifecycleOwner.lifecycleScope.launchWhenCreated {
-            var scrollStateKey: String? = null
+            var scrollStateKey = ""
             listItemViewModels.collect { list ->
-                scrollStateKey?.let {
-                    scrollStates.putParcelable(
-                        it, binding.vRecycler.layoutManager?.onSaveInstanceState()
-                    )
-                }
+                scrollStates.putParcelable(
+                    scrollStateKey, binding.vRecycler.layoutManager?.onSaveInstanceState()
+                )
 
                 listAdapter.items = list
-                Timber.d("--> ${list.tag} ${scrollStates.size()}")
-
                 scrollStateKey = list.tag
-                val scrollState = scrollStates.getParcelable<Parcelable>(list.tag)
+                
+                val scrollState = scrollStates.getParcelable<Parcelable>(scrollStateKey)
                 if (scrollState != null) {
                     binding.vRecycler.layoutManager?.onRestoreInstanceState(scrollState)
                 } else if (list.isNotEmpty()) {
