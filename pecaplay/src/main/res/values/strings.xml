@@ -88,7 +88,7 @@
     <string name="speed_test">Uptest</string>
     <string name="settings">Settings</string>
     <string name="peercast_has_started">PeerCast has started on %d</string>
-    <string name="reload">Reload</string>
+    <string name="menu_reload">Reload</string>
 
     <string name="yp4g_statistics">Statistics</string>
     <string name="yp4g_chat">Chat</string>

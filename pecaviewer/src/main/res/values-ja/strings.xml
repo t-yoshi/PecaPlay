@@ -12,4 +12,9 @@
 
     <string name="chat_auto_reload">自動リロード</string>
     <string name="chat_simple_display">簡易表示</string>
+    <string name="menu_reload">再読み込み</string>
+    <string name="menu_top">上へ</string>
+    <string name="menu_bottom">下へ</string>
+    <string name="menu_abort">中止</string>
+    <string name="menu_write">書き込む</string>
 </resources>

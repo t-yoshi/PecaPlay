@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:peca="http://schemas.android.com/apk/res-auto"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
         xmlns:bind="http://schemas.android.com/apk/res-auto">
 
     <data>
@@ -22,8 +22,9 @@
             android:orientation="horizontal"
             android:paddingTop="2dp"
             android:paddingBottom="2dp"
-            peca:listItemBackground="@{viewModel.isSelected ? @color/teal_200 : 0 }"
-            android:clickable="true">
+            app:listItemBackground="@{viewModel.isSelected ? @color/teal_200 : 0 }"
+            android:clickable="true"
+            android:focusable="true">
         <!---->
 
         <TextView

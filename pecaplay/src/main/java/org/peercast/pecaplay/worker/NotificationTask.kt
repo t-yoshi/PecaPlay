@@ -48,21 +48,7 @@ class NotificationTask(worker: ListenableWorker) : LoadingWorker.Task(worker), K
         )
     }
 
-    private val isForegrounded: Boolean
-        get() {
-            val info = ActivityManager.RunningAppProcessInfo()
-            ActivityManager.getMyMemoryState(info)
-            return when (info.importance) {
-                ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND,
-                ActivityManager.RunningAppProcessInfo.IMPORTANCE_VISIBLE,
-                -> true
-                else -> false
-            }
-        }
-
     override suspend fun invoke(): Boolean {
-        if (isForegrounded && !BuildConfig.DEBUG)
-            return true
         if (!appPrefs.isNotificationEnabled)
             return true
 

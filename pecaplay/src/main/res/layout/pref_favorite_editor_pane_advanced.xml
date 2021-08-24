@@ -17,7 +17,7 @@
         android:paddingBottom="1dp"
         android:paddingLeft="2dp"
         android:paddingTop="1dp"
-        android:visibility="@{safeUnbox(viewModel.isAdvancedMode) ? View.VISIBLE : View.INVISIBLE }">
+        android:visibility="@{viewModel.isAdvancedMode ? View.VISIBLE : View.INVISIBLE }">
 
         <LinearLayout
             android:layout_width="match_parent"

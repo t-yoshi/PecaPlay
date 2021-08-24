@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import androidx.core.widget.doOnTextChanged
+import androidx.fragment.app.FragmentManager
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
@@ -63,6 +64,13 @@ class PostMessageDialogFragment : BottomSheetDialogFragment(),
         binding.vEdit.doOnTextChanged { text, _, _, _ ->
             chatViewModel.messageDraft[u] = text?.toString() ?: ""
             binding.vSend.isEnabled = text?.isNotEmpty() == true
+        }
+    }
+
+    companion object {
+        fun show(fm: FragmentManager){
+            val f = PostMessageDialogFragment()
+            f.show(fm, "tag#PostMessageDialogFragment")
         }
     }
 

@@ -19,4 +19,12 @@
 
     <string name="chat_auto_reload">Auto Reload</string>
     <string name="chat_simple_display">Simple Display</string>
+    <string name="menu_reload">Reload</string>
+    <string name="menu_top">Top</string>
+    <string name="menu_bottom">Bottom</string>
+    <string name="menu_abort">Abort</string>
+    <string name="menu_write">Write</string>
+
+    <!--use @tag-->
+    <string name="tag_fab_opaque">fabOpaque</string>
 </resources>

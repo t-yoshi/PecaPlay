@@ -8,6 +8,7 @@ import androidx.appcompat.widget.Toolbar
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.google.android.exoplayer2.ui.PlayerView
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
@@ -46,10 +47,12 @@ class PlayerFragment : Fragment(), Toolbar.OnMenuItemClickListener {
             it.menu.findItem(R.id.menu_background).isChecked = viewerPrefs.isBackgroundPlaying
         }
 
-        playerViewModel.isFullScreenMode.observe(viewLifecycleOwner) {
-            vPlayerControlBar.menu.run {
-                findItem(R.id.menu_enter_fullscreen).isVisible = !it
-                findItem(R.id.menu_exit_fullscreen).isVisible = it
+        viewLifecycleOwner.lifecycleScope.launch {
+            playerViewModel.isFullScreenMode.collect {
+                vPlayerControlBar.menu.run {
+                    findItem(R.id.menu_enter_fullscreen).isVisible = !it
+                    findItem(R.id.menu_exit_fullscreen).isVisible = it
+                }
             }
         }
 

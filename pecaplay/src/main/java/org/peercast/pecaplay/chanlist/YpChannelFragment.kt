@@ -70,7 +70,7 @@ class YpChannelFragment : Fragment() {
 
                 listAdapter.items = list
                 scrollStateKey = list.tag
-                
+
                 val scrollState = scrollStates.getParcelable<Parcelable>(scrollStateKey)
                 if (scrollState != null) {
                     binding.vRecycler.layoutManager?.onRestoreInstanceState(scrollState)

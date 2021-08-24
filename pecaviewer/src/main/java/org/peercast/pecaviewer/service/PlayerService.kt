@@ -146,9 +146,9 @@ class PlayerService : LifecycleService() {
 
         override fun onPlayerError(
             eventTime: AnalyticsListener.EventTime,
-            error: ExoPlaybackException,
+            error: PlaybackException
         ) {
-            if (error.type == ExoPlaybackException.TYPE_SOURCE) {
+            if (error is ExoPlaybackException && error.type == ExoPlaybackException.TYPE_SOURCE) {
                 val se = error.sourceException
                 if (se is HttpDataSource.InvalidResponseCodeException && se.responseCode == 404) {
                     Timber.i("404: stop reconnecting.")

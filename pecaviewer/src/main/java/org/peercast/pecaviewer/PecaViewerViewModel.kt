@@ -4,11 +4,12 @@ import android.app.Application
 import android.content.ComponentName
 import android.content.ServiceConnection
 import android.os.IBinder
-import androidx.lifecycle.*
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import org.peercast.pecaviewer.chat.ChatViewModel
 import org.peercast.pecaviewer.player.PlayerViewModel
@@ -21,63 +22,40 @@ internal class PecaViewerViewModel(
     private val playerViewModel: PlayerViewModel,
     private val chatViewModel: ChatViewModel,
 ) : AndroidViewModel(a) {
+
     /**
      * スライディングパネルの状態
-    EXPANDED=0,
-    COLLAPSED=1,
-    ANCHORED=2
+    EXPANDED=0  プレーヤーのみ,
+    COLLAPSED=1 チャットのみ,
+    ANCHORED=2  両方表示,
      * @see com.sothree.slidinguppanel.SlidingUpPanelLayout.PanelState
      */
-    val slidingPanelState = MutableLiveData<Int>()
+    val slidingPanelState = MutableStateFlow(0)
 
-    /**
-     * 没入モード。フルスクリーンかつコントロール類が表示されていない状態。
-     * -> systemUiVisibilityを変える。
-     * */
-    val isImmersiveMode: LiveData<Boolean> = MediatorLiveData<Boolean>().also { ld ->
-        val o = Observer<Any> {
-            ld.value = playerViewModel.isFullScreenMode.value == true &&
-                    playerViewModel.isControlsViewVisible.value != true &&
-                    slidingPanelState.value == 0 // EXPANDED
+
+    val isPostDialogButtonVisible: StateFlow<Boolean> = MutableStateFlow(false).also { f ->
+        viewModelScope.launch {
+            combine(
+                playerViewModel.isFullScreenMode,
+                playerViewModel.isControlsViewVisible,
+                slidingPanelState,
+            ) { isFullscreen, controlsVisible, panelState ->
+                !isFullscreen || controlsVisible || panelState != 0
+            }.collect {
+                f.value = it
+            }
         }
-        ld.addSource(playerViewModel.isFullScreenMode, o)
-        ld.addSource(playerViewModel.isControlsViewVisible, o)
-        ld.addSource(slidingPanelState, o)
     }
 
-    /**狭いスマホの画面ではスクロール時に数秒FABを引っ込める*/
-    val isPostDialogButtonFullVisible: MutableLiveData<Boolean> =
-        MediatorLiveData<Boolean>().also { ld ->
-            val onVisible = Observer<Any> {
-                if (it != false)
-                    ld.value = true
+    /**スマホの画面では半透明にする*/
+    val isPostDialogButtonOpaque = MutableStateFlow(false).also { f ->
+        viewModelScope.launch {
+            slidingPanelState.collect { state ->
+                f.value = a.resources.getBoolean(R.bool.isPhoneScreen) && state != 0
             }
-            //これらのイベントが発生したとき、引っ込んでいたFABを再表示する
-            ld.addSource(playerViewModel.isFullScreenMode, onVisible) // trueのとき
-            //ld.addSource(playerViewModel.isControlsViewVisible, onVisible) // trueのとき
-            ld.addSource(slidingPanelState, onVisible) //すべてのイベント
-
-            val onHide = Observer<Any> {
-                if (a.resources.getBoolean(R.bool.isNarrowScreen))
-                    ld.value = false
-            }
-            //これらのイベントが発生したとき、一時的にFABを引っ込める
-            ld.addSource(chatViewModel.messageLiveData, onHide)
-
-            //n秒後に再表示する
-            var j: Job? = null
-            ld.observeForever {
-                j?.cancel()
-                val sec = a.resources.getInteger(R.integer.post_button_show_after_sec)
-                if (!it) {
-                    j = viewModelScope.launch {
-                        delay(sec * 1000L)
-                        ld.value = true
-                    }
-                }
-            }
-
         }
+    }
+
 
     private val _playerService = MutableStateFlow<PlayerService?>(null)
 

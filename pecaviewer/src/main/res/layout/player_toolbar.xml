@@ -29,7 +29,7 @@
             android:paddingStart="8dp"
             android:focusable="true"
             android:clickable="true"
-            bind:visibleAnimate="@{!safeUnbox(playerViewModel.isFullScreenMode) || safeUnbox(playerViewModel.isControlsViewVisible) || safeUnbox(appViewModel.slidingPanelState==1)}"
+            bind:visibleAnimate="@{!playerViewModel.isFullScreenMode || playerViewModel.isControlsViewVisible || appViewModel.slidingPanelState==1}"
             android:paddingEnd="@dimen/player_toolbar_padding_right">
 
         <TextView

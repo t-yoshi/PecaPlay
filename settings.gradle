@@ -1,5 +1,4 @@
 include ':pecaplay'
 include ':pecaviewer'
 include ':slidinguppanel'
-include ':swipyrefreshlayout'
 include ':core'

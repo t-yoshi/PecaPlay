@@ -2,14 +2,13 @@ package org.peercast.pecaviewer
 
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.graphics.Paint
 import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewPropertyAnimator
-import android.view.animation.Animation
-import android.view.animation.Transformation
-import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.annotation.AttrRes
@@ -17,11 +16,8 @@ import androidx.annotation.ColorInt
 import androidx.core.content.ContextCompat
 import androidx.core.view.isGone
 import androidx.core.view.isVisible
-import androidx.core.view.marginRight
-import androidx.core.view.updateLayoutParams
 import androidx.databinding.BindingAdapter
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.orangegangsters.github.swipyrefreshlayout.library.SwipyRefreshLayout
 
 
 internal object BindAdapter {
@@ -49,15 +45,32 @@ internal object BindAdapter {
     }
 
     @JvmStatic
-    @BindingAdapter("refreshing")
-    fun bindRefreshing(view: SwipyRefreshLayout, isRefreshing: Boolean) {
-        view.isRefreshing = isRefreshing
-    }
+    @BindingAdapter("fabOpaque")
+            /**狭いスマホではボタンが邪魔でテキストが読めないので半透明にする*/
+    fun bindFabOpaque(fab: FloatingActionButton, b: Boolean) {
+        class SavedProps(
+            val backgroundTintList: ColorStateList?,
+            val elevation: Float,
+            val compatElevation: Float,
+        )
 
-    @JvmStatic
-    @BindingAdapter("colorScheme")
-    fun bindColorScheme(view: SwipyRefreshLayout, @ColorInt color: Int) {
-        view.setColorSchemeColors(color)
+        if (fab.getTag(R.string.tag_fab_opaque) == null) {
+            fab.setTag(R.string.tag_fab_opaque, SavedProps(
+                fab.backgroundTintList, fab.elevation, fab.compatElevation
+            ))
+        }
+
+        if (b) {
+            fab.backgroundTintList = ColorStateList.valueOf(Color.TRANSPARENT)
+            val e = 0.2f * fab.context.resources.displayMetrics.density
+            fab.elevation = e
+            fab.compatElevation = e
+        } else {
+            val savedProps = fab.getTag(R.string.tag_fab_opaque) as SavedProps
+            fab.backgroundTintList = savedProps.backgroundTintList
+            fab.elevation = savedProps.elevation
+            fab.compatElevation = savedProps.compatElevation
+        }
     }
 
     @JvmStatic
@@ -97,28 +110,6 @@ internal object BindAdapter {
                     .onEnd { view.isVisible = false }
             }
         }
-    }
-
-    @JvmStatic
-    @BindingAdapter("postDialogButton_fullVisible")
-            /**false=右端に隠す*/
-    fun bindPostDialogButtonHide(view: FloatingActionButton, visibility: Boolean) {
-        val id = if (visibility) {
-            R.dimen.post_dialog_button_margin_right_normal
-        } else {
-            R.dimen.post_dialog_button_margin_right_hide
-        }
-        val anim = object : Animation() {
-            val start = view.marginRight
-            val end = view.context.resources.getDimension(id)
-            override fun applyTransformation(interpolatedTime: Float, t: Transformation?) {
-                view.updateLayoutParams<FrameLayout.LayoutParams> {
-                    rightMargin = (start + (end - start) * interpolatedTime).toInt()
-                }
-            }
-        }
-        anim.duration = 100
-        view.startAnimation(anim)
     }
 
 }

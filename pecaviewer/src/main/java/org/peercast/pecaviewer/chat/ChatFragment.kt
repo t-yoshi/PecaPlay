@@ -7,21 +7,21 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.MenuItem
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.Observer
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import org.peercast.pecaviewer.PecaViewerViewModel
 import org.peercast.pecaviewer.R
@@ -33,6 +33,7 @@ import org.peercast.pecaviewer.chat.thumbnail.ThumbnailView
 import org.peercast.pecaviewer.databinding.FragmentChatBinding
 import org.peercast.pecaviewer.player.PlayerViewModel
 import timber.log.Timber
+import kotlin.properties.Delegates
 
 @Suppress("unused")
 class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener,
@@ -46,15 +47,16 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener,
     private lateinit var binding: FragmentChatBinding
     private val threadAdapter = ThreadAdapter()
     private val messageAdapter = MessageAdapter(this)
-    private val autoReload = AutoReload()
     private var loadingJob: Job? = null
-    private val loadingLiveData = MutableLiveData<Boolean>()
+
+    /**読込中である*/
+    private val isLoading = MutableStateFlow(false)
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         chatPrefs = requireContext().getSharedPreferences("chat", Context.MODE_PRIVATE)
-        autoReload.isEnabled = chatPrefs.isAutoReloadEnabled
-        messageAdapter.viewType = when (chatPrefs.isSimpleDisplay) {
+        messageAdapter.defaultViewType = when (chatPrefs.isSimpleDisplay) {
             true -> MessageAdapter.SIMPLE
             else -> MessageAdapter.BASIC
         }
@@ -78,7 +80,9 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener,
         binding.vThreadList.layoutManager = LinearLayoutManager(view.context)
         binding.vThreadList.adapter = threadAdapter
 
-        binding.vMessageList.layoutManager = LinearLayoutManager(view.context)
+        val messageLayoutManager = LinearLayoutManager(view.context)
+        messageLayoutManager.stackFromEnd = true
+        binding.vMessageList.layoutManager = messageLayoutManager
         binding.vMessageList.adapter = messageAdapter
 
         binding.vChatToolbar.inflateMenu(R.menu.menu_chat_thread)
@@ -98,97 +102,89 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener,
         }
 
         binding.vMessageList.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                if (newState != RecyclerView.SCROLL_STATE_IDLE) {
-                    if (recyclerView.context.resources.getBoolean(R.bool.isNarrowScreen)) {
-                        //狭い画面ではスクロール中にFABを消す。そして数秒後に再表示される。
-                        appViewModel.isPostDialogButtonFullVisible.value = false
-                    }
-                    //過去のレスを見ているときは自動リロードを無効にする
-                    if (recyclerView.canScrollVertically(1)) {
-                        autoReload.isEnabled = false
-                    } else {
-                        autoReload.isEnabled = chatPrefs.isAutoReloadEnabled
-                        autoReload.scheduleRun()
-                    }
+            private var isBottom by Delegates.observable(false) { _, old, new ->
+                if (old == new)
+                    return@observable
+                //Timber.d("--> $new")
+                if (new && chatViewModel.selectedThreadPoster.value != null) {
+                    scheduleAutoReload()
+                } else {
+                    cancelAutoReload()
                 }
+            }
+
+            override fun onScrolled(view: RecyclerView, dx: Int, dy: Int) {
+                val size = messageAdapter.itemCount
+                val last = messageLayoutManager.findLastVisibleItemPosition()
+                isBottom = size > 0 && last == size - 1
             }
         })
 
         threadAdapter.onSelectThread = { info ->
             startLoading {
-                chatViewModel.presenter.threadSelect(info)
+                threadSelect(info)
             }
         }
 
-        chatViewModel.threadLiveData.observe(viewLifecycleOwner) {
-            threadAdapter.items = it
-        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
 
-        chatViewModel.selectedThread.observe(viewLifecycleOwner) {
-            threadAdapter.selected = it
-            if (it == null)
-                chatViewModel.isThreadListVisible.postValue(true)
-        }
-
-        chatViewModel.messageLiveData.observe(viewLifecycleOwner) {
-            messageAdapter.messages = it
-            autoReload.scheduleRun()
-            scrollToBottom()
-        }
-
-        chatViewModel.snackbarMessage.observe(
-            viewLifecycleOwner,
-            SnackbarObserver(view, activity?.findViewById(R.id.vPostDialogButton))
-        )
-
-        chatViewModel.isThreadListVisible.observe(viewLifecycleOwner) {
-            binding.vChatToolbar.menu.clear()
-            if (it) {
-                binding.vChatToolbar.inflateMenu(R.menu.menu_chat_board)
-                binding.vChatToolbar.menu.findItem(R.id.menu_auto_reload_enabled).isChecked =
-                    chatPrefs.isAutoReloadEnabled
-                binding.vChatToolbar.menu.findItem(R.id.menu_simple_display).isChecked =
-                    chatPrefs.isSimpleDisplay
-            } else {
-                binding.vChatToolbar.inflateMenu(R.menu.menu_chat_thread)
-            }
-        }
-
-        loadingLiveData.observe(viewLifecycleOwner) {
-            with(binding.vChatToolbar.menu) {
-                findItem(R.id.menu_reload).isVisible = !it
-                findItem(R.id.menu_abort).isVisible = it
-            }
-        }
-    }
-
-    private class SnackbarObserver(val view: View, val anchor: View?) : Observer<SnackbarMessage> {
-        var bar: Snackbar? = null
-        override fun onChanged(msg: SnackbarMessage?) {
-            if (msg == null) {
-                bar?.dismiss()
-                bar = null
-                return
-            }
-
-            val length = when {
-                msg.cancelJob != null -> Snackbar.LENGTH_INDEFINITE
-                else -> Snackbar.LENGTH_LONG
-            }
-
-            bar = Snackbar.make(view, msg.text, length).also { bar ->
-                val c = bar.context
-                msg.cancelJob?.let { j ->
-                    bar.setAction(msg.cancelText ?: c.getText(android.R.string.cancel)) {
-                        j.cancel()
+                launch {
+                    chatViewModel.threads.collect {
+                        threadAdapter.items = it
                     }
                 }
-                if (msg.textColor != 0)
-                    bar.setTextColor(ContextCompat.getColor(c, msg.textColor))
-                //FABの上に出すのが正統
-                anchor?.let(bar::setAnchorView)
-                bar.show()
+
+                launch {
+                    chatViewModel.selectedThread.collect {
+                        threadAdapter.selected = it
+                        if (it == null)
+                            chatViewModel.isThreadListVisible.value = true
+                    }
+                }
+
+                launch {
+                    chatViewModel.messages.collect {
+                        messageAdapter.messages = it
+                        scheduleAutoReload()
+                        scrollToBottom()
+                    }
+                }
+
+                launch {
+                    chatViewModel.isThreadListVisible.collect {
+                        binding.vChatToolbar.menu.clear()
+                        if (it) {
+                            binding.vChatToolbar.inflateMenu(R.menu.menu_chat_board)
+                            binding.vChatToolbar.menu.findItem(R.id.menu_auto_reload_enabled).isChecked =
+                                chatPrefs.isAutoReloadEnabled
+                            binding.vChatToolbar.menu.findItem(R.id.menu_simple_display).isChecked =
+                                chatPrefs.isSimpleDisplay
+                        } else {
+                            binding.vChatToolbar.inflateMenu(R.menu.menu_chat_thread)
+                        }
+                    }
+                }
+
+                launch {
+                    combine(
+                        isLoading, chatViewModel.isThreadListVisible) { b, _ ->
+                        with(binding.vChatToolbar.menu) {
+                            findItem(R.id.menu_reload).isVisible = !b
+                            findItem(R.id.menu_abort).isVisible = b
+                        }
+                    }.collect()
+                }
+
+                launch {
+                    chatViewModel.snackbarFactory.consumeEach {
+                        val bar = it.create(requireView())
+                        activity?.findViewById<View>(R.id.vPostDialogButton)?.let { anchor ->
+                            bar.setAnchorView(anchor)
+                        }
+                        bar.show()
+                    }
+                }
             }
         }
     }
@@ -196,34 +192,33 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener,
     override fun onMenuItemClick(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.menu_reload -> {
-                autoReload.isEnabled = chatPrefs.isAutoReloadEnabled
                 startLoading {
                     when (chatViewModel.isThreadListVisible.value) {
-                        true -> chatViewModel.presenter.reloadThreadList()
-                        else -> chatViewModel.presenter.reloadThread()
+                        true -> reloadThreadList()
+                        else -> reloadThread()
                     }
                 }
             }
             R.id.menu_abort -> {
                 loadingJob?.cancel("abort button clicked")
             }
-            R.id.menu_align_top -> {
-                binding.vMessageList.scrollToPosition(0)
+            R.id.menu_top -> {
+                scrollToTop()
             }
-            R.id.menu_align_bottom -> {
+            R.id.menu_bottom -> {
                 scrollToBottom()
             }
             R.id.menu_auto_reload_enabled -> {
                 val b = !item.isChecked
                 item.isChecked = b
                 chatPrefs.isAutoReloadEnabled = b
-                autoReload.isEnabled = b
+                scheduleAutoReload()
             }
             R.id.menu_simple_display -> {
                 val b = !item.isChecked
                 item.isChecked = b
                 chatPrefs.isSimpleDisplay = b
-                messageAdapter.viewType = when (b) {
+                messageAdapter.defaultViewType = when (b) {
                     true -> MessageAdapter.SIMPLE
                     else -> MessageAdapter.BASIC
                 }
@@ -232,11 +227,15 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener,
         return true
     }
 
+    private fun scrollToTop() {
+        binding.vMessageList.scrollToPosition(0)
+    }
+
     private fun scrollToBottom() {
         val n = messageAdapter.itemCount
         if (n > 0) {
             val manager = binding.vMessageList.layoutManager as LinearLayoutManager
-            manager.scrollToPositionWithOffset(n - 1, 0)
+            manager.scrollToPosition(n - 1)
         }
     }
 
@@ -262,67 +261,65 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener,
 
     override fun onPause() {
         super.onPause()
+        cancelAutoReload()
         loadingJob?.cancel()
-        loadingJob = null
     }
 
-    private fun startLoading(block: suspend CoroutineScope.() -> Unit) {
+    private fun startLoading(action: suspend ChatPresenter.() -> Unit) {
         if (loadingJob?.run { isActive && !isCancelled } == true) {
             Timber.d("loadingJob [$loadingJob] is still active.")
             return
         }
-        autoReload.cancelSchedule()
-        loadingJob = lifecycleScope.launch {
-            loadingLiveData.value = true
+
+        loadingJob = lifecycleScope.launchWhenResumed {
+            isLoading.value = true
             try {
-                block()
+                chatViewModel.presenter.action()
             } finally {
-                loadingLiveData.value = false
+                isLoading.value = false
             }
         }
+    }
+
+    private var jAutoReload: Job? = null
+
+    /**
+     * 自動読込のキャンセル。
+     * */
+    private fun cancelAutoReload() {
+        //Timber.d("cancelAutoReload")
+        jAutoReload?.cancel()
+        chatViewModel.reloadRemain.value = -1
     }
 
     /**
      * スレッドの自動読込。
      * */
-    private inner class AutoReload {
-        private var j: Job? = null
-        private var f = {}
+    private fun scheduleAutoReload() {
+        cancelAutoReload()
 
-        fun scheduleRun() = f()
+        if (!chatPrefs.isAutoReloadEnabled || chatViewModel.selectedThreadPoster.value == null)
+            return
 
-        fun cancelSchedule() {
-            chatViewModel.reloadRemain.value = -1
-            j?.cancel()
-        }
-
-        var isEnabled = false
-            set(value) {
-                if (field == value)
-                    return
-                field = value
-                if (value) {
-                    f = {
-                        j?.cancel()
-                        j = lifecycleScope.launch {
-                            Timber.d("Set auto-reloading after ${AUTO_RELOAD_SEC}seconds.")
-                            for (i in AUTO_RELOAD_SEC downTo 1) {
-                                chatViewModel.reloadRemain.value = i * 100 / AUTO_RELOAD_SEC
-                                delay(1000L)
-                            }
-                            chatViewModel.reloadRemain.value = -1
-                            Timber.d("Start auto-reloading.")
-                            j = null
-                            startLoading {
-                                chatViewModel.presenter.reloadThread()
-                            }
-                        }
+        jAutoReload = lifecycleScope.launchWhenResumed {
+            try {
+                Timber.d("Set auto-reloading every ${AUTO_RELOAD_SEC}seconds.")
+                while (isActive) {
+                    for (i in AUTO_RELOAD_SEC downTo 1) {
+                        chatViewModel.reloadRemain.value = i * 100 / AUTO_RELOAD_SEC
+                        delay(1000L)
                     }
-                } else {
-                    cancelSchedule()
-                    f = {}
+                    chatViewModel.reloadRemain.value = -1
+
+                    Timber.d("Start auto-reloading.")
+                    startLoading {
+                        reloadThread()
+                    }
                 }
+            } finally {
+                chatViewModel.reloadRemain.value = -1
             }
+        }
     }
 
     /**スレを自動的にリロードするか*/

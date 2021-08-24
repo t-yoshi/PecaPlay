@@ -23,12 +23,13 @@
                 android:layout_width="64dp"
                 android:layout_height="64dp"
                 android:background="?android:attr/selectableItemBackgroundBorderless"
-                android:src="@{vm.src}" />
+                android:src="@{vm.src}"
+                android:contentDescription="@null"/>
 
         <TextView
                 android:layout_width="64dp"
                 android:layout_height="wrap_content"
-                android:layout_gravity="bottom|right"
+                android:layout_gravity="bottom|end"
                 android:ellipsize="start"
                 android:padding="1dp"
                 android:text="@{vm.error}"
@@ -38,9 +39,10 @@
         <ImageView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_gravity="bottom|right"
+                android:layout_gravity="bottom|end"
                 android:src="@drawable/ic_launch_black_12dp"
-                android:visibility="@{vm.isLinkUrl ? View.VISIBLE : View.INVISIBLE}" />
+                android:visibility="@{vm.isLinkUrl ? View.VISIBLE : View.INVISIBLE}"
+                android:contentDescription="@null"/>
 
         <ImageView
                 android:layout_width="24dp"
@@ -48,7 +50,8 @@
                 android:layout_gravity="center"
                 android:src="@drawable/ic_play_circle_outline_black_24dp"
                 android:visibility="@{vm.isAnimation ? View.VISIBLE : View.INVISIBLE}"
-                app:tint="@color/grey_600" />
+                app:tint="@color/grey_600"
+                android:contentDescription="@null"/>
 
     </FrameLayout>
 

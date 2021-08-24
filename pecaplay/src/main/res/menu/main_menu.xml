@@ -12,7 +12,7 @@
     <item
         android:id="@+id/menu_reload"
         android:icon="@drawable/ic_refresh_24px"
-        android:title="@string/reload"
+        android:title="@string/menu_reload"
         auto:iconTint="?android:attr/textColorPrimary"
         auto:showAsAction="ifRoom" />
 

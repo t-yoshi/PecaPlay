@@ -7,10 +7,12 @@ import androidx.core.content.edit
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.peercast.pecaplay.core.io.localizedSystemMessage
 import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.chat.net.*
+import org.peercast.pecaviewer.util.SnackbarFactory
 import timber.log.Timber
 import java.io.IOException
 import java.util.concurrent.TimeUnit
@@ -23,7 +25,7 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
         updateChatToolbarTitle()
     }
 
-    //コンタクトURL。配信者が更新しないかぎり変わらない。
+    //コンタクトURL。
     private val contactUrl get() = boardConn?.info?.url ?: ""
 
     /**スレッドのリストとメッセージを再読込する*/
@@ -34,19 +36,18 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
     /**スレッドのリストを再読込する*/
     suspend fun reloadThreadList() {
         try {
-            chatViewModel.isThreadListLoading.postValue(true)
-            clearSnackMessage()
+            chatViewModel.isThreadListLoading.value = true
 
             val conn = boardConn ?: return
             val threads = conn.loadThreads()
             Timber.d("threads=$threads")
-            chatViewModel.threadLiveData.postValue(threads)
+            chatViewModel.threads.value = threads
         } catch (e: IOException) {
-            chatViewModel.threadLiveData.postValue(emptyList())
+            chatViewModel.threads.value = emptyList()
             threadSelect(null)
             postSnackErrorMessage(e)
         } finally {
-            chatViewModel.isThreadListLoading.postValue(false)
+            chatViewModel.isThreadListLoading.value = false
         }
     }
 
@@ -54,27 +55,26 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
      * スレッドのメッセージを再読込する。
      * */
     suspend fun reloadThread() {
-        if (chatViewModel.isMessageListLoading.value == true) {
+        if (chatViewModel.isMessageListLoading.value) {
             Timber.w("already loading.")
             return
         }
 
-        chatViewModel.isMessageListLoading.postValue(true)
-        clearSnackMessage()
+        chatViewModel.isMessageListLoading.value = true
         try {
             val conn = boardConn
             //Timber.d("$boardConn")
             if (conn is IBoardThreadConnection) {
-                chatViewModel.selectedThreadPoster.postValue(
+                chatViewModel.selectedThreadPoster.value =
                     if (conn.info.isPostable && conn is IBoardThreadPoster) conn else null
-                )
+
                 val messages = conn.loadMessages()
-                chatViewModel.messageLiveData.postValue(messages)
+                chatViewModel.messages.value = messages
             }
         } catch (e: IOException) {
             postSnackErrorMessage(e)
         } finally {
-            chatViewModel.isMessageListLoading.postValue(false)
+            chatViewModel.isMessageListLoading.value = false
         }
     }
 
@@ -85,7 +85,7 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
         Timber.d("loadUrl=$url, isForce=$isForce")
         when {
             url.isBlank() -> {
-                chatViewModel.threadLiveData.value = emptyList()
+                chatViewModel.threads.value = emptyList()
             }
             !url.matches("""^https?://.+""".toRegex()) -> {
                 Timber.w("invalid url: $url")
@@ -106,15 +106,14 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
         Timber.d("doLoadUrl: $url")
 
         try {
-            chatViewModel.isThreadListLoading.postValue(true)
-            clearSnackMessage()
+            chatViewModel.isThreadListLoading.value = true
 
             val conn = openBoardConnection(url)
             boardConn = conn
 
             val threads = conn.loadThreads()
             Timber.d("threads=$threads")
-            chatViewModel.threadLiveData.postValue(threads)
+            chatViewModel.threads.value = threads
 
             //スレッド選択の復元
             val threadSelectFilter = prefs.restoreSelectedThread(conn.info)
@@ -137,17 +136,17 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
             Timber.w(t)
             throw t
         } finally {
-            chatViewModel.isThreadListLoading.postValue(false)
+            chatViewModel.isThreadListLoading.value = false
         }
     }
 
     suspend fun threadSelect(info: IThreadInfo?) {
-        chatViewModel.selectedThread.postValue(info)
+        chatViewModel.selectedThread.value = info
 
         if (info == null) {
             //boardConn = null
-            chatViewModel.selectedThreadPoster.postValue(null)
-            chatViewModel.messageLiveData.postValue(emptyList())
+            chatViewModel.selectedThreadPoster.value = null
+            chatViewModel.messages.value = emptyList()
             Timber.w("Thread not selected: $contactUrl")
             return
         }
@@ -161,7 +160,7 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
             boardConn = threadConn
             reloadThread()
 
-            chatViewModel.isThreadListVisible.postValue(false)
+            chatViewModel.isThreadListVisible.value = false
 
         } catch (e: IOException) {
             postSnackErrorMessage(e)
@@ -174,24 +173,28 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
             true -> boardConn?.info?.boardTopTitle
             else -> boardConn?.info?.title
         }
-        chatViewModel.chatToolbarTitle.value = title
+        chatViewModel.chatToolbarTitle.value = title ?: ""
     }
 
     /**掲示板に書き込む*/
     fun postMessage(poster: IBoardThreadPoster, msg: PostMessage): Job {
         return chatViewModel.viewModelScope.launch {
             val d = async {
-                val r = kotlin.runCatching { poster.postMessage(msg) }
-                postSnackMessage(r)
-                r.isSuccess
+                delay(1000)
+                kotlin.runCatching { poster.postMessage(msg) }
             }
-            postSnackMessage(a.getText(R.string.sending), d)
 
-            if (!d.isCancelled && d.await()) {
+            chatViewModel.snackbarFactory.trySend(
+                SnackbarFactory.Cancelable(a.getText(R.string.sending), d)
+            )
+
+            val r = d.await()
+            postSnackMessage(r)
+
+            if (r.isSuccess) {
                 //送信成功したのでスレッドを再読み込み
                 try {
                     reload()
-                    clearSnackMessage()
                 } catch (e: IOException) {
                     postSnackErrorMessage(e)
                 }
@@ -199,25 +202,12 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
         }
     }
 
-    /**スナックバー表示をクリアする*/
-    fun clearSnackMessage() {
-        chatViewModel.snackbarMessage.postValue(null)
-    }
-
-    /**スナックバーに表示する*/
-    fun postSnackMessage(
-        text: CharSequence,
-        cancelJob: Job? = null,
-        cancelText: CharSequence? = null,
-    ) {
-        val m = SnackbarMessage(text, cancelJob = cancelJob, cancelText = cancelText)
-        chatViewModel.snackbarMessage.postValue(m)
-    }
-
     /**スナックバーに成功またはエラーを表示する*/
-    fun postSnackMessage(result: Result<CharSequence>) {
+    private fun postSnackMessage(result: Result<CharSequence>) {
         result.onSuccess {
-            postSnackMessage(it)
+            chatViewModel.snackbarFactory.trySend(
+                SnackbarFactory(it)
+            )
         }.onFailure {
             Timber.d(it)
             if (it !is IOException)
@@ -227,9 +217,10 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
     }
 
     /**スナックバーにエラーを表示する*/
-    fun postSnackErrorMessage(e: IOException) {
-        val m = SnackbarMessage(e.localizedSystemMessage(), R.color.red_800)
-        chatViewModel.snackbarMessage.postValue(m)
+    private fun postSnackErrorMessage(e: IOException) {
+        chatViewModel.snackbarFactory.trySend(
+            SnackbarFactory(e.localizedSystemMessage(), a.getColor(R.color.red_800))
+        )
     }
 
 }
@@ -279,7 +270,9 @@ private class BbsThreadPreference(c: Context) {
         return pref.getString(boardUrl, null)
             ?.replace(RE_EXPIRE, "")
 //            ?.also { Timber.d("$boardUrl <- $it") }
-            ?.let { u -> { it.url == u } }
+            ?.let { u ->
+                { it.url == u && it.isPostable }
+            }
     }
 
     //避難所にいるかどうか

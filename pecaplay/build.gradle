@@ -18,8 +18,8 @@ android {
         minSdkVersion min_sdk_version
         targetSdkVersion target_sdk_version
 
-        versionCode 8_00_04_00
-        versionName '8.0.4-0'
+        versionCode 8_01_00_00
+        versionName '8.1.0-0'
         buildConfigField "long", "TIMESTAMP", System.currentTimeMillis() + "L"
 
         javaCompileOptions {
@@ -67,11 +67,6 @@ android {
 dependencies {
 
     implementation project(":core")
-
-//    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-//    implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
-//    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinx_coroutines_version"
-//    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$kotlinx_coroutines_version"
 
     implementation "androidx.appcompat:appcompat:$androidx_version"
     implementation 'androidx.core:core-ktx:1.6.0'

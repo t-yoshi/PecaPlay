@@ -83,10 +83,9 @@ internal class PecaViewerFragment : Fragment() {
         binding.vPostDialogButton.setOnClickListener {
             //フルスクリーン時には一時的にコントロールボタンを
             //表示させないとOSのナビゲーションバーが残る
-            if (playerViewModel.isFullScreenMode.value == true)
+            if (playerViewModel.isFullScreenMode.value)
                 playerViewModel.isControlsViewVisible.value = true
-            val f = PostMessageDialogFragment()
-            f.show(parentFragmentManager, "tag#PostMessageDialogFragment")
+            PostMessageDialogFragment.show(parentFragmentManager)
         }
 
         isPortraitMode.value = resources.configuration.isPortraitMode

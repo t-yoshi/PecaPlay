@@ -11,7 +11,6 @@ import androidx.lifecycle.ViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
 import org.peercast.pecaviewer.BR
 import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.chat.ChatFragment
@@ -38,7 +37,7 @@ class MessageAdapter(private val fragment: ChatFragment) :
     }
 
     /**簡易表示、または詳細表示。*/
-    var viewType by Delegates.observable(SIMPLE) { _, old, new ->
+    var defaultViewType by Delegates.observable(SIMPLE) { _, old, new ->
         require(new in arrayOf(SIMPLE, BASIC)) { "not support viewType: $new" }
         if (new != old)
             notifyDataSetChanged()
@@ -51,6 +50,10 @@ class MessageAdapter(private val fragment: ChatFragment) :
         return ViewHolder(
             DATA_BINDING_INFLATES[viewType](inflater, parent, false)
         )
+    }
+
+    override fun getItemViewType(position: Int): Int {
+        return defaultViewType
     }
 
     inner class ViewHolder(val binding: ViewDataBinding) : RecyclerView.ViewHolder(binding.root) {
@@ -99,7 +102,7 @@ class MessageAdapter(private val fragment: ChatFragment) :
             return null
         }
 
-        val vh = onCreateViewHolder(parent, viewType)
+        val vh = onCreateViewHolder(parent, defaultViewType)
         vh.viewModel.setMessage(m)
         return vh.itemView
     }

@@ -15,7 +15,7 @@
     <string name="sort_listener_asc">視聴数 少ない</string>
     <string name="sort_listener_desc">視聴数 多い</string>
     <string name="sort_order">並び替え</string>
-    <string name="reload">再読み込み</string>
+    <string name="menu_reload">再読み込み</string>
     <string name="yp4g_statistics">統計情報</string>
     <string name="yp4g_chat">チャット</string>
     <string name="star_delete">お気に入りを削除</string>

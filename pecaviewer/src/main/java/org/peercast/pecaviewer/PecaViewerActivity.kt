@@ -16,7 +16,10 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.fragment.app.commit
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import com.google.android.exoplayer2.video.VideoSize
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
@@ -55,9 +58,11 @@ class PecaViewerActivity : AppCompatActivity() {
             replaceMainFragment()
         }
 
-        playerViewModel.isFullScreenMode.let { ld ->
-            ld.value = requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-            ld.observe(this) {
+        playerViewModel.isFullScreenMode.value =
+            requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+
+        lifecycleScope.launch {
+            playerViewModel.isFullScreenMode.collect {
                 requestedOrientation = when (it) {
                     true -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
                     else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
@@ -65,14 +70,16 @@ class PecaViewerActivity : AppCompatActivity() {
             }
         }
 
-        playerViewModel.isFullScreenMode.observe(this) {
-            val controller = WindowCompat.getInsetsController(window, window.decorView)
-            if (it) {
-                controller?.hide(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
-                controller?.systemBarsBehavior =
-                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            } else {
-                controller?.show(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
+        lifecycleScope.launch {
+            playerViewModel.isFullScreenMode.collect {
+                val controller = WindowCompat.getInsetsController(window, window.decorView)
+                if (it) {
+                    controller?.hide(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
+                    controller?.systemBarsBehavior =
+                        WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                } else {
+                    controller?.show(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
+                }
             }
         }
     }

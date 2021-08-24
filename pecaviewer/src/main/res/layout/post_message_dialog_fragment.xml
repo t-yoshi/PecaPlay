@@ -17,7 +17,8 @@
                 android:inputType="text"
                 android:lines="1"
                 android:maxLines="1"
-                android:autofillHints="" />
+                android:autofillHints=""
+                android:hint="@null"/>
 
         <Space
                 android:layout_width="10dp"
