@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.peercast.pecaplay.R
-import org.peercast.pecaplay.app.AppTheme
+import org.peercast.pecaplay.util.AppTheme
 import org.peercast.pecaplay.app.Favorite
 
 

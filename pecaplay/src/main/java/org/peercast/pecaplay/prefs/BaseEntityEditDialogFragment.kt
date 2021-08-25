@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.collect
 import org.koin.android.ext.android.inject
 import org.peercast.pecaplay.R
 import org.peercast.pecaplay.app.AppRoomDatabase
-import org.peercast.pecaplay.app.AppTheme
+import org.peercast.pecaplay.util.AppTheme
 import org.peercast.pecaplay.app.ManageableEntity
 import timber.log.Timber
 

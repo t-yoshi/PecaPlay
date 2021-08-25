@@ -6,7 +6,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.EditTextPreference
@@ -17,9 +16,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.peercast.pecaplay.BuildConfig
+import org.peercast.pecaplay.PecaPlayNotification
 import org.peercast.pecaplay.R
 import org.peercast.pecaplay.app.AppRoomDatabase
-import org.peercast.pecaplay.worker.NotificationTask
 import java.util.*
 
 class GeneralPrefsFragment : PreferenceFragmentCompat() {
@@ -64,11 +63,7 @@ class GeneralPrefsFragment : PreferenceFragmentCompat() {
 
             @TargetApi(Build.VERSION_CODES.O)
             it.onPreferenceClickListener = Preference.OnPreferenceClickListener { _ ->
-                NotificationTask.createNotificationChannel(it.context)
-                val i = Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
-                i.putExtra(Settings.EXTRA_APP_PACKAGE, it.context.packageName)
-                i.putExtra(Settings.EXTRA_CHANNEL_ID, NotificationTask.NOTIFICATION_CHANNEL_ID)
-                startActivity(i)
+                PecaPlayNotification(it.context).launchSystemSettings(this)
                 true
             }
         }

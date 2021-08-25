@@ -43,12 +43,6 @@ class DefaultAppPreferences(c: Context) : AppPreferences() {
             prefs.edit { putBoolean(KEY_NOTIFICATION_ENABLED, value) }
         }
 
-    override var notificationNewlyChannelsId: List<String>
-        get() = prefs.getStringSet(KEY_NOTIFICATION_NEWLY_CHANNELS_ID, null)?.toList()
-            ?: emptyList()
-        set(value) {
-            prefs.edit { putStringSet(KEY_NOTIFICATION_NEWLY_CHANNELS_ID, value.toSet()) }
-        }
 
     companion object {
         const val KEY_PEERCAST_SERVER_URL = "pref_peercast_server_url"
@@ -59,8 +53,6 @@ class DefaultAppPreferences(c: Context) : AppPreferences() {
         private const val KEY_PLAYER_ENABLED = "pref_viewer_enabled"
 
         private const val KEY_NOTIFICATION_ENABLED = "pref_notification_enabled"
-        private const val KEY_NOTIFICATION_SOUND_URL = "pref_notification_sound_url"
-        private const val KEY_NOTIFICATION_NEWLY_CHANNELS_ID = "pref_notification_newly_channels_id"
 
     }
 }

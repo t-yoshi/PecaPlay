@@ -20,8 +20,4 @@ abstract class AppPreferences {
 
     /**通知するか*/
     abstract var isNotificationEnabled: Boolean
-
-    /**通知済み新着のChannel-Id*/
-    abstract var notificationNewlyChannelsId: List<String>
-
 }

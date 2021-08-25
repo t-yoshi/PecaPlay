@@ -1,4 +1,4 @@
-package org.peercast.pecaplay.app
+package org.peercast.pecaplay.util
 
 import android.content.Context
 import android.util.TypedValue

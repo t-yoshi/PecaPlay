@@ -1,6 +1,5 @@
 package org.peercast.pecaplay
 
-import android.app.NotificationManager
 import android.app.SearchManager
 import android.content.Context
 import android.content.Intent
@@ -96,9 +95,7 @@ class PecaPlayActivity : AppCompatActivity() {
             viewModel.channelFilter.navigationItem.value = item
 
             if (item is NavigationNotifiedItem) {
-                appPrefs.notificationNewlyChannelsId = emptyList()
-                val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-                manager.cancelAll()
+                PecaPlayNotification(this).clearNotifiedNewYpChannels()
             }
 
             binding.vDrawerLayout?.let {
@@ -170,6 +167,9 @@ class PecaPlayActivity : AppCompatActivity() {
         if (!naviKey.isNullOrBlank()) {
             intent.removeExtra(PecaPlayIntent.EX_NAVIGATION_ITEM)
             binding.vNavigation.navigate { it.key == naviKey }
+        }
+        if (naviKey == "notified"){
+            PecaPlayNotification(this).clearNotifiedNewYpChannels()
         }
     }
 
