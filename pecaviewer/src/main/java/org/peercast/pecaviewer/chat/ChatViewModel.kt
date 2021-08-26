@@ -41,7 +41,7 @@ class ChatViewModel(a: Application) : AndroidViewModel(a) {
     val messageDraft = HashMap<String, String>()
 
     /**スナックバーに表示する*/
-    val snackbarFactory = Channel<SnackbarFactory>(1, BufferOverflow.DROP_OLDEST)
+    val snackbarFactory = Channel<SnackbarFactory>(1, BufferOverflow.DROP_LATEST)
 
     /**自動リロードへの残り秒(%)*/
     val reloadRemain = MutableLiveData(-1)

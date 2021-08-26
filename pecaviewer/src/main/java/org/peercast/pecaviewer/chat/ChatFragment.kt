@@ -19,7 +19,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
@@ -169,22 +168,13 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener,
 
                 launch {
                     combine(
-                        isLoading, chatViewModel.isThreadListVisible) { b, _ ->
+                        isLoading, chatViewModel.isThreadListVisible
+                    ) { b, _ ->
                         with(binding.vChatToolbar.menu) {
                             findItem(R.id.menu_reload).isVisible = !b
                             findItem(R.id.menu_abort).isVisible = b
                         }
                     }.collect()
-                }
-
-                launch {
-                    chatViewModel.snackbarFactory.consumeEach {
-                        val bar = it.create(requireView())
-                        activity?.findViewById<View>(R.id.vPostDialogButton)?.let { anchor ->
-                            bar.setAnchorView(anchor)
-                        }
-                        bar.show()
-                    }
                 }
 
                 launch {
@@ -237,7 +227,7 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener,
         return true
     }
 
-    private val backPressedCallback = object : OnBackPressedCallback(false){
+    private val backPressedCallback = object : OnBackPressedCallback(false) {
         override fun handleOnBackPressed() {
             chatViewModel.isThreadListVisible.value = false
         }

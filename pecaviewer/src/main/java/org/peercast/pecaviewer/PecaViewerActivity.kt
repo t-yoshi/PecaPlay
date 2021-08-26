@@ -18,6 +18,7 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.google.android.exoplayer2.video.VideoSize
+import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
@@ -82,6 +83,15 @@ class PecaViewerActivity : AppCompatActivity() {
                 }
             }
         }
+
+        lifecycleScope.launch {
+            chatViewModel.snackbarFactory.consumeEach {
+                it.show(
+                    findViewById(android.R.id.content),
+                    findViewById(R.id.vPostDialogButton)
+                )
+            }
+        }
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -143,7 +153,7 @@ class PecaViewerActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        if (onBackPressedDispatcher.hasEnabledCallbacks()){
+        if (onBackPressedDispatcher.hasEnabledCallbacks()) {
             return super.onBackPressed()
         }
 

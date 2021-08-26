@@ -12,6 +12,7 @@ import kotlinx.coroutines.launch
 import org.peercast.pecaplay.core.io.localizedSystemMessage
 import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.chat.net.*
+import org.peercast.pecaviewer.util.CancelableSnackbarFactory
 import org.peercast.pecaviewer.util.SnackbarFactory
 import timber.log.Timber
 import java.io.IOException
@@ -187,8 +188,8 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
                 kotlin.runCatching { poster.postMessage(msg) }
             }
 
-            chatViewModel.snackbarFactory.trySend(
-                SnackbarFactory.Cancelable(a.getText(R.string.sending), d)
+            chatViewModel.snackbarFactory.send(
+                CancelableSnackbarFactory(a.getText(R.string.sending), d)
             )
 
             val r = d.await()
@@ -206,9 +207,9 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
     }
 
     /**スナックバーに成功またはエラーを表示する*/
-    private fun postSnackMessage(result: Result<CharSequence>) {
+    private suspend fun postSnackMessage(result: Result<CharSequence>) {
         result.onSuccess {
-            chatViewModel.snackbarFactory.trySend(
+            chatViewModel.snackbarFactory.send(
                 SnackbarFactory(it)
             )
         }.onFailure {
@@ -220,8 +221,8 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
     }
 
     /**スナックバーにエラーを表示する*/
-    private fun postSnackErrorMessage(e: IOException) {
-        chatViewModel.snackbarFactory.trySend(
+    private suspend fun postSnackErrorMessage(e: IOException) {
+        chatViewModel.snackbarFactory.send(
             SnackbarFactory(e.localizedSystemMessage(), a.getColor(R.color.red_800))
         )
     }
