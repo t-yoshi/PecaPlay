@@ -1,11 +1,14 @@
 package org.peercast.pecaplay
 
 import android.app.Application
+import android.content.Intent
 import android.net.Uri
 import androidx.core.text.HtmlCompat
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import org.peercast.core.lib.app.BaseClientViewModel
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.chanlist.filter.ChannelFilter
@@ -31,9 +34,12 @@ class AppViewModel(
 
 
     /**Snackbarで表示するメッセージ*/
-    val message = MutableSharedFlow<CharSequence>(1, 0, BufferOverflow.DROP_OLDEST)
+    val message = Channel<CharSequence>()
 
     val channelFilter = ChannelFilter(database, appPrefs)
+
+    var isInformingPeerCastStart = true
+
 
     init {
         loadingEvent.filterIsInstance<LoadingEvent.OnException>().onEach { ev ->
@@ -43,9 +49,19 @@ class AppViewModel(
                 else -> ev.e.localizedSystemMessage()
             }
             val h = HtmlCompat.fromHtml("<font color=red>${ev.yp.name}: $s", 0)
-            message.emit(h)
+            message.send(h)
         }.launchIn(viewModelScope)
 
+        viewModelScope.launch {
+            rpcClient.filterNotNull().collect {
+                //PeerCastの起動を知らせる。プレーヤーからの復帰時は表示しない。
+                if (isInformingPeerCastStart) {
+                    message.send(
+                        a.getString(R.string.peercast_has_started, it.rpcEndPoint.port)
+                    )
+                }
+            }
+        }
     }
 
     override fun bindService() {

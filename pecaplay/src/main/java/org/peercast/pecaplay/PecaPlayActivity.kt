@@ -22,7 +22,9 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.lifecycleScope
 import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.snackbar.Snackbar
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -110,22 +112,13 @@ class PecaPlayActivity : AppCompatActivity() {
         }
 
         lifecycleScope.launchWhenCreated {
-            viewModel.message.filter { it.isNotEmpty() }.onEach {
+            viewModel.message.consumeEach {
                 Snackbar.make(binding.root, it, Snackbar.LENGTH_LONG).show()
-                viewModel.message.emit("")
-            }.collect()
-        }
-
-        lifecycleScope.launchWhenCreated {
-            viewModel.rpcClient.filterNotNull().collect {
-                //PeerCastの起動を知らせる。プレーヤーからの復帰時は表示しない。
-                if (savedInstanceState == null && intent.hasCategory(Intent.CATEGORY_LAUNCHER)) {
-                    viewModel.message.emit(
-                        getString(R.string.peercast_has_started, it.rpcEndPoint.port)
-                    )
-                }
             }
         }
+
+        viewModel.isInformingPeerCastStart =
+            savedInstanceState == null && intent.hasCategory(Intent.CATEGORY_LAUNCHER)
 
         lifecycleScope.launchWhenCreated {
             viewModel.notificationIconEnabled.collect {
@@ -144,8 +137,6 @@ class PecaPlayActivity : AppCompatActivity() {
         lifecycleScope.launchWhenCreated {
             binding.vNavigation.model.repository.collect()
         }
-
-        viewModel.bindService()
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -168,9 +159,14 @@ class PecaPlayActivity : AppCompatActivity() {
             intent.removeExtra(PecaPlayIntent.EX_NAVIGATION_ITEM)
             binding.vNavigation.navigate { it.key == naviKey }
         }
-        if (naviKey == "notified"){
+        if (naviKey == "notified") {
             PecaPlayNotification(this).clearNotifiedNewYpChannels()
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        viewModel.bindService()
     }
 
     override fun onResume() {
