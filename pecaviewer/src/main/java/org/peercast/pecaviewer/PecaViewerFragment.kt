@@ -139,10 +139,12 @@ internal class PecaViewerFragment : Fragment() {
                     onPanelSlide(panel, 0f)
                     chatViewModel.isToolbarVisible.value = true
                 }
-                SlidingUpPanelLayout.PanelState.EXPANDED,
-                SlidingUpPanelLayout.PanelState.COLLAPSED,
-                -> {
+                //プレーヤーのみ表示
+                SlidingUpPanelLayout.PanelState.EXPANDED -> {
                     binding.vPlayerFragmentContainer.updatePadding(top = 0)
+                }
+                //チャットのみ表示
+                SlidingUpPanelLayout.PanelState.COLLAPSED -> {
                     binding.vChatFragmentContainer.updatePadding(bottom = 0)
                 }
                 else -> {
