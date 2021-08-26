@@ -143,6 +143,10 @@ class PecaViewerActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
+        if (onBackPressedDispatcher.hasEnabledCallbacks()){
+            return super.onBackPressed()
+        }
+
         val hasEnteredPip = viewerPrefs.isBackgroundPlaying && enterPipMode()
         //hasEnteredPip:
         // true: プレーヤーをPIP化 & PecaPlay起動

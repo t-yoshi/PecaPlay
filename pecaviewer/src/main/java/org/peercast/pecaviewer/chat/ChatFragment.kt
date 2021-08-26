@@ -8,6 +8,7 @@ import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
 import android.view.*
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
@@ -185,6 +186,15 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener,
                         bar.show()
                     }
                 }
+
+                launch {
+                    combine(
+                        chatViewModel.isThreadListVisible,
+                        chatViewModel.threads,
+                    ) { b, t ->
+                        backPressedCallback.isEnabled = b && t.isNotEmpty()
+                    }.collect()
+                }
             }
         }
     }
@@ -225,6 +235,17 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener,
             }
         }
         return true
+    }
+
+    private val backPressedCallback = object : OnBackPressedCallback(false){
+        override fun handleOnBackPressed() {
+            chatViewModel.isThreadListVisible.value = false
+        }
+    }
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        requireActivity().onBackPressedDispatcher.addCallback(this, backPressedCallback)
     }
 
     private fun scrollToTop() {
