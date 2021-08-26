@@ -77,13 +77,11 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="bottom|right"
-                android:layout_marginRight="30dp"
-                android:layout_marginBottom="30dp"
-                android:src="@drawable/ic_mode_edit_black_24dp"
-                app:iconTint="@android:attr/textColorPrimary"
-                app:fabOpaque="@{appViewModel.isPostDialogButtonOpaque}"
+                style="@style/PostDialogButtonStyle"
+                app:fabOpaqueMode="@{appViewModel.isPostDialogButtonOpaque}"
                 android:visibility="@{appViewModel.isPostDialogButtonVisible ? View.VISIBLE : View.INVISIBLE}"
                 android:enabled="@{chatViewModel.selectedThreadPoster != null}"
+                android:src="@drawable/ic_mode_edit_black_24dp"
                 android:contentDescription="@null" />
     </FrameLayout>
 </layout>

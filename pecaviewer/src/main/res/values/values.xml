@@ -5,4 +5,12 @@
     <dimen name="min_popup_image_width">250dp</dimen>
     <dimen name="min_popup_image_height">250dp</dimen>
 
+    <!--小中型スマホ画面のとき-->
+    <style name="PostDialogButtonStyle" parent="Widget.MaterialComponents.FloatingActionButton">
+        <item name="android:layout_marginRight">18dp</item>
+        <item name="android:layout_marginBottom">23dp</item>
+        <item name="tint">?android:attr/textColorPrimary</item>
+    </style>
+    <dimen name="post_dialog_button_elevation_on_opaque_mode">0.5dp</dimen>
+
 </resources>

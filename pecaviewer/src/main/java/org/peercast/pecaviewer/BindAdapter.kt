@@ -45,9 +45,9 @@ internal object BindAdapter {
     }
 
     @JvmStatic
-    @BindingAdapter("fabOpaque")
+    @BindingAdapter("fabOpaqueMode")
             /**狭いスマホではボタンが邪魔でテキストが読めないので半透明にする*/
-    fun bindFabOpaque(fab: FloatingActionButton, b: Boolean) {
+    fun bindFabOpaqueMode(fab: FloatingActionButton, b: Boolean) {
         class SavedProps(
             val backgroundTintList: ColorStateList?,
             val elevation: Float,
@@ -62,7 +62,7 @@ internal object BindAdapter {
 
         if (b) {
             fab.backgroundTintList = ColorStateList.valueOf(Color.TRANSPARENT)
-            val e = 0.2f * fab.context.resources.displayMetrics.density
+            val e = fab.context.resources.getDimension(R.dimen.post_dialog_button_elevation_on_opaque_mode)
             fab.elevation = e
             fab.compatElevation = e
         } else {

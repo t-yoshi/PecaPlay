@@ -80,7 +80,9 @@
                 android:layout_gravity="top"
                 android:fadeScrollbars="false"
                 android:scrollbarStyle="outsideInset"
-                android:scrollbars="vertical"/>
+                android:scrollbars="vertical"
+                android:paddingBottom="15dp"
+                android:clipToPadding="false"/>
 
             <androidx.core.widget.ContentLoadingProgressBar
                 android:id="@+id/vMessageListLoading"

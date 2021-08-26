@@ -7,4 +7,11 @@
     -->
     <bool name="isPhoneScreen">false</bool>
 
+    <!--大型スマホ画面、タブレットのとき-->
+    <style name="PostDialogButtonStyle" parent="Widget.MaterialComponents.FloatingActionButton">
+        <item name="android:layout_marginRight">30dp</item>
+        <item name="android:layout_marginBottom">30dp</item>
+        <item name="tint">@color/grey_1000b</item>
+    </style>
+
 </resources>
