@@ -35,10 +35,13 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
 
     /**スレッドのリストを再読込する*/
     suspend fun reloadThreadList() {
+        val conn = boardConn ?: return
+        if (conn is MockBbsConnection)
+            return doLoadUrl(conn.info.url)
+
         try {
             chatViewModel.isThreadListLoading.value = true
 
-            val conn = boardConn ?: return
             val threads = conn.loadThreads()
             Timber.d("threads=$threads")
             chatViewModel.threads.value = threads

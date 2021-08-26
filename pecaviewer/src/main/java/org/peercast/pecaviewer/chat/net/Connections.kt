@@ -1,7 +1,7 @@
 package org.peercast.pecaviewer.chat.net
 
 /**疑似コネクション*/
-private class MockBbsConnection(private val url: String) : IBoardThreadConnection {
+class MockBbsConnection(private val url: String) : IBoardThreadConnection {
     override val info = object : IThreadInfo {
         override val url = this@MockBbsConnection.url
         override val title = url
@@ -22,7 +22,7 @@ private class MockBbsConnection(private val url: String) : IBoardThreadConnectio
 
     override suspend fun loadMessages(): List<IMessage> {
         return listOf(
-            BbsMessage(info, 1, "", "", "", url, "")
+            BbsMessage(info, 1, "", "", "", "Connection error:\n$url", "")
         )
     }
 }
