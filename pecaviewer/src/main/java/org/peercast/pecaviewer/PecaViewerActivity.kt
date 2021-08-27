@@ -152,16 +152,20 @@ class PecaViewerActivity : AppCompatActivity() {
         }
     }
 
-    override fun onBackPressed() {
-        if (onBackPressedDispatcher.hasEnabledCallbacks()) {
-            return super.onBackPressed()
-        }
-
+    fun quitOrEnterPipMode() {
         val hasEnteredPip = viewerPrefs.isBackgroundPlaying && enterPipMode()
         //hasEnteredPip:
         // true: プレーヤーをPIP化 & PecaPlay起動
         // false: (再生してないので) PIP化せず、単にPecaPlayへ戻る
         backToPecaPlay(this, !hasEnteredPip)
+    }
+
+    override fun onBackPressed() {
+        if (onBackPressedDispatcher.hasEnabledCallbacks()) {
+            super.onBackPressed()
+        } else {
+            quitOrEnterPipMode()
+        }
     }
 
     override fun onPause() {

@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
+import org.peercast.pecaviewer.PecaViewerActivity
 import org.peercast.pecaviewer.PecaViewerPreference
 import org.peercast.pecaviewer.PecaViewerViewModel
 import org.peercast.pecaviewer.R
@@ -61,7 +62,7 @@ class PlayerFragment : Fragment(), Toolbar.OnMenuItemClickListener {
         }
 
         vPlayerControlBar.setNavigationOnClickListener {
-            requireActivity().onBackPressed()
+            (requireActivity() as PecaViewerActivity).quitOrEnterPipMode()
         }
 
         view.setOnTouchListener(DoubleTapDetector(view, ::onFullScreenClicked))
