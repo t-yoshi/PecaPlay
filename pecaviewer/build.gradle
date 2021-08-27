@@ -78,6 +78,8 @@ dependencies {
     implementation "com.google.android.exoplayer:exoplayer-ui:$exoplayer_version"
     implementation "com.google.android.exoplayer:extension-okhttp:$exoplayer_version"
 
+    implementation 'com.github.stfalcon-studio:StfalconImageViewer:v1.0.1'
+
     implementation project(':slidinguppanel')
 
 

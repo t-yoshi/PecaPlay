@@ -8,6 +8,7 @@ import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
 import android.view.*
+import android.widget.ImageView
 import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
@@ -18,6 +19,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.stfalcon.imageviewer.StfalconImageViewer
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
@@ -27,17 +30,14 @@ import org.peercast.pecaviewer.PecaViewerViewModel
 import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.chat.adapter.MessageAdapter
 import org.peercast.pecaviewer.chat.adapter.ThreadAdapter
-import org.peercast.pecaviewer.chat.thumbnail.ImageViewerFragment
 import org.peercast.pecaviewer.chat.thumbnail.ThumbnailUrl
-import org.peercast.pecaviewer.chat.thumbnail.ThumbnailView
 import org.peercast.pecaviewer.databinding.FragmentChatBinding
 import org.peercast.pecaviewer.player.PlayerViewModel
 import timber.log.Timber
 import kotlin.properties.Delegates
 
 @Suppress("unused")
-class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener,
-    ThumbnailView.OnItemEventListener {
+class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener {
 
     private val chatViewModel by sharedViewModel<ChatViewModel>()
     private val playerViewModel by sharedViewModel<PlayerViewModel>()
@@ -247,19 +247,6 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener,
         if (n > 0) {
             val manager = binding.vMessageList.layoutManager as LinearLayoutManager
             manager.scrollToPosition(n - 1)
-        }
-    }
-
-    override fun onLaunchImageViewer(u: ThumbnailUrl) {
-        if (u.linkUrl.isNotEmpty()) {
-            try {
-                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(u.linkUrl)))
-            } catch (e: ActivityNotFoundException) {
-                Timber.e(e)
-            }
-        } else {
-            ImageViewerFragment.create(u.imageUrl)
-                .show(parentFragmentManager, "ImageViewerFragment")
         }
     }
 

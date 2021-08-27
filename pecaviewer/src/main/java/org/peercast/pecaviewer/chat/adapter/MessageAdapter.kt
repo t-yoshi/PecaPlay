@@ -15,6 +15,7 @@ import org.peercast.pecaviewer.BR
 import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.chat.ChatFragment
 import org.peercast.pecaviewer.chat.net.IMessage
+import org.peercast.pecaviewer.chat.thumbnail.ImageViewerHandler
 import org.peercast.pecaviewer.chat.thumbnail.ThumbnailView
 import org.peercast.pecaviewer.databinding.BbsMessageItemBasicBinding
 import org.peercast.pecaviewer.databinding.BbsMessageItemSimpleBinding
@@ -42,6 +43,8 @@ class MessageAdapter(private val fragment: ChatFragment) :
         if (new != old)
             notifyDataSetChanged()
     }
+
+    private val imageViewerHandler = ImageViewerHandler(fragment)
 
     private var lastMessageCount = -1
 
@@ -78,7 +81,7 @@ class MessageAdapter(private val fragment: ChatFragment) :
                 }
             }
             vThumbnail?.let { v ->
-                v.eventListener = fragment
+                v.onThumbnailClickedListener = imageViewerHandler
                 fragment.lifecycleScope.launchWhenCreated {
                     viewModel.thumbnails.collect {
                         v.adapter.urls = it

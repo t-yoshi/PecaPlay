@@ -2,6 +2,7 @@ package org.peercast.pecaviewer.chat.thumbnail
 
 import android.content.Context
 import android.util.AttributeSet
+import android.widget.ImageView
 import com.google.android.flexbox.FlexboxLayout
 
 class ThumbnailView : FlexboxLayout {
@@ -14,10 +15,14 @@ class ThumbnailView : FlexboxLayout {
     )
 
     val adapter = ViewAdapter(this)
-    var eventListener: OnItemEventListener? = null
+    var onThumbnailClickedListener: OnThumbnailClickedListener? = null
 
-    interface OnItemEventListener {
-        fun onLaunchImageViewer(u: ThumbnailUrl)
+    interface OnThumbnailClickedListener {
+        fun onThumbnailClicked(
+            thumbnail: ImageView,
+            urls: List<ThumbnailUrl>,
+            position: Int,
+        )
     }
 }
 

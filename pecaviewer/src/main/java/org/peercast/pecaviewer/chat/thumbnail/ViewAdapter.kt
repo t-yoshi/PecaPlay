@@ -41,8 +41,8 @@ class ViewAdapter(private val view: ThumbnailView) {
             view.addView(b.root)
         }
 
-        urls.zip(viewHolders) { u, vh ->
-            vh.showThumbnail(u)
+        urls.zip(viewHolders).forEachIndexed { i, (_, vh) ->
+            vh.showThumbnail(urls, i)
         }
 
         viewHolders.drop(urls.size).forEach { vh ->
@@ -64,8 +64,9 @@ class ViewAdapter(private val view: ThumbnailView) {
 
         private var prevLoader: DefaultImageLoader? = null
 
-        fun showThumbnail(u: ThumbnailUrl) {
+        fun showThumbnail(urls: List<ThumbnailUrl>, position: Int) {
             val c = view.context
+            val u = urls[position]
 
             //prevLoader?.cancelLoad(binding.icon)
             val loader = when (u) {
@@ -83,12 +84,12 @@ class ViewAdapter(private val view: ThumbnailView) {
             with(viewModel) {
                 loader.loadImage(u.imageUrl, 1 * 1024 * 1024)
                 background.value = bg
-                isLinkUrl.value = u.linkUrl.isNotEmpty()
+                isLinkUrl.value = u is ThumbnailUrl.HasLinked
 
                 binding.root.setOnClickListener {
                     when {
-                        u.linkUrl.isNotEmpty() || error.value.isNullOrEmpty() -> {
-                            view.eventListener?.onLaunchImageViewer(u)
+                        u is ThumbnailUrl.HasLinked || error.value.isNullOrEmpty() -> {
+                            view.onThumbnailClickedListener?.onThumbnailClicked(binding.icon, urls, position)
                         }
                         else -> {
                             loader.loadImage(u.imageUrl)
