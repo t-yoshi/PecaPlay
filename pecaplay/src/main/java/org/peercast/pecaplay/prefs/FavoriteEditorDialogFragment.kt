@@ -94,7 +94,8 @@ class FavoriteEditorDialogFragment : BaseEntityEditDialogFragment<Favorite>() {
     }
 
     override fun onOkButtonClicked() {
-        presenter.replaceItem(editSource, viewModel.fav)
+        FavoritePresenter(requireActivity())
+            .replaceItem(editSource, viewModel.fav)
     }
 
     override fun onBackPressed(): Boolean {

@@ -1,5 +1,6 @@
 package org.peercast.pecaplay.prefs
 
+import android.content.Context
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.LayerDrawable
 import android.os.Bundle
@@ -11,11 +12,13 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import org.peercast.pecaplay.R
-import org.peercast.pecaplay.util.AppTheme
 import org.peercast.pecaplay.app.Favorite
+import org.peercast.pecaplay.util.AppTheme
 
 
 class FavoritePrefsFragment : BaseEntityPreferenceFragment<Favorite>() {
+    override lateinit var presenter: FavoritePresenter
+
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         super.onCreatePreferences(savedInstanceState, rootKey)
 
@@ -34,39 +37,17 @@ class FavoritePrefsFragment : BaseEntityPreferenceFragment<Favorite>() {
         }
     }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        super.onActivityCreated(savedInstanceState)
-        (activity as AppCompatActivity?)?.supportActionBar?.title =
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        val a = requireActivity()
+        (a as AppCompatActivity).supportActionBar?.title =
             getString(R.string.pref_header_favorites)
+        presenter = FavoritePresenter(a)
     }
 
     override fun createEditDialogFragment(): BaseEntityEditDialogFragment<Favorite> {
         return FavoriteEditorDialogFragment()
     }
-
-    override val presenter = object : IPresenter<Favorite> {
-        override fun replaceItem(oldItem: Favorite?, newItem: Favorite) {
-            lifecycleScope.launch {
-                database.favoriteDao.run {
-                    oldItem?.let { remove(it) }
-                    add(newItem)
-                }
-            }
-        }
-
-        override fun removeItem(item: Favorite) {
-            lifecycleScope.launch {
-                database.favoriteDao.remove(item)
-            }
-        }
-
-        override fun updateItem(item: Favorite, enabled: Boolean) {
-            lifecycleScope.launch {
-                database.favoriteDao.update(item.copy(isEnabled = enabled))
-            }
-        }
-    }
-
 
     private fun getIconDrawable(fav: Favorite): Drawable {
         val ic1 = when {

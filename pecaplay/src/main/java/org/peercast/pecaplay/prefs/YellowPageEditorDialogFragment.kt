@@ -88,7 +88,8 @@ class YellowPageEditorDialogFragment : BaseEntityEditDialogFragment<YellowPage>(
     }
 
     override fun onOkButtonClicked() {
-        presenter.replaceItem(editSource, viewModel.toYellowPage())
+        YellowPagePresenter(requireActivity())
+            .replaceItem(editSource, viewModel.toYellowPage())
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

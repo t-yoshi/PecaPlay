@@ -17,12 +17,12 @@ import kotlinx.coroutines.flow.collect
 import org.koin.android.ext.android.inject
 import org.peercast.pecaplay.R
 import org.peercast.pecaplay.app.AppRoomDatabase
-import org.peercast.pecaplay.util.AppTheme
 import org.peercast.pecaplay.app.ManageableEntity
+import org.peercast.pecaplay.util.AppTheme
 import timber.log.Timber
 
 /**編集ダイアログ*/
-abstract class BaseEntityEditDialogFragment<ME : ManageableEntity>
+abstract class BaseEntityEditDialogFragment<E : ManageableEntity>
     : DialogFragment(), DialogInterface.OnShowListener {
 
     protected val isOkButtonEnabled = MutableStateFlow(false)
@@ -31,7 +31,7 @@ abstract class BaseEntityEditDialogFragment<ME : ManageableEntity>
     protected val dialog: AlertDialog get() = super.getDialog() as AlertDialog
 
     /**編集対象*/
-    val editSource: ME?
+    val editSource: E?
         get() = arguments?.getParcelable(ARG_EDIT_SOURCE)
 
     /**編集or新規*/
@@ -43,11 +43,6 @@ abstract class BaseEntityEditDialogFragment<ME : ManageableEntity>
         isCancelable = false
         Timber.d("editSource = $editSource")
     }
-
-    protected val presenter: BaseEntityPreferenceFragment.IPresenter<ME>
-        @Suppress("unchecked_cast")
-        get() = (targetFragment as BaseEntityPreferenceFragment<ME>).presenter
-
 
     final override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val c = requireContext()

@@ -21,23 +21,11 @@ import org.peercast.pecaplay.app.ManageableEntity
  * 長押しで削除。
  * チェックボックスで有効/無効。
  * */
-abstract class BaseEntityPreferenceFragment<ME : ManageableEntity>
+abstract class BaseEntityPreferenceFragment<E : ManageableEntity>
     : PreferenceFragmentCompat() {
 
     protected val database: AppRoomDatabase by inject()
-    abstract val presenter: IPresenter<ME>
-
-    interface IPresenter<ME : ManageableEntity> {
-        /** 編集の完了 (oldItem=nullなら新規)    */
-        fun replaceItem(oldItem: ME?, newItem: ME)
-
-        /**確認済みなので削除する。*/
-        fun removeItem(item: ME)
-
-        /**チェックボックスを押して有効/無効が変化した。　*/
-        fun updateItem(item: ME, enabled: Boolean)
-    }
-
+    abstract val presenter: EntityPresenter<E>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,20 +53,19 @@ abstract class BaseEntityPreferenceFragment<ME : ManageableEntity>
     }
 
     /**編集ダイアログの作成*/
-    protected abstract fun createEditDialogFragment(): BaseEntityEditDialogFragment<ME>
+    protected abstract fun createEditDialogFragment(): BaseEntityEditDialogFragment<E>
 
     //item==null 新規
-    private fun showEditDialog(item: ME?) {
+    private fun showEditDialog(item: E?) {
         val f = createEditDialogFragment()
         f.arguments = Bundle().also {
             it.putParcelable(BaseEntityEditDialogFragment.ARG_EDIT_SOURCE, item)
         }
-        f.setTargetFragment(this, 0)
         f.show(parentFragmentManager, "EditDialog@$item")
     }
 
     //  削除するか確認する
-    private fun confirmRemoveItem(item: ME) {
+    private fun confirmRemoveItem(item: E) {
         MaterialAlertDialogBuilder(requireContext())
             .setTitle(R.string.delete)
             .setIcon(android.R.drawable.ic_menu_delete)
@@ -88,7 +75,7 @@ abstract class BaseEntityPreferenceFragment<ME : ManageableEntity>
             .show()
     }
 
-    fun createCheckBoxPreference(item: ME): Preference {
+    fun createCheckBoxPreference(item: E): Preference {
         return CustomCheckBoxPreference(item.isEnabled, {
             presenter.updateItem(item, it)
         }, {
