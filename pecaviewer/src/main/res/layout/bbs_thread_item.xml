@@ -22,7 +22,8 @@
             android:orientation="horizontal"
             android:paddingTop="2dp"
             android:paddingBottom="2dp"
-            app:listItemBackground="@{viewModel.isSelected ? @color/teal_200 : 0 }"
+            app:listItemBackgroundColor="@{viewModel.isSelected ? @color/teal_200 : 0}"
+            android:background="?selectableItemBackground"
             android:clickable="true"
             android:focusable="true">
         <!---->

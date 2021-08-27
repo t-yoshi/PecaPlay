@@ -25,6 +25,4 @@
     <string name="menu_abort">Abort</string>
     <string name="menu_write">Write</string>
 
-    <!--use @tag-->
-    <string name="tag_fab_opaque">fabOpaque</string>
 </resources>

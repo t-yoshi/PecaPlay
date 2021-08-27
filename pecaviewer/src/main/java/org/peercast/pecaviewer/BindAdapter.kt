@@ -5,6 +5,7 @@ import android.animation.AnimatorListenerAdapter
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.drawable.Drawable
 import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
@@ -21,17 +22,27 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 
 internal object BindAdapter {
+    private inline fun <reified T> View.setDefaultTag(id: Int, createTag: () -> T): T {
+        getTag(id)?.let { return it as T }
+        return createTag().also {
+            setTag(id, it)
+        }
+    }
+
     @JvmStatic
-    @BindingAdapter("listItemBackground")
-            /**color=0のとき、selectableItemBackgroundをセットする。*/
-    fun bindListItemBackground(view: ViewGroup, @ColorInt color: Int) {
+    @BindingAdapter("listItemBackgroundColor")
+            /**color=0のとき、android:backgroundを使う。*/
+    fun bindListItemBackgroundColor(view: ViewGroup, @ColorInt color: Int) {
+        val tag = view.setDefaultTag(R.id.tag_list_item_background_color) {
+            object {
+                val background = view.background
+            }
+        }
+
         if (color != 0) {
             view.setBackgroundColor(color)
         } else {
-            val c = view.context
-            val tv = TypedValue()
-            c.theme.resolveAttribute(android.R.attr.selectableItemBackground, tv, true)
-            view.setBackgroundResource(tv.resourceId)
+            view.background = tag.background
         }
     }
 
@@ -48,28 +59,24 @@ internal object BindAdapter {
     @BindingAdapter("fabOpaqueMode")
             /**狭いスマホではボタンが邪魔でテキストが読めないので半透明にする*/
     fun bindFabOpaqueMode(fab: FloatingActionButton, b: Boolean) {
-        class SavedProps(
-            val backgroundTintList: ColorStateList?,
-            val elevation: Float,
-            val compatElevation: Float,
-        )
-
-        if (fab.getTag(R.string.tag_fab_opaque) == null) {
-            fab.setTag(R.string.tag_fab_opaque, SavedProps(
-                fab.backgroundTintList, fab.elevation, fab.compatElevation
-            ))
+        val tag = fab.setDefaultTag(R.id.tag_fab_opaque){
+            object {
+                val backgroundTintList = fab.backgroundTintList
+                val elevation = fab.elevation
+                val compatElevation = fab.compatElevation
+            }
         }
 
         if (b) {
             fab.backgroundTintList = ColorStateList.valueOf(Color.TRANSPARENT)
-            val e = fab.context.resources.getDimension(R.dimen.post_dialog_button_elevation_on_opaque_mode)
+            val e =
+                fab.context.resources.getDimension(R.dimen.post_dialog_button_elevation_on_opaque_mode)
             fab.elevation = e
             fab.compatElevation = e
         } else {
-            val savedProps = fab.getTag(R.string.tag_fab_opaque) as SavedProps
-            fab.backgroundTintList = savedProps.backgroundTintList
-            fab.elevation = savedProps.elevation
-            fab.compatElevation = savedProps.compatElevation
+            fab.backgroundTintList = tag.backgroundTintList
+            fab.elevation = tag.elevation
+            fab.compatElevation = tag.compatElevation
         }
     }
 

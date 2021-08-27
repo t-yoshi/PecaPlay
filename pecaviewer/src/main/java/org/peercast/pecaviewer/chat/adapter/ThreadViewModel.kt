@@ -1,20 +1,19 @@
 package org.peercast.pecaviewer.chat.adapter
 
 import androidx.databinding.BaseObservable
-import androidx.databinding.ObservableBoolean
-import androidx.databinding.ObservableField
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.peercast.pecaviewer.chat.net.IThreadInfo
 
 class ThreadViewModel : BaseObservable() {
-    val number = ObservableField<CharSequence>()
-    val title = ObservableField<CharSequence>()
-    val count = ObservableField<CharSequence>()
-    val isSelected = ObservableBoolean()
+    val number = MutableStateFlow<CharSequence>("")
+    val title = MutableStateFlow<CharSequence>("")
+    val count = MutableStateFlow<CharSequence>("")
+    val isSelected = MutableStateFlow(false)
 
     fun setThreadInfo(info: IThreadInfo, position: Int, selected: Boolean) {
-        number.set("% 2d".format(position + 1))
-        title.set(info.title)
-        count.set("${info.numMessages}")
-        isSelected.set(selected)
+        number.value = "% 2d".format(position + 1)
+        title.value = info.title
+        count.value = "${info.numMessages}"
+        isSelected.value = selected
     }
 }

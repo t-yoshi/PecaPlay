@@ -45,7 +45,7 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener,
     private lateinit var chatPrefs: SharedPreferences
 
     private lateinit var binding: FragmentChatBinding
-    private val threadAdapter = ThreadAdapter()
+    private val threadAdapter = ThreadAdapter(this)
     private val messageAdapter = MessageAdapter(this)
     private var loadingJob: Job? = null
 

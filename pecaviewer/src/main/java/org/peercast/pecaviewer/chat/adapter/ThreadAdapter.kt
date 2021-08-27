@@ -4,11 +4,12 @@ import android.annotation.SuppressLint
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import org.peercast.pecaviewer.chat.ChatFragment
 import org.peercast.pecaviewer.chat.net.IThreadInfo
 import org.peercast.pecaviewer.databinding.BbsThreadItemBinding
 
 @SuppressLint("NotifyDataSetChanged")
-class ThreadAdapter : RecyclerView.Adapter<ThreadAdapter.ViewHolder>() {
+class ThreadAdapter(private val fragment: ChatFragment) : RecyclerView.Adapter<ThreadAdapter.ViewHolder>() {
     var items = emptyList<IThreadInfo>()
         set(value) {
             field = value
@@ -48,6 +49,7 @@ class ThreadAdapter : RecyclerView.Adapter<ThreadAdapter.ViewHolder>() {
             notifyDataSetChanged()
         }
         holder.viewModel.setThreadInfo(thread, position, thread == selected)
+        holder.binding.lifecycleOwner = fragment
         holder.binding.executePendingBindings()
     }
 
