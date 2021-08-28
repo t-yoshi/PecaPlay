@@ -89,7 +89,11 @@ class ViewAdapter(private val view: ThumbnailView) {
                 binding.root.setOnClickListener {
                     when {
                         u is ThumbnailUrl.HasLinked || error.value.isNullOrEmpty() -> {
-                            view.onThumbnailClickedListener?.onThumbnailClicked(binding.icon, urls, position)
+                            view.onThumbnailClickedListener?.onThumbnailClicked(
+                                binding.icon,
+                                urls,
+                                position
+                            )
                         }
                         else -> {
                             loader.loadImage(u.imageUrl)

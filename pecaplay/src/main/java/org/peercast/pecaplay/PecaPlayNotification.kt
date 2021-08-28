@@ -112,7 +112,7 @@ class PecaPlayNotification(private val c: Context) {
         f.startActivity(i)
     }
 
-    fun clearNotifiedNewYpChannels(){
+    fun clearNotifiedNewYpChannels() {
         prefs.edit {
             remove(KEY_NEW_CHANNELS_IDS)
         }

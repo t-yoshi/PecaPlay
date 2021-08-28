@@ -40,10 +40,12 @@ abstract class NavigationItem(
 }
 
 abstract class BadgeableNavigationItem(title: CharSequence, groupId: Int, order: Int, icon: Int) :
-    NavigationItem(title,
+    NavigationItem(
+        title,
         groupId,
         order,
-        icon) {
+        icon
+    ) {
 
     /**バッジ用のテキスト*/
     var badge: String = ""

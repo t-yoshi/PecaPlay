@@ -5,7 +5,6 @@ import android.animation.AnimatorListenerAdapter
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.Paint
-import android.graphics.drawable.Drawable
 import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
@@ -59,7 +58,7 @@ internal object BindAdapter {
     @BindingAdapter("fabOpaqueMode")
             /**狭いスマホではボタンが邪魔でテキストが読めないので半透明にする*/
     fun bindFabOpaqueMode(fab: FloatingActionButton, b: Boolean) {
-        val tag = fab.setDefaultTag(R.id.tag_fab_opaque){
+        val tag = fab.setDefaultTag(R.id.tag_fab_opaque) {
             object {
                 val backgroundTintList = fab.backgroundTintList
                 val elevation = fab.elevation

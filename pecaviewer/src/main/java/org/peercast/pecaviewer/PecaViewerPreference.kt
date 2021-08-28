@@ -12,8 +12,10 @@ internal class PecaViewerPreference(a: Application) {
     /**縦画面での起動時の画面分割状態。横画面では常にプレーヤー全画面で起動する。*/
     var initPanelState: SlidingUpPanelLayout.PanelState
         get() {
-            return prefs.getString(KEY_INIT_SLIDING_PANEL_STATE,
-                null).let {
+            return prefs.getString(
+                KEY_INIT_SLIDING_PANEL_STATE,
+                null
+            ).let {
                 try {
                     SlidingUpPanelLayout.PanelState.valueOf(it ?: "")
                 } catch (e: IllegalArgumentException) {
@@ -24,30 +26,40 @@ internal class PecaViewerPreference(a: Application) {
         }
         set(value) {
             prefs.edit {
-                putString(KEY_INIT_SLIDING_PANEL_STATE,
-                    value.name)
+                putString(
+                    KEY_INIT_SLIDING_PANEL_STATE,
+                    value.name
+                )
             }
         }
 
     /**バックグラウンドで再生続行するか*/
     var isBackgroundPlaying: Boolean
-        get() = prefs.getBoolean(KEY_BACKGROUND_PLAYING,
-            false)
+        get() = prefs.getBoolean(
+            KEY_BACKGROUND_PLAYING,
+            false
+        )
         set(value) {
             prefs.edit {
-                putBoolean(KEY_BACKGROUND_PLAYING,
-                    value)
+                putBoolean(
+                    KEY_BACKGROUND_PLAYING,
+                    value
+                )
             }
         }
 
     /**フルスクーンモードか*/
     var isFullScreenMode: Boolean
-        get() = prefs.getBoolean(KEY_FULLSCREEN_MODE,
-            false)
+        get() = prefs.getBoolean(
+            KEY_FULLSCREEN_MODE,
+            false
+        )
         set(value) {
             prefs.edit {
-                putBoolean(KEY_FULLSCREEN_MODE,
-                    value)
+                putBoolean(
+                    KEY_FULLSCREEN_MODE,
+                    value
+                )
             }
         }
 

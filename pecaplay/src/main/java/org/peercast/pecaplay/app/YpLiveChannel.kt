@@ -13,9 +13,11 @@ import java.util.*
  * @see LoadingTask#storeToYpLiveChannelTable
  */
 @Parcelize
-@Entity(tableName = "YpLiveChannel",
+@Entity(
+    tableName = "YpLiveChannel",
     primaryKeys = ["name", "id"],
-    indices = [Index("isLatest")])
+    indices = [Index("isLatest")]
+)
 data class YpLiveChannel(
     override val name: String,
     override val id: String,

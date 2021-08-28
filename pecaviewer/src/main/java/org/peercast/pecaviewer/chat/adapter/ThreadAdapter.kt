@@ -9,7 +9,8 @@ import org.peercast.pecaviewer.chat.net.IThreadInfo
 import org.peercast.pecaviewer.databinding.BbsThreadItemBinding
 
 @SuppressLint("NotifyDataSetChanged")
-class ThreadAdapter(private val fragment: ChatFragment) : RecyclerView.Adapter<ThreadAdapter.ViewHolder>() {
+class ThreadAdapter(private val fragment: ChatFragment) :
+    RecyclerView.Adapter<ThreadAdapter.ViewHolder>() {
     var items = emptyList<IThreadInfo>()
         set(value) {
             field = value

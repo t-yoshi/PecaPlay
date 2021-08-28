@@ -68,7 +68,7 @@ class PostMessageDialogFragment : BottomSheetDialogFragment(),
     }
 
     companion object {
-        fun show(fm: FragmentManager){
+        fun show(fm: FragmentManager) {
             val f = PostMessageDialogFragment()
             f.show(fm, "tag#PostMessageDialogFragment")
         }

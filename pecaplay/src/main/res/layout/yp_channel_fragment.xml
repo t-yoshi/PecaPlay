@@ -1,4 +1,5 @@
-<layout  xmlns:android="http://schemas.android.com/apk/res/android">
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/vSwipeRefresh"
         android:layout_width="match_parent"

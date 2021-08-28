@@ -35,15 +35,19 @@ abstract class ListItemViewHolder private constructor(
                         binding.vStarred.setOnClickListener {
                             val vm = checkNotNull(binding.viewModel)
                             eventListener.onStarClicked(
-                                vm, !vm.isStarChecked, bindingAdapterPosition)
+                                vm, !vm.isStarChecked, bindingAdapterPosition
+                            )
                         }
                         binding.root.setOnClickListener {
-                            eventListener.onItemClick(checkNotNull(binding.viewModel),
-                                bindingAdapterPosition)
+                            eventListener.onItemClick(
+                                checkNotNull(binding.viewModel),
+                                bindingAdapterPosition
+                            )
                         }
                         binding.root.setOnLongClickListener {
                             eventListener.onItemLongClick(
-                                checkNotNull(binding.viewModel), bindingAdapterPosition)
+                                checkNotNull(binding.viewModel), bindingAdapterPosition
+                            )
                         }
                     }
 
@@ -70,12 +74,14 @@ abstract class ListItemViewHolder private constructor(
                         binding.root.setOnClickListener {
                             eventListener.onItemClick(
                                 checkNotNull(binding.viewModel),
-                                bindingAdapterPosition)
+                                bindingAdapterPosition
+                            )
                         }
                         binding.root.setOnLongClickListener {
                             eventListener.onItemLongClick(
                                 checkNotNull(binding.viewModel),
-                                bindingAdapterPosition)
+                                bindingAdapterPosition
+                            )
                         }
                     }
 

@@ -7,4 +7,4 @@
     android:paddingTop="3dp"
     android:textColor="@color/navigation_item"
     android:textAppearance="?android:attr/textAppearanceListItemSmall"
-    android:textSize="12sp"/>
+    android:textSize="12sp" />

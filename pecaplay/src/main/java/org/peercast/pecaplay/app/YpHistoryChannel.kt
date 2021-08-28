@@ -11,8 +11,10 @@ import java.util.*
  * @version 50100
  * */
 @Parcelize
-@Entity(tableName = "YpHistoryChannel",
-    primaryKeys = ["name", "id"])
+@Entity(
+    tableName = "YpHistoryChannel",
+    primaryKeys = ["name", "id"]
+)
 data class YpHistoryChannel constructor(
     override val name: String,
     override val id: String,

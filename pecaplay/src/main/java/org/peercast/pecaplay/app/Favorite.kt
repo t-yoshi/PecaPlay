@@ -114,9 +114,11 @@ data class Favorite(
 
     companion object {
         fun Star(ch: YpChannel): Favorite {
-            return Favorite("[star]${ch.name}", ch.name, Flags(
-                isName = true, isExactMatch = true
-            ))
+            return Favorite(
+                "[star]${ch.name}", ch.name, Flags(
+                    isName = true, isExactMatch = true
+                )
+            )
         }
     }
 

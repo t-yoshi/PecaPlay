@@ -4,6 +4,7 @@
     xmlns:card_view="http://schemas.android.com/apk/res-auto">
 
     <data>
+
         <variable
             name="viewModel"
             type="org.peercast.pecaplay.chanlist.ListItemViewModel" />
@@ -23,8 +24,7 @@
         android:clickable="false"
         android:focusable="false"
         card_view:cardElevation="2sp"
-        card_view:cardUseCompatPadding="true"
-        >
+        card_view:cardUseCompatPadding="true">
 
         <RelativeLayout
             android:layout_width="match_parent"
