@@ -59,7 +59,7 @@ fun backToPecaPlay(src: Activity, finish: Boolean) {
     }
 
     if (finish) {
-        src.finish()
+        src.finishAffinity()
     }
 
     src.overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
