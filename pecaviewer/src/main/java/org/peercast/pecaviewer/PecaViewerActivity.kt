@@ -101,8 +101,8 @@ class PecaViewerActivity : AppCompatActivity() {
         replaceMainFragment()
     }
 
-    override fun onPostCreate(savedInstanceState: Bundle?) {
-        super.onPostCreate(savedInstanceState)
+    override fun onStart() {
+        super.onStart()
         viewerViewModel.bindPlayerService()
     }
 
