@@ -53,16 +53,14 @@ class PecaPlayNotification(private val c: Context) {
         Timber.d("notifyNewChannels(%s)", channels)
         prefs.newChannelsId += channels.map { it.id }
         doNotifyNewYpChannelsWereFound(
-            channels.filter {
-                it.id in prefs.newChannelsId
-            }.sortedWith(YpDisplayOrder.AGE_ASC.comparator)
+            channels.sortedWith(YpDisplayOrder.AGE_ASC.comparator)
         )
     }
 
     private fun doNotifyNewYpChannelsWereFound(channels: List<YpChannel>) {
         val title = c.getString(
             R.string.notification_new_channels_were_found,
-            channels.size
+            prefs.newChannelsId.size
         )
         var content = ""
         val inbox = NotificationCompat.InboxStyle()
