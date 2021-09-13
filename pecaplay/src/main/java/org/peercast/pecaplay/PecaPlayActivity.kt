@@ -141,9 +141,6 @@ class PecaPlayActivity : AppCompatActivity() {
                 }
             }
         }
-
-        viewModel.isInformingPeerCastStart =
-            savedInstanceState == null && intent.hasCategory(Intent.CATEGORY_LAUNCHER)
     }
 
     override fun onPostCreate(savedInstanceState: Bundle?) {

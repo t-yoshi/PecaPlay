@@ -36,9 +36,6 @@ class AppViewModel(
 
     val channelFilter = ChannelFilter(database, appPrefs)
 
-    var isInformingPeerCastStart = true
-
-
     init {
         loadingEvent.filterIsInstance<LoadingEvent.OnException>().onEach { ev ->
             val s = when (ev.e) {
@@ -49,17 +46,6 @@ class AppViewModel(
             val h = HtmlCompat.fromHtml("<font color=red>${ev.yp.name}: $s", 0)
             message.send(h)
         }.launchIn(viewModelScope)
-
-        viewModelScope.launch {
-            rpcClient.filterNotNull().collect {
-                //PeerCastの起動を知らせる。プレーヤーからの復帰時は表示しない。
-                if (isInformingPeerCastStart) {
-                    message.send(
-                        a.getString(R.string.peercast_has_started, it.rpcEndPoint.port)
-                    )
-                }
-            }
-        }
     }
 
     override fun bindService() {
