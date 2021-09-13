@@ -155,7 +155,7 @@ class PecaNaviView : NavigationView {
 
     //メニュー再生成と再選択
     private fun rebuildMenuAndReselect() {
-        val checkedId = checkedItem?.itemId ?: 0
+        val checkedId = prefs.getInt(KEY_SELECTED, 0)
         rebuildMenu()
         selectNavigationItem(checkedId, false)
     }

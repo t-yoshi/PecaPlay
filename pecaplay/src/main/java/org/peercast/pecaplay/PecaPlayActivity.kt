@@ -19,7 +19,9 @@ import androidx.core.view.GravityCompat
 import androidx.core.view.MenuItemCompat
 import androidx.databinding.DataBindingUtil
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.material.appbar.AppBarLayout
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.channels.consumeEach
@@ -111,39 +113,37 @@ class PecaPlayActivity : AppCompatActivity() {
             }
         }
 
-        lifecycleScope.launchWhenCreated {
-            viewModel.message.consumeEach {
-                Snackbar.make(binding.root, it, Snackbar.LENGTH_LONG).show()
+        navigateFromIntent()
+
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.CREATED) {
+                launch {
+                    viewModel.message.consumeEach {
+                        Snackbar.make(binding.root, it, Snackbar.LENGTH_LONG).show()
+                    }
+                }
+
+                launch {
+                    viewModel.notificationIconEnabled.collect {
+                        invalidateOptionsMenu()
+                    }
+                }
+
+                launch {
+                    loadingEvent.filterIsInstance<LoadingEvent.OnFinished>().collect {
+                        lastLoadedET = SystemClock.elapsedRealtime()
+                        Timber.i("loading finished: $lastLoadedET")
+                    }
+                }
+
+                launch {
+                    binding.vNavigation.model.repository.collect()
+                }
             }
         }
 
         viewModel.isInformingPeerCastStart =
             savedInstanceState == null && intent.hasCategory(Intent.CATEGORY_LAUNCHER)
-
-        lifecycleScope.launchWhenCreated {
-            viewModel.notificationIconEnabled.collect {
-                invalidateOptionsMenu()
-            }
-        }
-
-        lifecycleScope.launch {
-            loadingEvent.filterIsInstance<LoadingEvent.OnFinished>().collect {
-                lastLoadedET = SystemClock.elapsedRealtime()
-                Timber.i("loading finished: $lastLoadedET")
-            }
-        }
-
-        navigateFromIntent()
-        lifecycleScope.launchWhenCreated {
-            binding.vNavigation.model.repository.collect()
-        }
-    }
-
-    override fun onNewIntent(intent: Intent?) {
-        super.onNewIntent(intent)
-        setIntent(intent)
-
-        navigateFromIntent()
     }
 
     override fun onPostCreate(savedInstanceState: Bundle?) {
