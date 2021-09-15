@@ -1,14 +1,10 @@
-package org.peercast.pecaviewer.chat.thumbnail
+package org.peercast.pecaviewer.chat.thumbnail.net
 
 import okhttp3.HttpUrl
 import okhttp3.Interceptor
 import okhttp3.Response
 import timber.log.Timber
-import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
-
-
-class TooLargeFileException(val size: Int) : IOException("large file: ${size / 1024}KB")
 
 
 class LimitSizeInterceptor : Interceptor {

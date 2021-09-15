@@ -50,7 +50,7 @@ class ThreadAdapter(private val fragment: ChatFragment) :
             notifyDataSetChanged()
         }
         holder.viewModel.setThreadInfo(thread, position, thread == selected)
-        holder.binding.lifecycleOwner = fragment
+        holder.binding.lifecycleOwner = fragment.viewLifecycleOwner
         holder.binding.executePendingBindings()
     }
 

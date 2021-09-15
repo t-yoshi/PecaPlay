@@ -1,4 +1,4 @@
-package org.peercast.pecaviewer.chat.thumbnail
+package org.peercast.pecaviewer.chat.thumbnail.net
 
 import android.content.Context
 import com.bumptech.glide.Glide
@@ -21,6 +21,7 @@ class OkHttpLibraryGlideModule : AppGlideModule(), KoinComponent { //LibraryGlid
     override fun registerComponents(context: Context, glide: Glide, registry: Registry) {
         val glideOkHttpClient = square.okHttpClient.newBuilder()
             .addInterceptor(LimitSizeInterceptor())
+            .addInterceptor(ProgressInterceptor())
             .build()
 
         registry.replace(

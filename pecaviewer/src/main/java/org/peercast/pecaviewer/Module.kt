@@ -3,6 +3,7 @@ package org.peercast.pecaviewer
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 import org.peercast.pecaviewer.chat.ChatViewModel
+import org.peercast.pecaviewer.chat.thumbnail.net.ImageLoadingEventFlow
 import org.peercast.pecaviewer.player.PlayerViewModel
 import org.peercast.pecaviewer.service.PlayerServiceEventFlow
 
@@ -12,6 +13,7 @@ val pecaviewerModule = module {
     viewModel { PlayerViewModel(get()) }
     viewModel { ChatViewModel(get()) }
 
+    single { ImageLoadingEventFlow() }
     single { PlayerServiceEventFlow() }
 }
 

@@ -28,11 +28,11 @@
 
         <TextView
                 android:layout_width="64dp"
-                android:layout_height="wrap_content"
+                android:layout_height="64dp"
                 android:layout_gravity="bottom|end"
                 android:ellipsize="start"
                 android:padding="1dp"
-                android:text="@{vm.error}"
+                android:text="@{vm.message}"
                 android:textAppearance="?android:attr/textAppearanceSmall"
                 android:textColor="@color/grey_800" />
 

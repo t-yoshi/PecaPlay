@@ -153,7 +153,7 @@ open class BbsMessage(
     final override val name: CharSequence = name.parseAsHtml()
     final override val mail: CharSequence = mail.parseAsHtml()
     final override val body: CharSequence =
-        //(body + TEST_TEXT).stripHtml().toSpannable()
+    //(body + BbsUtils.TEST_TEXT).stripHtml().toSpannable()
         body.stripHtml().toSpannable()
             .applyPopupSpanForAnchors() // PopupSpanを適用し、>123のようなアンカーでポップアップ
             .applyUrlSpan() // URLSpanを適用し、リンクを動作させる
@@ -207,6 +207,7 @@ object BbsUtils {
             https://www.youtube.com/watch?v=DsYdPQ1igvM
             https://www.nicovideo.jp/watch/sm9
             https://file-examples-com.github.io/uploads/2017/10/file_example_JPG_1MB.jpg
+            https://abc.com/404-notfound.jpg
              >>1
         """
 }

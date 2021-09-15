@@ -65,9 +65,9 @@ class MessageAdapter(private val fragment: ChatFragment) :
         private val vThumbnail: ThumbnailView? = itemView.findViewById(R.id.vThumbnail)
 
         init {
-            binding.lifecycleOwner = fragment
+            binding.lifecycleOwner = fragment.viewLifecycleOwner
             vThumbnail?.let {
-                ViewTreeLifecycleOwner.set(it, fragment)
+                ViewTreeLifecycleOwner.set(it, binding.lifecycleOwner)
             }
 
             if (!binding.setVariable(BR.viewModel, viewModel))

@@ -1,31 +1,48 @@
 package org.peercast.pecaviewer.chat.thumbnail
 
-import android.content.Context
 import android.graphics.drawable.Animatable
 import android.graphics.drawable.Drawable
+import android.view.View
+import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.findViewTreeLifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.DataSource
+import com.bumptech.glide.load.HttpException
 import com.bumptech.glide.load.engine.DiskCacheStrategy
 import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.load.model.LazyHeaders
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.target.Target
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import okhttp3.*
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import org.peercast.pecaplay.core.io.Square
 import org.peercast.pecaviewer.R
+import org.peercast.pecaviewer.chat.thumbnail.net.ImageLoadingEventFlow
+import org.peercast.pecaviewer.chat.thumbnail.net.LimitSizeInterceptor
+import org.peercast.pecaviewer.chat.thumbnail.net.TooLargeFileException
 import timber.log.Timber
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 open class DefaultImageLoader(
-    protected val c: Context,
+    private val view: View,
     protected val vm: ItemViewModel,
     protected val target: Target<Drawable>,
-) {
+) : KoinComponent {
+    private val loadingEventFlow by inject<ImageLoadingEventFlow>()
+    private var jEvent: Job? = null
+
     private val requestListener = object : RequestListener<Drawable> {
         override fun onLoadFailed(
             e: GlideException?,
@@ -34,22 +51,30 @@ open class DefaultImageLoader(
             isFirstResource: Boolean,
         ): Boolean {
             Timber.w(e)
-            val eCause = e?.rootCauses?.firstOrNull()
-            if (eCause is TooLargeFileException) {
-                vm.error.value = eCause.message
-                vm.isTooLargeFileSize.value = true
-                target.onLoadFailed(
-                    ContextCompat.getDrawable(
-                        c,
-                        R.drawable.ic_help_outline_gray_24dp
+            jEvent?.cancel()
+            vm.isAnimation.value = false
+
+            return when (val eCause = e?.rootCauses?.firstOrNull()) {
+                is TooLargeFileException -> {
+                    vm.message.value = eCause.message
+                    vm.isTooLargeFileSize.value = true
+                    target.onLoadFailed(
+                        getDrawable(R.drawable.ic_help_outline_gray_24dp)
                     )
-                )
-                return true
-            } else {
-                vm.isTooLargeFileSize.value = false
-                vm.error.value = e?.rootCauses?.firstOrNull()?.message ?: e?.message ?: "error..."
-                vm.isAnimation.value = false
-                return false
+                    true
+                }
+
+                is HttpException -> {
+                    vm.isTooLargeFileSize.value = false
+                    vm.message.value = eCause.run { "$statusCode: $message" }
+                    false
+                }
+
+                else -> {
+                    vm.isTooLargeFileSize.value = false
+                    vm.message.value = eCause?.message ?: e?.message ?: "error..."
+                    false
+                }
             }
         }
 
@@ -60,21 +85,35 @@ open class DefaultImageLoader(
             dataSource: DataSource,
             isFirstResource: Boolean,
         ): Boolean {
+            jEvent?.cancel()
             vm.isAnimation.value = resource is Animatable
-            vm.error.value = null
+            vm.message.value = null
             vm.isTooLargeFileSize.value = false
             return false
         }
     }
 
-    open fun loadImage(u: String, maxFileSize: Int = 0) {
+    open fun loadImage(u: String, maxFileSize: Long = 0) {
         val hb = LazyHeaders.Builder()
 
         if (maxFileSize > 0)
             hb.addHeader(LimitSizeInterceptor.X_HEADER_MAX_SIZE, "$maxFileSize")
 
+        jEvent?.cancel()
+        jEvent = loadingEventFlow
+            .filter { it.url == u }
+            .onEach {
+                val s = "loaded: ${it.bytesRead / 1024}KB"
+                Timber.d("$u: $s")
+                vm.message.value = s
+
+                delay(100)
+            }
+            .flowOn(Dispatchers.Default)
+            .launchIn(checkNotNull(view.findViewTreeLifecycleOwner()).lifecycleScope)
+
         Glide
-            .with(c)
+            .with(view)
             .load(GlideUrl(u, hb.build()))
             .diskCacheStrategy(DiskCacheStrategy.ALL)
 //            .diskCacheStrategy(DiskCacheStrategy.NONE)
@@ -85,15 +124,18 @@ open class DefaultImageLoader(
     }
 
     open fun cancelLoad() {
-        Glide.with(c).clear(target)
+        jEvent?.cancel()
+        Glide.with(view).clear(target)
     }
+
+    protected fun getDrawable(@DrawableRes id: Int) = ContextCompat.getDrawable(view.context, id)
 }
 
 class NicoImageLoader(
-    c: Context,
+    view: View,
     vm: ItemViewModel,
     target: Target<Drawable>,
-) : DefaultImageLoader(c, vm, target), Callback, KoinComponent {
+) : DefaultImageLoader(view, vm, target), Callback, KoinComponent {
     private var prevCall: Call? = null
 
     private val square by inject<Square>()
@@ -101,12 +143,9 @@ class NicoImageLoader(
     /**
      * @see ThumbnailUrl.NicoVideo
      * */
-    override fun loadImage(u: String, maxFileSize: Int) {
+    override fun loadImage(u: String, maxFileSize: Long) {
         require(u.startsWith("https://ext.nicovideo.jp/api/getthumbinfo/"))
-//        vm.src.value =
-//            ContextCompat.getDrawable(c,
-//            R.drawable.ic_help_outline_gray_24dp
-//        )
+
         val req = Request.Builder()
             .url(u)
             .cacheControl(MAX_STALE_10DAYS)
@@ -125,12 +164,9 @@ class NicoImageLoader(
     override fun onFailure(call: Call, e: IOException) {
         Timber.w(e)
         target.onLoadFailed(
-            ContextCompat.getDrawable(
-                c,
-                R.drawable.ic_warning_gray_24dp
-            )
+            getDrawable(R.drawable.ic_warning_gray_24dp)
         )
-        vm.error.value = "error: nicovideo getthumbinfo"
+        vm.message.value = "error: nicovideo getthumbinfo"
         prevCall = null
     }
 

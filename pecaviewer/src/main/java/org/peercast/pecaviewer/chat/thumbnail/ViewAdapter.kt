@@ -65,16 +65,15 @@ class ViewAdapter(private val view: ThumbnailView) {
         private var prevLoader: DefaultImageLoader? = null
 
         fun showThumbnail(urls: List<ThumbnailUrl>, position: Int) {
-            val c = view.context
             val u = urls[position]
 
             //prevLoader?.cancelLoad(binding.icon)
             val loader = when (u) {
                 is ThumbnailUrl.NicoVideo -> ::NicoImageLoader
                 else -> ::DefaultImageLoader
-            }(c, viewModel, target)
+            }(view, viewModel, target)
             val bg = ContextCompat.getDrawable(
-                c, when (u) {
+                view.context, when (u) {
                     is ThumbnailUrl.YouTube -> R.drawable.frame_bg_red
                     is ThumbnailUrl.NicoVideo -> R.drawable.frame_bg_grey
                     else -> R.drawable.frame_bg_blue
@@ -88,7 +87,7 @@ class ViewAdapter(private val view: ThumbnailView) {
 
                 binding.root.setOnClickListener {
                     when {
-                        u is ThumbnailUrl.HasLinked || error.value.isNullOrEmpty() -> {
+                        u is ThumbnailUrl.HasLinked || message.value.isNullOrEmpty() -> {
                             view.onThumbnailClickedListener?.onThumbnailClicked(
                                 binding.icon,
                                 urls,
