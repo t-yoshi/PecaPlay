@@ -7,6 +7,7 @@ import androidx.core.content.edit
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
+import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.peercast.pecaplay.core.io.localizedSystemMessage
@@ -184,24 +185,24 @@ class ChatPresenter(private val chatViewModel: ChatViewModel) {
     fun postMessage(poster: IBoardThreadPoster, msg: PostMessage): Job {
         return chatViewModel.viewModelScope.launch {
             val d = async {
-                delay(1000)
-                kotlin.runCatching { poster.postMessage(msg) }
+                delay(2000)
+                kotlin.runCatching {
+                    poster.postMessage(msg)
+                }
             }
 
             chatViewModel.snackbarFactory.send(
-                CancelableSnackbarFactory(a.getText(R.string.sending), d)
+                CancelableSnackbarFactory(a.getText(R.string.sending), job = d)
             )
 
+            //キャンセルボタンを押した場合、CancellationExceptionがここでthrowされる。
             val r = d.await()
+
             postSnackMessage(r)
 
             if (r.isSuccess) {
                 //送信成功したのでスレッドを再読み込み
-                try {
-                    reload()
-                } catch (e: IOException) {
-                    postSnackErrorMessage(e)
-                }
+                reloadThread()
             }
         }
     }

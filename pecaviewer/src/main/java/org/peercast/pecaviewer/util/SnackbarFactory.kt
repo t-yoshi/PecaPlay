@@ -31,20 +31,17 @@ open class SnackbarFactory(
 }
 
 
-class CancelableSnackbarFactory(text: CharSequence, private val job: Job) :
-    SnackbarFactory(text, Snackbar.LENGTH_INDEFINITE) {
+class CancelableSnackbarFactory(
+    text: CharSequence,
+    @ColorInt textColor: Int? = null,
+    private val job: Job
+) :
+    SnackbarFactory(text, textColor, Snackbar.LENGTH_INDEFINITE) {
 
     override suspend fun create(view: View): Snackbar {
         return super.create(view).also { bar ->
             bar.setAction(android.R.string.cancel) {
                 job.cancel()
-            }
-            coroutineScope {
-                launch {
-                    job.join()
-                    if (bar.isShownOrQueued)
-                        bar.dismiss()
-                }
             }
         }
     }
