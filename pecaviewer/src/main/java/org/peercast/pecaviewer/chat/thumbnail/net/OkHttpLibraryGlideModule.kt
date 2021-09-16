@@ -20,7 +20,7 @@ class OkHttpLibraryGlideModule : AppGlideModule(), KoinComponent { //LibraryGlid
 
     override fun registerComponents(context: Context, glide: Glide, registry: Registry) {
         val glideOkHttpClient = square.okHttpClient.newBuilder()
-            .addInterceptor(LimitSizeInterceptor())
+            .addNetworkInterceptor(LimitSizeInterceptor())
             .addInterceptor(ProgressInterceptor())
             .build()
 

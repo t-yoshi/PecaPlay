@@ -3,6 +3,7 @@ package org.peercast.pecaviewer.chat.thumbnail.net
 import okhttp3.HttpUrl
 import okhttp3.Interceptor
 import okhttp3.Response
+import okio.IOException
 import timber.log.Timber
 import java.util.concurrent.ConcurrentHashMap
 
@@ -12,7 +13,7 @@ class LimitSizeInterceptor : Interceptor {
         Timber.d("LimitSizeInterceptor installed")
     }
 
-    private val errorCache = ConcurrentHashMap<HttpUrl, Int>()
+    private val errorCache = ConcurrentHashMap<HttpUrl, TooLargeFileException>()
 
     override fun intercept(chain: Interceptor.Chain): Response {
         Timber.d("request=${chain.request()}")
@@ -22,23 +23,21 @@ class LimitSizeInterceptor : Interceptor {
             errorCache.remove(request.url)
             return chain.proceed(request)
         }
-        errorCache[request.url]?.let {
-            throw TooLargeFileException(it)
+        errorCache[request.url]?.let { throw it }
+
+        val response = chain.proceed(request)
+        if (response.isSuccessful) {
+            val body = response.body ?: throw IOException("body is null")
+            val size = body.contentLength()
+            Timber.d(" size=$size")
+
+            if (size < 0 || size > maxSize) {
+                throw TooLargeFileException(size).also {
+                    errorCache[request.url] = it
+                }
+            }
         }
-
-        val reqHead = request.newBuilder().head().build()
-        val resHead = chain.proceed(reqHead)
-        if (!resHead.isSuccessful)
-            return resHead
-
-        val size = resHead.header("Content-Length")?.toIntOrNull() ?: -1
-        Timber.d(" size=$size")
-
-        if (size < 0 || size > maxSize) {
-            errorCache[request.url] = size
-            throw TooLargeFileException(size)
-        }
-        return chain.proceed(request)
+        return response
     }
 
     companion object {
