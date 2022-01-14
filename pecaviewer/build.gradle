@@ -48,7 +48,7 @@ dependencies {
     implementation project(':core')
 
     implementation "androidx.appcompat:appcompat:$androidx_version"
-    implementation "androidx.core:core-ktx:1.6.0"
+    implementation "androidx.core:core-ktx:1.7.0"
     implementation "androidx.preference:preference-ktx:1.1.1"
     implementation "androidx.recyclerview:recyclerview:1.2.1"
 
@@ -73,7 +73,7 @@ dependencies {
 
     implementation 'org.unbescape:unbescape:1.1.6.RELEASE'
 
-    def exoplayer_version = "2.15.0"
+    def exoplayer_version = "2.16.1"
     implementation "com.google.android.exoplayer:exoplayer-core:$exoplayer_version"
     implementation "com.google.android.exoplayer:exoplayer-ui:$exoplayer_version"
     implementation "com.google.android.exoplayer:extension-okhttp:$exoplayer_version"

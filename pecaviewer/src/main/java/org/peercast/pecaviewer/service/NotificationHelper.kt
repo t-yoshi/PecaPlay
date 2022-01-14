@@ -58,7 +58,7 @@ internal class NotificationHelper(private val service: PlayerService) {
             service,
             0,
             Intent(act).also { it.setPackage(service.packageName) },
-            PendingIntent.FLAG_UPDATE_CURRENT
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
     }
 
@@ -69,7 +69,7 @@ internal class NotificationHelper(private val service: PlayerService) {
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         return PendingIntent.getActivity(
             service, 0, i,
-            PendingIntent.FLAG_UPDATE_CURRENT
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
     }
 

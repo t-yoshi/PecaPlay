@@ -1,13 +1,13 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
 
 buildscript {
-    ext.kotlin_version = '1.5.30'
+    ext.kotlin_version = '1.6.10'
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.0.2'
+        classpath 'com.android.tools.build:gradle:7.0.4'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath 'com.google.gms:google-services:4.3.10' //4.3.9 is NG
         classpath "org.jetbrains.kotlin:kotlin-serialization:$kotlin_version"
@@ -16,26 +16,26 @@ buildscript {
         classpath 'com.google.android.gms:oss-licenses-plugin:0.10.4'
 
         classpath 'com.android.tools.build:bundletool:0.9.0'
-        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.7.1'
+        classpath 'com.google.firebase:firebase-crashlytics-gradle:2.8.1'
     }
 
     ext {
         build_tools_version = "30.0.3"
         min_sdk_version = 23
-        target_sdk_version = 30
+        target_sdk_version = 31
 
-        kotlinx_coroutines_version = "1.5.0"
+        kotlinx_coroutines_version = "1.6.0"
         kotlinx_serialization_version = "1.2.1"
 
-        libpeercast_version = "35cbd64070"
+        libpeercast_version = "e4ff7975fd"
 
-        androidx_version = "1.3.1"
-        lifecycle_version = "2.4.0-alpha03"
+        androidx_version = "1.4.1"
+        lifecycle_version = "2.4.0"
         koin_version = '3.0.2'
-        okhttp_version = "4.9.1"
-        work_version = "2.5.0"
+        okhttp_version = "4.9.2"
+        work_version = "2.7.1"
         glide_version = '4.11.0'
-        timber_version = "4.7.1"
+        timber_version = "5.0.1"
     }
 }
 
