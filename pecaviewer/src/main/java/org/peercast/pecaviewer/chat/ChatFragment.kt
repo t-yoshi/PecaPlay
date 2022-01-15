@@ -24,9 +24,11 @@ import org.peercast.pecaviewer.PecaViewerViewModel
 import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.chat.adapter.MessageAdapter
 import org.peercast.pecaviewer.chat.adapter.ThreadAdapter
+import org.peercast.pecaviewer.chat.net.BbsUtils
 import org.peercast.pecaviewer.databinding.FragmentChatBinding
 import org.peercast.pecaviewer.player.PlayerViewModel
 import timber.log.Timber
+import kotlin.math.max
 import kotlin.properties.Delegates
 
 @Suppress("unused")
@@ -41,6 +43,7 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener {
     private val threadAdapter = ThreadAdapter(this)
     private val messageAdapter = MessageAdapter(this)
     private var loadingJob: Job? = null
+    private var autoReloadSec = DEFAULT_AUTO_RELOAD_SEC
 
     /**読込中である*/
     private val isLoading = MutableStateFlow(false)
@@ -139,6 +142,10 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener {
                 launch {
                     chatViewModel.messages.collect {
                         messageAdapter.messages = it
+                        autoReloadSec = max(
+                            DEFAULT_AUTO_RELOAD_SEC - BbsUtils.resCountPerHour(it),
+                            DEFAULT_AUTO_RELOAD_SEC / 3
+                        )
                         scheduleAutoReload()
                         scrollToBottom()
                     }
@@ -294,10 +301,10 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener {
 
         jAutoReload = lifecycleScope.launchWhenResumed {
             try {
-                Timber.d("Set auto-reloading every ${AUTO_RELOAD_SEC}seconds.")
+                Timber.d("Set auto-reloading every ${autoReloadSec}seconds.")
                 while (isActive) {
-                    for (i in AUTO_RELOAD_SEC downTo 1) {
-                        chatViewModel.reloadRemain.value = i * 100 / AUTO_RELOAD_SEC
+                    for (i in autoReloadSec downTo 1) {
+                        chatViewModel.reloadRemain.value = i * 100 / autoReloadSec
                         delay(1000L)
                     }
                     chatViewModel.reloadRemain.value = -1
@@ -327,7 +334,7 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener {
         }
 
     companion object {
-        private const val AUTO_RELOAD_SEC = 30
+        private const val DEFAULT_AUTO_RELOAD_SEC = 40
 
         private const val KEY_AUTO_RELOAD = "key_chat_auto_reload"
         private const val KEY_SIMPLE_DISPLAY = "key_simple_display"

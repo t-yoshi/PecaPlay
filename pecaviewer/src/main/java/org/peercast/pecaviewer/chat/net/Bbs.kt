@@ -199,6 +199,16 @@ object BbsUtils {
         return this
     }
 
+    fun resCountPerHour(messages: List<IMessage>) : Int {
+        if (messages.isEmpty())
+            return 0
+        val now = System.currentTimeMillis()
+        val rangeOneHour = now - 3600_000 .. now
+        return messages.filterIsInstance<BbsMessage>().count {
+            it.timeInMillis in rangeOneHour
+        }
+    }
+
     const val TEST_TEXT = """
              "https://media2.giphy.com/media/xreCEnteawblu/giphy.gif?cid=ecf05e47scyg0bt1ljd58r7kj4xkcifs4x5c92pf5bwfhygv&rid=giphy.gif"),
             "https://i.giphy.com/media/2igz2N2bac1Wg/giphy.webp"),
