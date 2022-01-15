@@ -36,7 +36,7 @@ import java.util.*
 
 class PlayerService : LifecycleService() {
 
-    private lateinit var player: SimpleExoPlayer
+    private lateinit var player: ExoPlayer
     private lateinit var notificationHelper: NotificationHelper
     private var peerCastController: PeerCastController? = null
 
@@ -60,7 +60,7 @@ class PlayerService : LifecycleService() {
     override fun onCreate() {
         super.onCreate()
 
-        player = SimpleExoPlayer.Builder(this)
+        player = ExoPlayer.Builder(this)
             .setAudioAttributes(AA_MEDIA_MOVIE, true)
             .setWakeMode(C.WAKE_MODE_NETWORK)
             //.setLoadControl(LOAD_CONTROL)
@@ -94,6 +94,14 @@ class PlayerService : LifecycleService() {
     private val analyticsListener = object : AnalyticsListener {
         private var jBuf: Job? = null
         var nMaxReconnect = 0
+
+        override fun onPlayWhenReadyChanged(
+            eventTime: AnalyticsListener.EventTime,
+            playWhenReady: Boolean,
+            reason: Int
+        ) {
+            PlayerWhenReadyChangedEvent(playWhenReady, reason).emit()
+        }
 
         override fun onPlaybackStateChanged(eventTime: AnalyticsListener.EventTime, state: Int) {
             when (state) {

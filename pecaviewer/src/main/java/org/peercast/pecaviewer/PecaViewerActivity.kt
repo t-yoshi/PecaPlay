@@ -1,10 +1,13 @@
 package org.peercast.pecaviewer
 
+import android.annotation.TargetApi
 import android.app.PictureInPictureParams
+import android.app.RemoteAction
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.graphics.drawable.Icon
 import android.os.Build
 import android.os.Bundle
 import android.util.Rational
@@ -19,7 +22,7 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.google.android.exoplayer2.video.VideoSize
 import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -30,6 +33,8 @@ import org.peercast.pecaplay.core.app.backToPecaPlay
 import org.peercast.pecaviewer.chat.ChatViewModel
 import org.peercast.pecaviewer.player.PlayerViewModel
 import org.peercast.pecaviewer.service.PlayerService
+import org.peercast.pecaviewer.service.PlayerServiceEventFlow
+import org.peercast.pecaviewer.service.PlayerWhenReadyChangedEvent
 import timber.log.Timber
 
 class PecaViewerActivity : AppCompatActivity() {
@@ -44,6 +49,7 @@ class PecaViewerActivity : AppCompatActivity() {
     }
     private val viewerPrefs by inject<PecaViewerPreference>()
     private val service: PlayerService? get() = viewerViewModel.playerService.value
+    private val eventFlow by inject<PlayerServiceEventFlow>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -92,6 +98,15 @@ class PecaViewerActivity : AppCompatActivity() {
                 )
             }
         }
+
+        if (isApi26AtLeast) {
+            lifecycleScope.launch {
+                eventFlow.filterIsInstance<PlayerWhenReadyChangedEvent>().collect { ev ->
+                    if (isInPictureInPictureMode)
+                        setPictureInPictureParams(createPipParams())
+                }
+            }
+        }
     }
 
     override fun onNewIntent(intent: Intent?) {
@@ -125,6 +140,31 @@ class PecaViewerActivity : AppCompatActivity() {
         }
     }
 
+    @TargetApi(Build.VERSION_CODES.O)
+    private fun createPipParams(): PictureInPictureParams {
+        val b = PictureInPictureParams.Builder()
+        val size = service?.videoSize ?: VideoSize.UNKNOWN
+        if (size != VideoSize.UNKNOWN) {
+            b.setAspectRatio(Rational(size.width, size.height))
+        }
+        val action = if (service?.isPlaying != true) {
+            RemoteAction(
+                Icon.createWithResource(this, R.drawable.ic_play_circle_filled_black_96dp),
+                "play",
+                "play",
+                PecaViewerIntent.createActionPendingIntent(this, PecaViewerIntent.ACTION_PLAY)
+            )
+        } else {
+            RemoteAction(
+                Icon.createWithResource(this, R.drawable.ic_pause_circle_filled_black_96dp),
+                "pause",
+                "pause",
+                PecaViewerIntent.createActionPendingIntent(this, PecaViewerIntent.ACTION_PAUSE)
+            )
+        }
+        return b.setActions(listOf(action)).build()
+    }
+
     /**Android8以降でプレーヤーをPIP化する。*/
     private fun enterPipMode(): Boolean {
         if (isApi26AtLeast &&
@@ -132,12 +172,7 @@ class PecaViewerActivity : AppCompatActivity() {
             (service?.isPlaying == true || service?.isBuffering == true)
         ) {
             Timber.i("enterPipMode")
-            val b = PictureInPictureParams.Builder()
-            val size = service?.videoSize ?: VideoSize.UNKNOWN
-            if (size != VideoSize.UNKNOWN) {
-                b.setAspectRatio(Rational(size.width, size.height))
-            }
-            return enterPictureInPictureMode(b.build())
+            return enterPictureInPictureMode(createPipParams())
         }
         return false
     }

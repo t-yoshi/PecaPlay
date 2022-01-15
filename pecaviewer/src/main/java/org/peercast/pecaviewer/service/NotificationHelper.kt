@@ -38,29 +38,20 @@ internal class NotificationHelper(private val service: PlayerService) {
     private val playAction = NotificationCompat.Action(
         R.drawable.ic_play_arrow_black_24dp,
         "play",
-        buildActionPendingIntent(PecaViewerIntent.ACTION_PLAY)
+        PecaViewerIntent.createActionPendingIntent(service, PecaViewerIntent.ACTION_PLAY)
     )
 
     private val pauseAction = NotificationCompat.Action(
         R.drawable.ic_pause_black_24dp,
         "pause",
-        buildActionPendingIntent(PecaViewerIntent.ACTION_PAUSE)
+        PecaViewerIntent.createActionPendingIntent(service, PecaViewerIntent.ACTION_PAUSE)
     )
 
     private val stopAction = NotificationCompat.Action(
         R.drawable.ic_stop_black_24dp,
         "stop",
-        buildActionPendingIntent(PecaViewerIntent.ACTION_STOP)
+        PecaViewerIntent.createActionPendingIntent(service, PecaViewerIntent.ACTION_STOP)
     )
-
-    private fun buildActionPendingIntent(act: String): PendingIntent {
-        return PendingIntent.getBroadcast(
-            service,
-            0,
-            Intent(act).also { it.setPackage(service.packageName) },
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-    }
 
     //タスクバーから復帰する
     private fun buildPendingIntent(): PendingIntent {

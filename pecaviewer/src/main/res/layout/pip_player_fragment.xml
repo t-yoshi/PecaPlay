@@ -23,11 +23,10 @@
             app:use_controller="false"/>
 
         <FrameLayout
-            android:id="@+id/vTitleBar"
             android:layout_width="match_parent"
             android:layout_height="36dp"
             android:layout_gravity="bottom"
-            android:background="#D0212121"
+            android:background="#A0212121"
             bind:visibleAnimate="@{isVisibleTitleBar}"
             android:padding="3dp">
 
