@@ -12,6 +12,8 @@ interface YpHistoryChannelDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun addHistory(ch: YpHistoryChannel)
 
-    @Query("SELECT * FROM YpHistoryChannel ORDER BY lastPlay DESC")
+    //配信者のidはランダム化されるようになったが、DBをいじりたくないので
+    // SELECT ... GROUP BY name で対応する
+    @Query("SELECT * FROM YpHistoryChannel GROUP BY name ORDER BY lastPlay DESC")
     fun query(): Flow<List<YpHistoryChannel>>
 }

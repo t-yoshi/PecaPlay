@@ -13,6 +13,8 @@ import java.util.*
 @Parcelize
 @Entity(
     tableName = "YpHistoryChannel",
+    //配信者のidはランダム化されるようになったが、DBをいじりたくないので
+    // SELECT ... GROUP BY name で対応する
     primaryKeys = ["name", "id"]
 )
 data class YpHistoryChannel constructor(
