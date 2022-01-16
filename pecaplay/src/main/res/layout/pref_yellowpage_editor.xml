@@ -3,10 +3,13 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <data>
-
+        <import type="org.peercast.pecaplay.app.YellowPage"/>
         <variable
-            name="viewModel"
-            type="org.peercast.pecaplay.prefs.YellowPageEditorDialogFragment.ViewModel" />
+            name="yp"
+            type="kotlinx.coroutines.flow.MutableStateFlow&lt;YellowPage>" />
+        <variable
+            name="pr"
+            type="org.peercast.pecaplay.prefs.YellowPageEditorDialogFragment.BindingPresenter" />
     </data>
 
     <LinearLayout
@@ -21,15 +24,15 @@
             android:layout_height="wrap_content"
             app:hintTextAppearance="@style/TextAppearance.AppCompat">
 
-            <androidx.appcompat.widget.AppCompatAutoCompleteTextView
+            <org.peercast.pecaplay.view.YpAutoCompleteView
                 android:id="@+id/vName"
                 style="@style/Widget.MaterialComponents.AutoCompleteTextView.FilledBox"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:completionThreshold="1"
                 android:hint="YP-Name"
-                android:text="@={viewModel.name}"
-                android:inputType="textCapCharacters"
+                android:text="@{yp.name}"
+                android:afterTextChanged="@{(text) -> pr.onNameChanged(text) }"
+                android:inputType="textCapWords"
                 android:maxLines="1" />
 
         </com.google.android.material.textfield.TextInputLayout>
@@ -44,12 +47,14 @@
             app:hintTextAppearance="@style/TextAppearance.AppCompat">
 
             <EditText
+                android:id="@+id/vUrl"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:ems="10"
                 android:hint="YP-URL"
                 android:inputType="textUri"
-                android:text="@={viewModel.url}"
+                android:text="@{yp.url}"
+                android:afterTextChanged="@{(text) -> pr.onUrlChanged(text) }"
                 android:maxLines="1" />
         </com.google.android.material.textfield.TextInputLayout>
 

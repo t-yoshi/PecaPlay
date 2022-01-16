@@ -4,10 +4,18 @@
         <item>SP</item>
         <item>TP</item>
         <item>Heisei YP</item>
+        <item>Turf</item>
+        <item>P@</item>
+        <item>YPv6</item>
+        <item>Event YP</item>
     </string-array>
     <string-array name="default_yp_urls">
         <item>http://bayonet.ddo.jp/sp/</item>
         <item>http://temp.orz.hm/yp/</item>
         <item>http://yp.pcgw.pgw.jp/</item>
+        <item>http://peercast.takami98.net/turf-page/</item>
+        <item>https://p-at.net/</item>
+        <item>http://ypv6.pecastation.org/</item>
+        <item>http://eventyp.xrea.jp/</item>
     </string-array>
 </resources>
