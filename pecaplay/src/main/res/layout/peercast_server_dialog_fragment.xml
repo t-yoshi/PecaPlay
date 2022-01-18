@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:padding="10dp">
+
+        <EditText
+            android:id="@+id/vHost"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:enabled="@{!vm.isLocal }"
+            android:inputType="textUri"
+            android:text="@={vm.host}"
+            app:layout_constraintBaseline_toBaselineOf="@id/vLanSever"
+            app:layout_constraintEnd_toStartOf="@id/vPortLabel"
+            app:layout_constraintHorizontal_weight="2"
+            app:layout_constraintStart_toEndOf="@+id/vHostLabel" />
+
+        <EditText
+            android:id="@+id/vPort"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_alignBaseline="@id/vLanSever"
+            android:layout_alignParentRight="true"
+            android:enabled="@{!vm.isLocal }"
+            android:inputType="numberSigned"
+            android:maxLength="5"
+            android:text="@={vm.port}"
+            app:layout_constraintBaseline_toBaselineOf="@id/vLanSever"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintHorizontal_weight="1"
+            app:layout_constraintStart_toEndOf="@+id/vPortLabel" />
+
+        <RadioButton
+            android:id="@+id/vLocalServer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="@{vm.isLocal}"
+            android:enabled="@{isInstalled}"
+            android:onCheckedChanged="@{(_, b)->vm.onLocalServerChecked(b)}"
+            app:layout_constraintBottom_toTopOf="@id/vLanSever"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <RadioButton
+            android:id="@+id/vLanSever"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/vLocalServer"
+            android:checked="@{!vm.isLocal }"
+            android:onCheckedChanged="@{(_, b)->vm.onLocalServerChecked(!b)}"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/vLocalServer" />
+
+        <TextView
+            android:id="@+id/vVersion"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="@{()->vm.onLocalServerChecked(true)}"
+            android:text="@{isInstalled ? @string/peercast_android : @string/peercast_is_not_installed}"
+            android:enabled="@{isInstalled}"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            app:layout_constraintBaseline_toBaselineOf="@id/vLocalServer"
+            app:layout_constraintStart_toEndOf="@id/vLocalServer" />
+
+        <TextView
+            android:id="@+id/vPortLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text=" Port:"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            app:layout_constraintBaseline_toBaselineOf="@id/vLanSever"
+            app:layout_constraintEnd_toStartOf="@+id/vPort"
+            app:layout_constraintStart_toEndOf="@+id/vHost"
+            tools:ignore="HardcodedText" />
+
+        <TextView
+            android:id="@+id/vHostLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Host:"
+            android:textAppearance="?android:attr/textAppearanceMedium"
+            app:layout_constraintBaseline_toBaselineOf="@id/vLanSever"
+            app:layout_constraintStart_toEndOf="@+id/vLanSever"
+            tools:ignore="HardcodedText" />
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <data>
+
+        <variable
+            name="isInstalled"
+            type="boolean" />
+
+        <variable
+            name="vm"
+            type="org.peercast.pecaplay.prefs.PeerCastServerDialogFragment.BindingViewModel" />
+
+    </data>
+
+
+</layout>

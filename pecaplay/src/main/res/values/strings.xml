@@ -100,7 +100,8 @@
     <string name="pref_header_about" translatable="false">About</string>
     <string name="viewer_goto_google_play">Go to Google play…</string>
     <string name="viewer_installed">PecaViewer installed.</string>
-    <string name="viewer_not_installed">Not installed</string>
+    <string name="peercast_is_not_installed">PeerCast is not installed</string>
+    <string name="peercast_android" translatable="false">PeerCast for Android</string>
     <string name="debug_mode">Debug mode</string>
 
     <!--Notification-->

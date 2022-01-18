@@ -3,6 +3,7 @@ package org.peercast.pecaplay.prefs
 import android.os.Bundle
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.commit
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
@@ -30,11 +31,16 @@ class SettingsActivity : AppCompatActivity(),
         caller: PreferenceFragmentCompat,
         pref: Preference,
     ): Boolean {
-        val f = supportFragmentManager.fragmentFactory.instantiate(classLoader, pref.fragment)
-        supportFragmentManager.commit {
-            addToBackStack(null)
-            //setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
-            replace(android.R.id.content, f)
+        val man = supportFragmentManager
+        val f = man.fragmentFactory.instantiate(classLoader, pref.fragment)
+        if (f is DialogFragment){
+            f.show(man, f.javaClass.name)
+        } else {
+            man.commit {
+                addToBackStack(null)
+                //setTransition(FragmentTransaction.TRANSIT_FRAGMENT_OPEN)
+                replace(android.R.id.content, f)
+            }
         }
         return true
     }

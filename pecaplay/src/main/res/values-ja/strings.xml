@@ -73,7 +73,7 @@
     <string name="pref_header_viewer">専用プレーヤー</string>
     <string name="viewer_goto_google_play">Google Playへ..</string>
     <string name="viewer_installed">PecaViewerインストール済み</string>
-    <string name="viewer_not_installed">インストールされていません</string>
+    <string name="peercast_is_not_installed">PeerCast未インストール</string>
     <string name="debug_mode">デバッグモード</string>
     <string name="notification">通知</string>
     <string name="notified">通知済み</string>

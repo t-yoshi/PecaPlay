@@ -1,19 +1,17 @@
 package org.peercast.pecaplay.prefs
 
 import android.annotation.TargetApi
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.view.inputmethod.EditorInfo
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.setFragmentResultListener
 import androidx.lifecycle.lifecycleScope
-import androidx.preference.EditTextPreference
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import com.google.android.gms.oss.licenses.OssLicensesMenuActivity
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
@@ -29,27 +27,14 @@ class GeneralPrefsFragment : PreferenceFragmentCompat() {
 
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
         addPreferencesFromResource(R.xml.pref_general)
+        setFragmentResultListener("") { _, b ->
+            if (b.getInt("result") == Activity.RESULT_OK)
+                initPreferences()
+        }
     }
 
     private fun initPreferences() {
-        checkNotNull(findPreference<EditTextPreference>(DefaultAppPreferences.KEY_PEERCAST_SERVER_URL)).let {
-            it.setOnBindEditTextListener { et ->
-                et.inputType = EditorInfo.TYPE_TEXT_VARIATION_URI
-            }
-            it.setOnPreferenceChangeListener { _, newValue ->
-                val valid = Uri.parse(newValue as String).let { u ->
-                    u.scheme == "http" &&
-                            u.host.let { h -> h != null && isPrivateAddress(h) } &&
-                            u.port in 1025..65535 &&
-                            u.path == "/"
-                } || newValue.isEmpty()
-                if (valid) {
-                    lifecycleScope.launch(Dispatchers.Main) {
-                        initPreferences()
-                    }
-                }
-                valid
-            }
+        checkNotNull(findPreference(DefaultAppPreferences.KEY_PEERCAST_SERVER_URL)).let {
             it.summary = appPrefs.peerCastUrl.toString()
         }
 
@@ -89,34 +74,11 @@ class GeneralPrefsFragment : PreferenceFragmentCompat() {
         initPreferences()
     }
 
+
     override fun onAttach(context: Context) {
         super.onAttach(context)
         (activity as AppCompatActivity?)?.supportActionBar?.title =
             getString(R.string.pref_header_general)
     }
-
-    companion object {
-        private fun isPrivateAddress(ip: String): Boolean {
-            if (ip in listOf("localhost", "127.0.0.1"))
-                return true
-            val n = ip.split(".")
-                .mapNotNull { it.toUByteOrNull()?.toInt() }
-            return when {
-                n.size != 4 -> false
-
-                // a)
-                n[0] == 192 && n[1] == 168 -> true
-
-                // b)
-                n[0] == 172 && n[1] in 16..31 -> true
-
-                // c)
-                n[0] == 10 -> true
-
-                else -> false
-            }
-        }
-    }
-
 }
 

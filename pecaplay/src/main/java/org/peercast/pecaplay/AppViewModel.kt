@@ -6,10 +6,10 @@ import androidx.core.text.HtmlCompat
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import org.peercast.core.lib.app.BaseClientViewModel
 import org.peercast.pecaplay.app.AppRoomDatabase
 import org.peercast.pecaplay.chanlist.filter.ChannelFilter
+import org.peercast.pecaplay.core.io.isLoopbackAddress
 import org.peercast.pecaplay.core.io.localizedSystemMessage
 import org.peercast.pecaplay.prefs.AppPreferences
 import org.peercast.pecaplay.worker.LoadingEvent
@@ -50,7 +50,7 @@ class AppViewModel(
 
     override fun bindService() {
         val u = appPrefs.peerCastUrl
-        if (u.host in listOf(null, "", "localhost", "127.0.0.1")) {
+        if (u.isLoopbackAddress()) {
             super.bindService()
             rpcClient.filterNotNull()
                 .onEach { cl ->

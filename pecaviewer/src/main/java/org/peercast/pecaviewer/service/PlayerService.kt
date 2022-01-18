@@ -26,6 +26,7 @@ import org.peercast.core.lib.notify.NotifyMessageType
 import org.peercast.pecaplay.core.app.PecaViewerIntent
 import org.peercast.pecaplay.core.app.Yp4gChannel
 import org.peercast.pecaplay.core.io.Square
+import org.peercast.pecaplay.core.io.isLoopbackAddress
 import org.peercast.pecaviewer.PecaViewerActivity
 import org.peercast.pecaviewer.PecaViewerPreference
 import timber.log.Timber
@@ -340,7 +341,7 @@ class PlayerService : LifecycleService() {
 
         player.setMediaSource(progressiveFactory.createMediaSource(item))
 
-        if (u.host in listOf("localhost", "127.0.0.1"))
+        if (u.isLoopbackAddress())
             bindPeerCastService()
 
         analyticsListener.nMaxReconnect = MAX_RECONNECT

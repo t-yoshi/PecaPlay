@@ -1,20 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <Preference
         android:title="@string/pref_header_yellow_page"
         android:key="pref_header_yellow_page"
         android:fragment="org.peercast.pecaplay.prefs.YellowPagePrefsFragment" />
 
-    <EditTextPreference
-        android:defaultValue="http://localhost:7144/"
-        android:inputType="textUri"
+    <Preference
+        android:title="@string/pref_peercast_url"
         android:key="pref_peercast_server_url"
-        android:maxLines="1"
-        android:selectAllOnFocus="true"
-        android:singleLine="true"
-        android:dialogMessage="http://(host):(port)/"
-        android:title="@string/pref_peercast_url" />
+        android:persistent="false"
+        android:fragment="org.peercast.pecaplay.prefs.PeerCastServerDialogFragment"        />
+
 
     <SwitchPreference
         android:defaultValue="false"
