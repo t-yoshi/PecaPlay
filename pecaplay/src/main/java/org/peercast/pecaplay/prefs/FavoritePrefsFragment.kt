@@ -28,7 +28,7 @@ class FavoritePrefsFragment : BaseEntityPreferenceFragment<Favorite>() {
                     preferenceScreen.removeAll()
                     it.sortedWith(COMPARATOR).forEach { f ->
                         val p = createCheckBoxPreference(f)
-                        p.title = p.title.removePrefix("[star]")
+                        p.title = p.title!!.removePrefix("[star]")
                         p.icon = getIconDrawable(f)
                         preferenceScreen.addPreference(p)
                     }

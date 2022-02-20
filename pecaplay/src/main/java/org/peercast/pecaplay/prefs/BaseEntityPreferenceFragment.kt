@@ -34,7 +34,7 @@ abstract class BaseEntityPreferenceFragment<E : ManageableEntity>
 
     @CallSuper
     override fun onCreatePreferences(savedInstanceState: Bundle?, rootKey: String?) {
-        preferenceScreen = preferenceManager.createPreferenceScreen(context)
+        preferenceScreen = preferenceManager.createPreferenceScreen(requireContext())
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {

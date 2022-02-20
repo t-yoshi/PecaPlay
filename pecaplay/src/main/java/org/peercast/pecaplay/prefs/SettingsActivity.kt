@@ -32,7 +32,7 @@ class SettingsActivity : AppCompatActivity(),
         pref: Preference,
     ): Boolean {
         val man = supportFragmentManager
-        val f = man.fragmentFactory.instantiate(classLoader, pref.fragment)
+        val f = man.fragmentFactory.instantiate(classLoader, pref.fragment ?: return false)
         if (f is DialogFragment){
             f.show(man, f.javaClass.name)
         } else {

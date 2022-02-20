@@ -7,7 +7,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.1.0'
+        classpath 'com.android.tools.build:gradle:7.1.1'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath 'com.google.gms:google-services:4.3.10' //4.3.9 is NG
         classpath "org.jetbrains.kotlin:kotlin-serialization:$kotlin_version"
@@ -30,7 +30,7 @@ buildscript {
         libpeercast_version = "279492562a"
 
         androidx_version = "1.4.1"
-        lifecycle_version = "2.4.0"
+        lifecycle_version = "2.4.1"
         koin_version = '3.0.2'
         okhttp_version = "4.9.2"
         work_version = "2.7.1"

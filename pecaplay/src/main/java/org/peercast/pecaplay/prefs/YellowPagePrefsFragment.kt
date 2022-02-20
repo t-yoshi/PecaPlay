@@ -25,7 +25,7 @@ class YellowPagePrefsFragment : BaseEntityPreferenceFragment<YellowPage>() {
                     it.forEach { yp ->
                         createCheckBoxPreference(yp).let { p ->
                             p.setIcon(R.drawable.ic_peercast)
-                            p.icon.setTint(iconColor)
+                            p.icon?.setTint(iconColor)
                             p.summary = yp.url
                             preferenceScreen.addPreference(p)
                         }
