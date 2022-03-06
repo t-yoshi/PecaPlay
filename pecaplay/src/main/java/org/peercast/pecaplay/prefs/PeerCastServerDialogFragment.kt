@@ -52,7 +52,9 @@ class PeerCastServerDialogFragment : DialogFragment(),
         val isValidUrl = combine(isLocal, host, port) { l, h, p ->
             //Timber.d("==> $l $h $p")
             toUri().run {
-                isSiteLocalAddress() or isLoopbackAddress()
+                //Issue #1
+                isSiteLocalAddress() || isLoopbackAddress() ||
+                        (host?.isNotBlank() == true && h == host)
             } && p.toString().toIntOrNull() in 1025..65532
         }.stateIn(lifecycleScope, SharingStarted.Lazily, false)
 
