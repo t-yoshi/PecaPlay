@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:tools="http://schemas.android.com/tools"
+    xmlns:bind="http://schemas.android.com/apk/res-auto"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <com.google.android.exoplayer2.ui.PlayerView
+            xmlns:app="http://schemas.android.com/apk/res-auto"
+            android:id="@+id/vPlayer"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:background="@color/grey_1000b"
+            app:controller_layout_id="@layout/player_control_view" />
+
+        <RelativeLayout
+            android:id="@+id/vPlayerToolbar"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/player_toolbar_height"
+            android:minHeight="@dimen/player_toolbar_height"
+            android:background="#212121"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
+            android:paddingStart="8dp"
+            android:focusable="true"
+            android:clickable="true"
+            android:visibility="@{playerViewModel.isToolbarVisible ? View.VISIBLE : View.GONE}"
+            android:paddingEnd="@dimen/player_toolbar_padding_right">
+
+            <TextView
+                android:id="@android:id/title"
+                android:text="@{playerViewModel.channelTitle}"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?android:attr/textAppearanceLarge"
+                android:textStyle="bold"
+                android:gravity="center_vertical"
+                android:singleLine="true"
+                android:ellipsize="end"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentEnd="true"
+                android:layout_above="@android:id/text1"
+                android:textColor="@color/green_700" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:id="@android:id/text1"
+                android:text="@{playerViewModel.channelComment}"
+                android:singleLine="true"
+                android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:layout_alignParentStart="true"
+                android:textColor="@color/green_800"
+                android:layout_toStartOf="@android:id/text2" />
+
+            <TextView
+                android:id="@android:id/text2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@{TextUtils.isEmpty(playerViewModel.channelWarning) ? @color/green_800 : @color/deep_orange_500 }"
+                android:singleLine="true"
+                android:text="@{playerViewModel.channelWarning}"
+                android:textAppearance="?android:attr/textAppearanceSmall"
+                android:layout_alignBaseline="@android:id/text1"
+                android:layout_alignParentEnd="true"
+                android:paddingRight="10dp"
+                android:paddingLeft="10dp" />
+
+        </RelativeLayout>
+    </LinearLayout>
+
+    <data>
+
+        <import type="android.view.View" />
+
+        <import type="android.text.TextUtils" />
+
+        <variable
+            name="playerViewModel"
+            type="org.peercast.pecaviewer.player.PlayerViewModel" />
+
+        <variable
+            name="appViewModel"
+            type="org.peercast.pecaviewer.PecaViewerViewModel" />
+    </data>
+
+</layout>

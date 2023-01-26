@@ -13,7 +13,9 @@ import com.google.android.exoplayer2.analytics.AnalyticsListener
 import com.google.android.exoplayer2.audio.AudioAttributes
 import com.google.android.exoplayer2.decoder.DecoderReuseEvaluation
 import com.google.android.exoplayer2.ext.okhttp.OkHttpDataSource
-import com.google.android.exoplayer2.source.*
+import com.google.android.exoplayer2.source.LoadEventInfo
+import com.google.android.exoplayer2.source.MediaLoadData
+import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.ui.PlayerView
 import com.google.android.exoplayer2.upstream.HttpDataSource
 import kotlinx.coroutines.Job
@@ -49,8 +51,12 @@ class PlayerService : LifecycleService() {
 
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
+            Timber.d("received: $intent")
             when (intent?.action) {
-                PecaViewerIntent.ACTION_PLAY -> player.play()
+                PecaViewerIntent.ACTION_PLAY -> {
+                    player.prepare()
+                    player.play()
+                }
                 PecaViewerIntent.ACTION_PAUSE -> player.pause()
                 PecaViewerIntent.ACTION_STOP -> player.stop()
                 else -> Timber.e("$intent")
@@ -66,6 +72,7 @@ class PlayerService : LifecycleService() {
             .setWakeMode(C.WAKE_MODE_NETWORK)
             //.setLoadControl(LOAD_CONTROL)
             .setUseLazyPreparation(true)
+            .setRenderersFactory(DefaultRenderersFactory(this).setEnableDecoderFallback(true))
             .build()
         player.addAnalyticsListener(analyticsListener)
         player.repeatMode = Player.REPEAT_MODE_ONE
@@ -148,8 +155,12 @@ class PlayerService : LifecycleService() {
         }
 
         private fun sendPlayerErrorEvent(errorType: String, e: Exception) {
-            jBuf?.cancel()
+            if (e is ExoPlaybackException && e.type == ExoPlaybackException.TYPE_RENDERER) {
+                Timber.w(e, "$errorType -> $e")
+                return
+            }
             Timber.e(e, "$errorType -> $e")
+            jBuf?.cancel()
             PlayerErrorEvent(errorType, e).emit()
         }
 
@@ -268,6 +279,14 @@ class PlayerService : LifecycleService() {
             Timber.d("onTimelineChanged -> ${reason}")
         }
 
+        override fun onVideoDecoderInitialized(
+            eventTime: AnalyticsListener.EventTime,
+            decoderName: String,
+            initializedTimestampMs: Long,
+            initializationDurationMs: Long
+        ) {
+            Timber.d("onVideoDecoderInitialized: $decoderName")
+        }
 
     }
 
@@ -403,12 +422,11 @@ class PlayerService : LifecycleService() {
         }
     }
 
-    companion object {
-        fun PlayerView.setPlayerService(service: PlayerService?) {
-            Timber.d("--> $this $service")
-            player = service?.DelegatedPlayer(this)
-        }
+    fun attachView(view: PlayerView) {
+        view.player = DelegatedPlayer(view)
+    }
 
+    companion object {
         private val AA_MEDIA_MOVIE = AudioAttributes.Builder()
             .setUsage(C.USAGE_MEDIA)
             .setContentType(C.CONTENT_TYPE_MOVIE)

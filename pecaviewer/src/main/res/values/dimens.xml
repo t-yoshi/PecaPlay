@@ -1,5 +1,6 @@
 <resources>
     <dimen name="player_toolbar_padding_right">0dp</dimen>
+    <dimen name="player_toolbar_height">56dp</dimen>
     <integer name="thread_list_layout_weight">40</integer>
     <integer name="message_list_layout_weight">60</integer>
 

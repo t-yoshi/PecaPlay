@@ -8,9 +8,7 @@ import timber.log.Timber
 import java.io.IOException
 import java.net.URLEncoder
 import java.nio.charset.Charset
-import java.util.*
 import java.util.concurrent.TimeUnit
-import kotlin.collections.ArrayList
 
 
 private class ShitarabaBoardInfo(m: Map<String, String>) : BaseBbsBoardInfo() {

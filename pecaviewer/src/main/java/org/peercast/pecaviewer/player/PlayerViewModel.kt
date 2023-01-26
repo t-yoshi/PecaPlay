@@ -1,30 +1,30 @@
 package org.peercast.pecaviewer.player
 
 import android.app.Application
-import androidx.lifecycle.*
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.service.*
 
 
-class PlayerViewModel(private val a: Application) : AndroidViewModel(a), KoinComponent {
-    //サービスからのイベントを元に表示する
-    private val eventFlow by inject<PlayerServiceEventFlow>()
-
-    /**コントロールボタンの表示。タッチして数秒後に消える*/
-    val isControlsViewVisible = MutableStateFlow(false)
-
-    val isFullScreenMode = MutableStateFlow(false)
+class PlayerViewModel(a: Application, eventFlow: PlayerServiceEventFlow) : AndroidViewModel(a) {
+    /**Ch名、詳細を表示するツールバーを表示するか*/
+    val isToolbarVisible = MutableStateFlow(true)
 
     /**警告メッセージ。エラー、バッファ発生など。数秒後に消える。*/
-    val channelWarning: StateFlow<CharSequence> = MutableStateFlow<CharSequence>("").also { f ->
+    val channelWarning = MutableStateFlow<CharSequence>("")
+
+    val channelTitle = MutableStateFlow<CharSequence>("")
+
+    val channelComment = MutableStateFlow<CharSequence>("")
+
+    val isPlaying = MutableStateFlow(false)
+
+    init {
         viewModelScope.launch {
             var j: Job? = null
             eventFlow.collect { ev ->
@@ -54,18 +54,19 @@ class PlayerViewModel(private val a: Application) : AndroidViewModel(a), KoinCom
 
                     else -> return@collect
                 }
-                f.value = s
+                channelWarning.value = s
 
                 //5秒後に""を送出
                 if (s.isNotBlank()) {
                     j?.cancel()
                     j = launch {
                         delay(5_000)
-                        f.value = ""
+                        channelWarning.value = ""
                     }
                 }
             }
         }
 
     }
+
 }

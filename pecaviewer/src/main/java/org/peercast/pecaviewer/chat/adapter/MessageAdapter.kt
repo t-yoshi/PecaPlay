@@ -10,7 +10,6 @@ import androidx.databinding.ViewDataBinding
 import androidx.lifecycle.ViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
-import kotlinx.coroutines.flow.collect
 import org.peercast.pecaviewer.BR
 import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.chat.ChatFragment

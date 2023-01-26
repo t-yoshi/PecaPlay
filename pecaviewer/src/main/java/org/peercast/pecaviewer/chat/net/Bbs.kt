@@ -153,7 +153,7 @@ open class BbsMessage(
     final override val name: CharSequence = name.parseAsHtml()
     final override val mail: CharSequence = mail.parseAsHtml()
     final override val body: CharSequence =
-    //(body + BbsUtils.TEST_TEXT).stripHtml().toSpannable()
+        //(body + BbsUtils.TEST_TEXT).stripHtml().toSpannable()
         body.stripHtml().toSpannable()
             .applyPopupSpanForAnchors() // PopupSpanを適用し、>123のようなアンカーでポップアップ
             .applyUrlSpan() // URLSpanを適用し、リンクを動作させる
@@ -199,11 +199,11 @@ object BbsUtils {
         return this
     }
 
-    fun resCountPerHour(messages: List<IMessage>) : Int {
+    fun resCountPerHour(messages: List<IMessage>): Int {
         if (messages.isEmpty())
             return 0
         val now = System.currentTimeMillis()
-        val rangeOneHour = now - 3600_000 .. now
+        val rangeOneHour = now - 3600_000..now
         return messages.filterIsInstance<BbsMessage>().count {
             it.timeInMillis in rangeOneHour
         }

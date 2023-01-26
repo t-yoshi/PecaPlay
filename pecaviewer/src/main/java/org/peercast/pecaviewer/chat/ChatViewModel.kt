@@ -1,13 +1,14 @@
 package org.peercast.pecaviewer.chat
 
 import android.app.Application
+import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.peercast.pecaviewer.chat.net.IBoardThreadPoster
 import org.peercast.pecaviewer.chat.net.IMessage
@@ -16,7 +17,7 @@ import org.peercast.pecaviewer.util.SnackbarFactory
 
 
 class ChatViewModel(a: Application) : AndroidViewModel(a) {
-    val presenter = ChatPresenter(this)
+    val urlLoader = ChatUrlLoader(this)
 
     /**n秒後に自動的にfalse*/
     val isToolbarVisible = MutableStateFlow(true)
@@ -49,8 +50,17 @@ class ChatViewModel(a: Application) : AndroidViewModel(a) {
     init {
         viewModelScope.launch {
             isThreadListVisible.collect {
-                presenter.updateChatToolbarTitle()
+                urlLoader.updateChatToolbarTitle()
             }
+        }
+    }
+
+    private var loadJob: Job? = null
+
+    fun loadUrl(url: Uri) {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
+            urlLoader.loadUrl(url.toString())
         }
     }
 }

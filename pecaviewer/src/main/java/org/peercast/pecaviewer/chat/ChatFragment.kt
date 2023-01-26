@@ -16,7 +16,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
@@ -25,7 +24,7 @@ import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.chat.adapter.MessageAdapter
 import org.peercast.pecaviewer.chat.adapter.ThreadAdapter
 import org.peercast.pecaviewer.chat.net.BbsUtils
-import org.peercast.pecaviewer.databinding.FragmentChatBinding
+import org.peercast.pecaviewer.databinding.ChatFragmentBinding
 import org.peercast.pecaviewer.player.PlayerViewModel
 import timber.log.Timber
 import kotlin.math.max
@@ -39,15 +38,11 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener {
     private val appViewModel by sharedViewModel<PecaViewerViewModel>()
     private lateinit var chatPrefs: SharedPreferences
 
-    private lateinit var binding: FragmentChatBinding
+    private lateinit var binding: ChatFragmentBinding
     private val threadAdapter = ThreadAdapter(this)
     private val messageAdapter = MessageAdapter(this)
     private var loadingJob: Job? = null
     private var autoReloadSec = DEFAULT_AUTO_RELOAD_SEC
-
-    /**読込中である*/
-    private val isLoading = MutableStateFlow(false)
-
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,7 +58,7 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener {
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View {
-        return FragmentChatBinding.inflate(inflater, container, false).also {
+        return ChatFragmentBinding.inflate(inflater, container, false).also {
             binding = it
             it.viewModel = chatViewModel
             it.lifecycleOwner = viewLifecycleOwner
@@ -168,13 +163,17 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener {
 
                 launch {
                     combine(
-                        isLoading, chatViewModel.isThreadListVisible
-                    ) { b, _ ->
-                        with(binding.vChatToolbar.menu) {
-                            findItem(R.id.menu_reload).isVisible = !b
-                            findItem(R.id.menu_abort).isVisible = b
+                        chatViewModel.isThreadListLoading,
+                        chatViewModel.isMessageListLoading,
+                        chatViewModel.isThreadListVisible
+                    ) { b1, b2, _ ->
+                        b1 || b2
+                    }.collect {
+                        binding.vChatToolbar.menu.run {
+                            findItem(R.id.menu_reload).isVisible = !it
+                            findItem(R.id.menu_abort).isVisible = it
                         }
-                    }.collect()
+                    }
                 }
 
                 launch {
@@ -263,19 +262,14 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener {
         loadingJob?.cancel()
     }
 
-    private fun startLoading(action: suspend ChatPresenter.() -> Unit) {
+    private fun startLoading(action: suspend ChatUrlLoader.() -> Unit) {
         if (loadingJob?.run { isActive && !isCancelled } == true) {
             Timber.d("loadingJob [$loadingJob] is still active.")
             return
         }
 
         loadingJob = lifecycleScope.launchWhenResumed {
-            isLoading.value = true
-            try {
-                chatViewModel.presenter.action()
-            } finally {
-                isLoading.value = false
-            }
+            chatViewModel.urlLoader.action()
         }
     }
 

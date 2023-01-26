@@ -11,99 +11,220 @@ import android.graphics.drawable.Icon
 import android.os.Build
 import android.os.Bundle
 import android.util.Rational
+import android.view.View
 import androidx.annotation.ChecksSdkIntAtLeast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
-import androidx.fragment.app.commit
+import androidx.core.view.*
+import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.google.android.exoplayer2.video.VideoSize
+import com.sothree.slidinguppanel.SlidingUpPanelLayout
 import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
-import org.koin.core.parameter.parametersOf
 import org.peercast.pecaplay.core.app.PecaViewerIntent
 import org.peercast.pecaplay.core.app.Yp4gChannel
 import org.peercast.pecaplay.core.app.backToPecaPlay
 import org.peercast.pecaviewer.chat.ChatViewModel
+import org.peercast.pecaviewer.chat.PostMessageDialogFragment
+import org.peercast.pecaviewer.databinding.PecaViewerActivityBinding
 import org.peercast.pecaviewer.player.PlayerViewModel
 import org.peercast.pecaviewer.service.PlayerService
 import org.peercast.pecaviewer.service.PlayerServiceEventFlow
-import org.peercast.pecaviewer.service.PlayerWhenReadyChangedEvent
 import timber.log.Timber
 
 class PecaViewerActivity : AppCompatActivity() {
 
+    private val viewerViewModel by viewModel<PecaViewerViewModel>()
     private val playerViewModel by viewModel<PlayerViewModel>()
     private val chatViewModel by viewModel<ChatViewModel>()
-    private val viewerViewModel by viewModel<PecaViewerViewModel> {
-        parametersOf(
-            playerViewModel,
-            chatViewModel
-        )
-    }
     private val viewerPrefs by inject<PecaViewerPreference>()
+    private lateinit var binding: PecaViewerActivityBinding
     private val service: PlayerService? get() = viewerViewModel.playerService.value
     private val eventFlow by inject<PlayerServiceEventFlow>()
+    private val stateKeyPlaying get() = "STATE_PLAYING#${intent.data}"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        initViewModels()
 
         requestedOrientation = when (viewerPrefs.isFullScreenMode) {
             true -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
             else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         }
 
-        viewerViewModel.toString() // instantiate
+        binding = DataBindingUtil.setContentView(this, R.layout.peca_viewer_activity)
+        binding.appViewModel = viewerViewModel
+        binding.lifecycleOwner = this
 
-        if (savedInstanceState == null) {
-            replaceMainFragment()
+        binding.vPostDialogButton.setOnClickListener {
+            //フルスクリーン時には一時的にコントロールボタンを
+            //表示させないとOSのナビゲーションバーが残る
+            if (viewerViewModel.isFullScreenMode.value)
+                viewerViewModel.isPlayerControlsVisible.value = true
+            PostMessageDialogFragment.show(supportFragmentManager)
         }
 
-        playerViewModel.isFullScreenMode.value =
+        viewerViewModel.isFullScreenMode.value =
             requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
 
-        lifecycleScope.launch {
-            playerViewModel.isFullScreenMode.collect {
-                requestedOrientation = when (it) {
-                    true -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-                    else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        lifecycleScope.run {
+            launch {
+                viewerViewModel.isFullScreenMode.collect {
+                    requestedOrientation = when (it) {
+                        true -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                        else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                    }
                 }
+            }
+
+            launch {
+                viewerViewModel.isFullScreenMode.collect {
+                    val controller = WindowCompat.getInsetsController(window, window.decorView)
+                    if (it) {
+                        controller?.hide(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
+                        controller?.systemBarsBehavior =
+                            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                    } else {
+                        controller?.show(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
+                    }
+                }
+            }
+
+            launch {
+                chatViewModel.snackbarFactory.consumeEach {
+                    it.show(
+                        findViewById(android.R.id.content),
+                        findViewById(R.id.vPostDialogButton)
+                    )
+                }
+            }
+
+            launch {
+                isPortraitMode.collect {
+                    val ap = 0.01f * if (it) {
+                        resources.getInteger(R.integer.sliding_up_panel_anchor_point_port)
+                    } else {
+                        resources.getInteger(R.integer.sliding_up_panel_anchor_point_land)
+                    }
+                    binding.vSlidingUpPanel.anchorPoint = ap
+                    binding.vSlidingUpPanel
+                    if (it) {
+                        initPanelState(viewerPrefs.initPanelState)
+                    } else {
+                        initPanelState(SlidingUpPanelLayout.PanelState.EXPANDED)
+                    }
+                }
+            }
+
+        }
+
+        isPortraitMode.value = resources.configuration.isPortraitMode
+        binding.vSlidingUpPanel.addPanelSlideListener(panelSlideListener)
+
+        if (savedInstanceState?.getBoolean(stateKeyPlaying) != false)
+            startPlay()
+    }
+
+    private fun initViewModels() = lifecycleScope.run {
+        //遅延評価なのでインスタンス化しておく
+        "$viewerViewModel $playerViewModel $chatViewModel"
+
+        launch {
+            combine(
+                viewerViewModel.isFullScreenMode,
+                viewerViewModel.isPlayerControlsVisible,
+                viewerViewModel.slidingPanelState,
+            ) { full, control, state ->
+                (!full || control || state == 1)
+            }.collect {
+                playerViewModel.isToolbarVisible.value = it
             }
         }
 
-        lifecycleScope.launch {
-            playerViewModel.isFullScreenMode.collect {
-                val controller = WindowCompat.getInsetsController(window, window.decorView)
-                if (it) {
-                    controller?.hide(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
-                    controller?.systemBarsBehavior =
-                        WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                } else {
-                    controller?.show(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
-                }
+        launch {
+            chatViewModel.selectedThreadPoster.collect {
+                viewerViewModel.isPostDialogButtonEnabled.value = it != null
             }
         }
 
-        lifecycleScope.launch {
-            chatViewModel.snackbarFactory.consumeEach {
-                it.show(
-                    findViewById(android.R.id.content),
-                    findViewById(R.id.vPostDialogButton)
+        launch {
+            combine(
+                viewerViewModel.playerService.filterNotNull(),
+                eventFlow,
+            ) { s, _ ->
+                if (API26)
+                    setPictureInPictureParams(createPipParams())
+                playerViewModel.isPlaying.value = s.isPlaying
+            }.collect()
+        }
+    }
+
+    private fun initPanelState(state: SlidingUpPanelLayout.PanelState) {
+        binding.vSlidingUpPanel.panelState = state
+        binding.vSlidingUpPanel.doOnLayout {
+            panelSlideListener.onPanelStateChanged(
+                binding.vSlidingUpPanel, state, state
+            )
+        }
+    }
+
+    private val isPortraitMode = MutableStateFlow(false)
+
+    private val panelSlideListener = object : SlidingUpPanelLayout.PanelSlideListener {
+        override fun onPanelSlide(panel: View, __slideOffset: Float) {
+            val b = binding.vPlayerFragmentContainer.bottom
+            binding.vPlayerFragmentContainer.updatePadding(top = panel.height - b)
+            //val toolbarHeight = resources.getDimension(R.dimen.player_toolbar_height).toInt()
+            val toolbarHeight = findViewById<View>(R.id.vPlayerToolbar)?.height ?: 0
+            binding.vChatFragmentContainer.updatePadding(bottom = b - toolbarHeight)
+        }
+
+        override fun onPanelStateChanged(
+            panel: View,
+            previousState: SlidingUpPanelLayout.PanelState,
+            newState: SlidingUpPanelLayout.PanelState,
+        ) {
+            when (newState) {
+                //パネル位置・中間
+                SlidingUpPanelLayout.PanelState.ANCHORED -> {
+                    onPanelSlide(panel, 0f)
+                    chatViewModel.isToolbarVisible.value = true
+                }
+                //プレーヤーのみ表示
+                SlidingUpPanelLayout.PanelState.EXPANDED -> {
+                    binding.vPlayerFragmentContainer.updatePadding(top = 0)
+                }
+                //チャットのみ表示
+                SlidingUpPanelLayout.PanelState.COLLAPSED -> {
+                    binding.vChatFragmentContainer.updatePadding(bottom = 0)
+                }
+                else -> {
+                }
+            }
+
+            if (newState in setOf(
+                    SlidingUpPanelLayout.PanelState.EXPANDED,
+                    SlidingUpPanelLayout.PanelState.COLLAPSED,
+                    SlidingUpPanelLayout.PanelState.ANCHORED
                 )
-            }
-        }
-
-        if (isApi26AtLeast) {
-            lifecycleScope.launch {
-                eventFlow.filterIsInstance<PlayerWhenReadyChangedEvent>().collect { ev ->
-                    if (isInPictureInPictureMode)
-                        setPictureInPictureParams(createPipParams())
+            ) {
+                if (viewerViewModel.slidingPanelState.value != newState.ordinal) {
+                    viewerViewModel.slidingPanelState.value = newState.ordinal
+                }
+                if (isPortraitMode.value && newState != previousState &&
+                    (!API26 || !isInPictureInPictureMode)
+                ) {
+                    viewerPrefs.initPanelState = newState
                 }
             }
         }
@@ -113,7 +234,20 @@ class PecaViewerActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
 
-        replaceMainFragment()
+        startPlay()
+    }
+
+    private fun startPlay() {
+        val streamUrl = checkNotNull(intent.data)
+        val channel: Yp4gChannel = checkNotNull(
+            intent.getParcelableExtra(PecaViewerIntent.EX_YP4G_CHANNEL)
+        )
+
+        viewerViewModel.startPlay(streamUrl, channel)
+        chatViewModel.loadUrl(channel.url)
+
+        playerViewModel.channelTitle.value = channel.name
+        playerViewModel.channelComment.value = channel.run { "$genre $description $comment".trim() }
     }
 
     override fun onStart() {
@@ -121,31 +255,13 @@ class PecaViewerActivity : AppCompatActivity() {
         viewerViewModel.bindPlayerService()
     }
 
-    private fun replaceMainFragment() {
-        checkNotNull(intent.data)
-        checkNotNull(
-            intent.getParcelableExtra(PecaViewerIntent.EX_YP4G_CHANNEL) as? Yp4gChannel
-        )
-
-        val f = when (isApi26AtLeast && isInPictureInPictureMode) {
-            true -> PipPlayerFragment()
-            else -> PecaViewerFragment()
-        }
-        f.arguments = Bundle(1).also {
-            it.putParcelable(ARG_INTENT, intent)
-        }
-
-        supportFragmentManager.commit {
-            replace(android.R.id.content, f)
-        }
-    }
-
     @TargetApi(Build.VERSION_CODES.O)
     private fun createPipParams(): PictureInPictureParams {
         val b = PictureInPictureParams.Builder()
         val size = service?.videoSize ?: VideoSize.UNKNOWN
-        if (size != VideoSize.UNKNOWN) {
-            b.setAspectRatio(Rational(size.width, size.height))
+        val ratio = Rational(size.width, size.height)
+        if (size != VideoSize.UNKNOWN && ratio.toFloat() in 0.5f..2f) {
+            b.setAspectRatio(ratio)
         }
         val action = if (service?.isPlaying != true) {
             RemoteAction(
@@ -167,7 +283,7 @@ class PecaViewerActivity : AppCompatActivity() {
 
     /**Android8以降でプレーヤーをPIP化する。*/
     private fun enterPipMode(): Boolean {
-        if (isApi26AtLeast &&
+        if (API26 &&
             packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE) &&
             (service?.isPlaying == true || service?.isBuffering == true)
         ) {
@@ -181,7 +297,7 @@ class PecaViewerActivity : AppCompatActivity() {
         //ホームボタンが押された。
         Timber.d("onUserLeaveHint() isFinishing=$isFinishing")
         if (!isFinishing && viewerPrefs.isBackgroundPlaying &&
-            isApi26AtLeast && !isInPictureInPictureMode
+            API26 && !isInPictureInPictureMode
         ) {
             enterPipMode()
         }
@@ -206,15 +322,10 @@ class PecaViewerActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
 
-        val isInPipMode = isApi26AtLeast && isInPictureInPictureMode
+        val isInPipMode = API26 && isInPictureInPictureMode
         if (!(viewerPrefs.isBackgroundPlaying || isInPipMode)) {
             service?.stop()
         }
-    }
-
-    override fun onConfigurationChanged(newConfig: Configuration) {
-        super.onConfigurationChanged(newConfig)
-        replaceMainFragment()
     }
 
     //PIPモードの終了イベントを得る
@@ -228,29 +339,43 @@ class PecaViewerActivity : AppCompatActivity() {
         }
     }
 
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        isPortraitMode.value = newConfig.isPortraitMode
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
     override fun onPictureInPictureModeChanged(
         isInPictureInPictureMode: Boolean,
-        newConfig: Configuration?,
+        newConfig: Configuration,
     ) {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        viewerViewModel.isPipMode.value = isInPictureInPictureMode
+
         //PIPの閉じるボタンのイベントをなんとか得る
         if (isInPictureInPictureMode) {
             lifecycle.addObserver(pipWindowCloseObserver)
+            binding.vSlidingUpPanel.panelState = SlidingUpPanelLayout.PanelState.EXPANDED
         } else {
             lifecycle.removeObserver(pipWindowCloseObserver)
         }
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBoolean(stateKeyPlaying, viewerViewModel.playerService.value?.isPlaying ?: true)
+    }
+
     override fun onDestroy() {
-        super.onDestroy()
         viewerViewModel.unbindPlayerService()
+        super.onDestroy()
     }
 
 
     companion object {
-        const val ARG_INTENT = "intent"
+        private val Configuration.isPortraitMode get() = orientation == Configuration.ORIENTATION_PORTRAIT
 
         @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.O)
-        private val isApi26AtLeast = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+        private val API26 = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
     }
 }

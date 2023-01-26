@@ -5,8 +5,6 @@ import androidx.annotation.ColorInt
 import com.google.android.material.snackbar.BaseTransientBottomBar
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 
 
 open class SnackbarFactory(

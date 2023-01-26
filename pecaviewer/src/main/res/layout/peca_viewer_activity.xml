@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="RtlHardcoded">
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <com.sothree.slidinguppanel.SlidingUpPanelLayout
+            android:id="@+id/vSlidingUpPanel"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/grey_900"
+            android:gravity="top"
+            app:umanoAnchorPoint="1"
+            app:umanoFadeColor="@android:color/transparent"
+            app:umanoInitialState="collapsed"
+            app:umanoPanelHeight="?android:attr/actionBarSize"
+            app:umanoShadowHeight="3dp">
+
+            <androidx.fragment.app.FragmentContainerView
+                android:id="@+id/vChatFragmentContainer"
+                android:name="org.peercast.pecaviewer.chat.ChatFragment"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"/>
+
+            <androidx.fragment.app.FragmentContainerView
+                android:id="@+id/vPlayerFragmentContainer"
+                android:name="org.peercast.pecaviewer.player.PlayerFragment"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+            </androidx.fragment.app.FragmentContainerView>
+
+        </com.sothree.slidinguppanel.SlidingUpPanelLayout>
+
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/vPostDialogButton"
+            style="@style/PostDialogButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|right"
+            android:contentDescription="@null"
+            android:visibility="@{appViewModel.isPostDialogButtonVisible ? View.VISIBLE : View.INVISIBLE}"
+            android:enabled="@{appViewModel.isPostDialogButtonEnabled}"
+            android:src="@drawable/ic_mode_edit_black_24dp"
+            app:fabOpaqueMode="@{appViewModel.isPostDialogButtonOpaque}" />
+
+    </FrameLayout>
+
+    <data>
+
+        <import type="android.view.View" />
+
+        <variable
+            name="appViewModel"
+            type="org.peercast.pecaviewer.PecaViewerViewModel" />
+    </data>
+</layout>

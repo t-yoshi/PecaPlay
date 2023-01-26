@@ -7,7 +7,6 @@ import androidx.core.content.edit
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
-import kotlinx.coroutines.channels.produce
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.peercast.pecaplay.core.io.localizedSystemMessage
@@ -20,7 +19,7 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 import kotlin.properties.Delegates
 
-class ChatPresenter(private val chatViewModel: ChatViewModel) {
+class ChatUrlLoader(private val chatViewModel: ChatViewModel) {
     private val a = chatViewModel.getApplication<Application>()
     private val prefs = BbsThreadPreference(a)
     private var boardConn by Delegates.observable<IBoardConnection?>(null) { _, _, _ ->

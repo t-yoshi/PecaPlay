@@ -41,7 +41,7 @@ class PostMessageDialogFragment : BottomSheetDialogFragment(),
         val sendClickListener = View.OnClickListener {
             binding.vEdit.isEnabled = false
             binding.vSend.isEnabled = false
-            chatViewModel.presenter.postMessage(
+            chatViewModel.urlLoader.postMessage(
                 poster,
                 PostMessage("", "sage", binding.vEdit.text.toString())
             )

@@ -27,4 +27,5 @@ data class PlayerLoadErrorEvent(val url: Uri, val e: IOException) : PlayerServic
 data class PlayerErrorEvent(val errorType: String, val e: Exception) : PlayerServiceEvent()
 data class PlayerWhenReadyChangedEvent(
     val playWhenReady: Boolean,
-    val reason: Int) : PlayerServiceEvent()
+    val reason: Int
+) : PlayerServiceEvent()

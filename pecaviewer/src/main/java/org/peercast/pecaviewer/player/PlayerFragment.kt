@@ -5,10 +5,10 @@ import android.os.Build
 import android.os.Bundle
 import android.view.*
 import androidx.appcompat.widget.Toolbar
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import com.google.android.exoplayer2.ui.PlayerView
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
@@ -16,7 +16,7 @@ import org.peercast.pecaviewer.PecaViewerActivity
 import org.peercast.pecaviewer.PecaViewerPreference
 import org.peercast.pecaviewer.PecaViewerViewModel
 import org.peercast.pecaviewer.R
-import org.peercast.pecaviewer.service.bindPlayerView
+import org.peercast.pecaviewer.databinding.PlayerFragmentBinding
 import org.peercast.pecaviewer.util.takeScreenShot
 import timber.log.Timber
 
@@ -26,16 +26,21 @@ class PlayerFragment : Fragment(), Toolbar.OnMenuItemClickListener {
     private val viewerViewModel by sharedViewModel<PecaViewerViewModel>()
     private val playerViewModel by sharedViewModel<PlayerViewModel>()
     private val viewerPrefs by inject<PecaViewerPreference>()
+    private lateinit var binding: PlayerFragmentBinding
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View {
-        return inflater.inflate(R.layout.fragment_player, container, false)
+        return PlayerFragmentBinding.inflate(layoutInflater, container, false).let {
+            it.playerViewModel = playerViewModel
+            it.lifecycleOwner = viewLifecycleOwner
+            binding = it
+            it.root
+        }
     }
 
-    private val vPlayer: PlayerView get() = requireView() as PlayerView
     private lateinit var vPlayerControlBar: Toolbar
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -48,17 +53,29 @@ class PlayerFragment : Fragment(), Toolbar.OnMenuItemClickListener {
             it.menu.findItem(R.id.menu_background).isChecked = viewerPrefs.isBackgroundPlaying
         }
 
-        viewLifecycleOwner.lifecycleScope.launch {
-            playerViewModel.isFullScreenMode.collect {
-                vPlayerControlBar.menu.run {
-                    findItem(R.id.menu_enter_fullscreen).isVisible = !it
-                    findItem(R.id.menu_exit_fullscreen).isVisible = it
+        viewLifecycleOwner.lifecycleScope.run {
+            launch {
+                viewerViewModel.isFullScreenMode.collect {
+                    vPlayerControlBar.menu.run {
+                        findItem(R.id.menu_enter_fullscreen).isVisible = !it
+                        findItem(R.id.menu_exit_fullscreen).isVisible = it
+                    }
+                }
+            }
+            launch {
+                viewerViewModel.playerService.filterNotNull().collect {
+                    it.attachView(binding.vPlayer)
+                }
+            }
+            launch {
+                playerViewModel.isToolbarVisible.collect {
+                    binding.vPlayerToolbar.requestLayout()
                 }
             }
         }
 
-        vPlayer.setControllerVisibilityListener {
-            playerViewModel.isControlsViewVisible.value = it == View.VISIBLE
+        binding.vPlayer.setControllerVisibilityListener {
+            viewerViewModel.isPlayerControlsVisible.value = it == View.VISIBLE
         }
 
         vPlayerControlBar.setNavigationOnClickListener {
@@ -66,12 +83,15 @@ class PlayerFragment : Fragment(), Toolbar.OnMenuItemClickListener {
         }
 
         view.setOnTouchListener(DoubleTapDetector(view, ::onFullScreenClicked))
+    }
 
-        viewerViewModel.playerService.bindPlayerView(vPlayer)
+    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean) {
+        binding.vPlayerToolbar.isVisible = !isInPictureInPictureMode
+        binding.vPlayer.useController = !isInPictureInPictureMode
     }
 
     private fun onFullScreenClicked(v__: View) {
-        playerViewModel.isFullScreenMode.let {
+        viewerViewModel.isFullScreenMode.let {
             it.value = it.value != true
             viewerPrefs.isFullScreenMode = it.value == true
         }
@@ -97,11 +117,11 @@ class PlayerFragment : Fragment(), Toolbar.OnMenuItemClickListener {
     override fun onMenuItemClick(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.menu_enter_fullscreen -> {
-                playerViewModel.isFullScreenMode.value = true
+                viewerViewModel.isFullScreenMode.value = true
                 viewerPrefs.isFullScreenMode = true
             }
             R.id.menu_exit_fullscreen -> {
-                playerViewModel.isFullScreenMode.value = false
+                viewerViewModel.isFullScreenMode.value = false
                 viewerPrefs.isFullScreenMode = false
             }
 
@@ -115,18 +135,18 @@ class PlayerFragment : Fragment(), Toolbar.OnMenuItemClickListener {
     }
 
     override fun onPause() {
-        super.onPause()
-
         val sv = viewerViewModel.playerService.value ?: return
-
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && sv.isPlaying) {
-            lifecycleScope.launch {
+            viewLifecycleOwner.lifecycleScope.launch {
                 kotlin.runCatching {
-                    takeScreenShot(vPlayer.videoSurfaceView as SurfaceView, 256)
+                    takeScreenShot(binding.vPlayer.videoSurfaceView as SurfaceView, 256)
                 }.onSuccess {
                     sv.setThumbnail(it)
                 }.onFailure(Timber::w)
             }
         }
+
+        super.onPause()
     }
+
 }

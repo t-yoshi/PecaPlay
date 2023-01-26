@@ -6,7 +6,6 @@ import timber.log.Timber
 import java.io.IOException
 import java.net.URLEncoder
 import java.nio.charset.Charset
-import java.util.*
 
 
 private class ZeroChannelBoardInfo(
