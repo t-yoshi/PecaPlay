@@ -20,7 +20,7 @@ fun launchPecaViewer(src: Activity, streamUri: Uri, ch: Yp4gChannel) {
     //it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
     src.startActivity(it)
-    src.overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
+    //src.overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left)
 }
 
 fun launchPecaPlay(src: Activity) {
@@ -59,9 +59,14 @@ fun backToPecaPlay(src: Activity, finish: Boolean) {
     }
 
     if (finish) {
-        src.finishAffinity()
+        src.finishAndRemoveTask()
     }
 
-    src.overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
+    if (isLaunchPlay) {
+        src.overridePendingTransition(0, 0)
+    } else {
+        src.overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
+        //src.overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
+    }
 }
 
