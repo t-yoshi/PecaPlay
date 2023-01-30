@@ -11,6 +11,7 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import org.peercast.pecaviewer.PecaViewerActivity
 import org.peercast.pecaviewer.PecaViewerPreference
@@ -23,8 +24,8 @@ import timber.log.Timber
 @Suppress("unused")
 class PlayerFragment : Fragment(), Toolbar.OnMenuItemClickListener {
 
-    private val viewerViewModel by sharedViewModel<PecaViewerViewModel>()
-    private val playerViewModel by sharedViewModel<PlayerViewModel>()
+    private val viewerViewModel by activityViewModel<PecaViewerViewModel>()
+    private val playerViewModel by activityViewModel<PlayerViewModel>()
     private val viewerPrefs by inject<PecaViewerPreference>()
     private lateinit var binding: PlayerFragmentBinding
 
@@ -82,7 +83,7 @@ class PlayerFragment : Fragment(), Toolbar.OnMenuItemClickListener {
             (requireActivity() as PecaViewerActivity).quitOrEnterPipMode()
         }
 
-        view.setOnTouchListener(DoubleTapDetector(view, ::onFullScreenClicked))
+        binding.vPlayer.setOnTouchListener(DoubleTapDetector())
     }
 
     override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean) {
@@ -90,26 +91,19 @@ class PlayerFragment : Fragment(), Toolbar.OnMenuItemClickListener {
         binding.vPlayer.useController = !isInPictureInPictureMode
     }
 
-    private fun onFullScreenClicked(v__: View) {
-        viewerViewModel.isFullScreenMode.let {
-            it.value = it.value != true
-            viewerPrefs.isFullScreenMode = it.value == true
-        }
-    }
+    private inner class DoubleTapDetector : View.OnTouchListener, GestureDetector.SimpleOnGestureListener() {
+        private val detector = GestureDetector(requireContext(), this)
 
-    private class DoubleTapDetector(
-        private val view: View,
-        private val onDoubleTap: (View) -> Unit,
-    ) : View.OnTouchListener, GestureDetector.SimpleOnGestureListener() {
-        private val detector = GestureDetector(view.context, this)
-
-        override fun onDoubleTap(e: MotionEvent?): Boolean {
-            onDoubleTap(view)
+        override fun onDoubleTap(e: MotionEvent): Boolean {
+            viewerViewModel.isFullScreenMode.let {
+                it.value = it.value != true
+                viewerPrefs.isFullScreenMode = it.value == true
+            }
             return true
         }
 
         @SuppressLint("ClickableViewAccessibility")
-        override fun onTouch(v: View?, event: MotionEvent?): Boolean {
+        override fun onTouch(v: View?, event: MotionEvent): Boolean {
             return detector.onTouchEvent(event)
         }
     }

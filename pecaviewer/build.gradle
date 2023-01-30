@@ -47,12 +47,12 @@ dependencies {
 
     implementation project(':core')
 
-    implementation "androidx.appcompat:appcompat:$androidx_version"
-    implementation "androidx.core:core-ktx:1.7.0"
+    implementation "androidx.appcompat:appcompat:$appcompat_version"
+    implementation "androidx.core:core-ktx:$core_ktx_version"
     implementation "androidx.preference:preference-ktx:1.2.0"
     implementation "androidx.recyclerview:recyclerview:1.2.1"
 
-    implementation "com.google.android.material:material:1.5.0"
+    implementation "com.google.android.material:material:$material_version"
     implementation 'com.android.support.constraint:constraint-layout:2.0.4'
     implementation 'com.google.android.flexbox:flexbox:3.0.0'
 
@@ -65,7 +65,7 @@ dependencies {
     kapt "com.github.bumptech.glide:compiler:$glide_version"
     implementation "com.github.bumptech.glide:okhttp3-integration:$glide_version"
 
-    implementation "io.insert-koin:koin-android-ext:$koin_version"
+    implementation "io.insert-koin:koin-android:$koin_version"
 
     implementation "com.squareup.okhttp3:okhttp:$okhttp_version"
     implementation "com.squareup.okhttp3:logging-interceptor:$okhttp_version"
@@ -73,7 +73,7 @@ dependencies {
 
     implementation 'org.unbescape:unbescape:1.1.6.RELEASE'
 
-    def exoplayer_version = "2.16.1"
+    def exoplayer_version = "2.18.2"
     implementation "com.google.android.exoplayer:exoplayer-core:$exoplayer_version"
     implementation "com.google.android.exoplayer:exoplayer-ui:$exoplayer_version"
     implementation "com.google.android.exoplayer:extension-okhttp:$exoplayer_version"

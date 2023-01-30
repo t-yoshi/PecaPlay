@@ -281,6 +281,7 @@ class PecaPlayActivity : AppCompatActivity() {
         drawerToggle?.onConfigurationChanged(newConfig)
     }
 
+    @Deprecated("Deprecated in Java")
     override fun onBackPressed() {
         if (binding.vNavigation.onBackPressed())
             return
@@ -298,7 +299,7 @@ class PecaPlayActivity : AppCompatActivity() {
     //ソート順のサブメニュー
     private inner class DisplayOrderMenuProvider : ActionProvider(this) {
         override fun hasSubMenu(): Boolean = true
-        override fun onCreateActionView(): View? = null
+        override fun onCreateActionView() = View(context)
 
         override fun onPrepareSubMenu(menu: SubMenu) {
             val ordinal = appPrefs.displayOrder.ordinal

@@ -95,8 +95,9 @@ class PecaNaviView : NavigationView {
         if (it is NavigationHomeItem)
             return
 
-        mi.actionView = inflater.inflate(R.layout.navigation_action_view_checkbox, this, false)
-        mi.actionView.findViewById<CheckBox>(R.id.vCheckbox).let { cb ->
+        val view = inflater.inflate(R.layout.navigation_action_view_checkbox, this, false)
+        mi.actionView = view
+        view.findViewById<CheckBox>(R.id.vCheckbox).let { cb ->
             cb.isChecked = it.key !in prefs
             cb.setOnCheckedChangeListener { _, isChecked ->
                 if (isChecked) {

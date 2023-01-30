@@ -40,11 +40,11 @@ dependencies {
     api "org.jetbrains.kotlinx:kotlinx-serialization-core:$kotlinx_serialization_version"
     api "org.jetbrains.kotlinx:kotlinx-serialization-json:$kotlinx_serialization_version"
 
-    implementation 'androidx.core:core-ktx:1.7.0'
-    implementation 'androidx.appcompat:appcompat:1.4.1'
-    implementation 'com.google.android.material:material:1.5.0'
+    implementation "androidx.core:core-ktx:$core_ktx_version"
+    implementation "androidx.appcompat:appcompat:$appcompat_version"
+    implementation "com.google.android.material:material:$material_version"
 
-    api "io.insert-koin:koin-android-ext:$koin_version"
+    api "io.insert-koin:koin-android:$koin_version"
 
     api 'com.squareup.retrofit2:retrofit:2.9.0'
 
