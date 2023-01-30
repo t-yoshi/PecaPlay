@@ -17,7 +17,7 @@
             app:umanoAnchorPoint="1"
             app:umanoFadeColor="@android:color/transparent"
             app:umanoInitialState="collapsed"
-            app:umanoPanelHeight="?android:attr/actionBarSize"
+            app:umanoPanelHeight="@dimen/player_toolbar_height"
             app:umanoShadowHeight="3dp">
 
             <androidx.fragment.app.FragmentContainerView
