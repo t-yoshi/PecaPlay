@@ -11,13 +11,18 @@ import androidx.lifecycle.lifecycleScope
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.analytics.AnalyticsListener
 import com.google.android.exoplayer2.audio.AudioAttributes
+import com.google.android.exoplayer2.decoder.DecoderCounters
 import com.google.android.exoplayer2.decoder.DecoderReuseEvaluation
 import com.google.android.exoplayer2.ext.okhttp.OkHttpDataSource
+import com.google.android.exoplayer2.mediacodec.MediaCodecSelector
+import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
 import com.google.android.exoplayer2.source.LoadEventInfo
 import com.google.android.exoplayer2.source.MediaLoadData
-import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.ui.PlayerView
+import com.google.android.exoplayer2.upstream.DefaultLoadErrorHandlingPolicy
 import com.google.android.exoplayer2.upstream.HttpDataSource
+import com.google.android.exoplayer2.upstream.LoadErrorHandlingPolicy
+import com.google.android.exoplayer2.util.EventLogger
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -46,6 +51,7 @@ class PlayerService : LifecycleService() {
     private val square by inject<Square>()
     private val appPrefs by inject<PecaViewerPreference>()
     private val eventFlow by inject<PlayerServiceEventFlow>()
+
     var playingIntent = Intent()
         private set
 
@@ -70,12 +76,20 @@ class PlayerService : LifecycleService() {
         player = ExoPlayer.Builder(this)
             .setAudioAttributes(AA_MEDIA_MOVIE, true)
             .setWakeMode(C.WAKE_MODE_NETWORK)
-            //.setLoadControl(LOAD_CONTROL)
             .setUseLazyPreparation(true)
-            .setRenderersFactory(DefaultRenderersFactory(this).setEnableDecoderFallback(true))
+            .setLoadControl(loadControl)
+            .setRenderersFactory(DefaultRenderersFactory(this).also {
+                it.setEnableDecoderFallback(true)
+                it.setMediaCodecSelector(codecSelector)
+            })
             .build()
-        player.addAnalyticsListener(analyticsListener)
-        player.repeatMode = Player.REPEAT_MODE_ONE
+
+        player.run {
+            addAnalyticsListener(analyticsListener)
+            addAnalyticsListener(retryHandler)
+            addAnalyticsListener(EventLogger())
+            repeatMode = Player.REPEAT_MODE_ALL
+        }
 
         notificationHelper = NotificationHelper(this)
 
@@ -93,6 +107,17 @@ class PlayerService : LifecycleService() {
         })
     }
 
+    private val codecSelector =
+        MediaCodecSelector { mimeType, requiresSecureDecoder, requiresTunnelingDecoder ->
+            val info = MediaCodecSelector.DEFAULT.getDecoderInfos(
+                mimeType,
+                requiresSecureDecoder,
+                requiresTunnelingDecoder
+            )
+            Timber.d("codecSelector ($mimeType, $requiresSecureDecoder, $requiresTunnelingDecoder): " + info.joinToString { it.name })
+            return@MediaCodecSelector info
+        }
+
     private fun PlayerServiceEvent.emit() {
         lifecycleScope.launch {
             eventFlow.emit(this@emit)
@@ -101,7 +126,6 @@ class PlayerService : LifecycleService() {
 
     private val analyticsListener = object : AnalyticsListener {
         private var jBuf: Job? = null
-        var nMaxReconnect = 0
 
         override fun onPlayWhenReadyChanged(
             eventTime: AnalyticsListener.EventTime,
@@ -116,26 +140,10 @@ class PlayerService : LifecycleService() {
                 Player.STATE_BUFFERING -> {
                     jBuf = lifecycleScope.launch {
                         while (isActive) {
-                            for (i in 0..2) {
-                                eventFlow.emit(PlayerBufferingEvent(player.bufferedPercentage))
-                                delay(5_000)
-                            }
-                            if (nMaxReconnect-- > 0) {
-                                Timber.i("try to reconnect.")
-                                lifecycleScope.launch {
-                                    //バッファー状態でフリーズすることを防ぐ
-                                    player.stop()
-                                    delay(500)
-                                    player.prepare()
-                                }
-                                break
-                            }
+                            eventFlow.emit(PlayerBufferingEvent(player.bufferedPercentage))
+                            delay(5_000)
                         }
                     }
-                }
-                Player.STATE_READY -> {
-                    jBuf?.cancel()
-                    nMaxReconnect = MAX_RECONNECT
                 }
                 else -> {
                     jBuf?.cancel()
@@ -151,6 +159,7 @@ class PlayerService : LifecycleService() {
                 else -> {
                 }
             }
+            notificationHelper.isPlaying = isPlaying
             //Timber.d("state -> $state")
         }
 
@@ -168,29 +177,7 @@ class PlayerService : LifecycleService() {
             eventTime: AnalyticsListener.EventTime,
             error: PlaybackException
         ) {
-            if (error is ExoPlaybackException && error.type == ExoPlaybackException.TYPE_SOURCE) {
-                val se = error.sourceException
-                if (se is HttpDataSource.InvalidResponseCodeException && se.responseCode == 404) {
-                    Timber.i("404: stop reconnecting.")
-                    nMaxReconnect = 0
-                }
-            }
-
             sendPlayerErrorEvent("PlayerError", error)
-        }
-
-        override fun onAudioCodecError(
-            eventTime: AnalyticsListener.EventTime,
-            audioCodecError: Exception,
-        ) {
-            sendPlayerErrorEvent("AudioCodecError", audioCodecError)
-        }
-
-        override fun onAudioSinkError(
-            eventTime: AnalyticsListener.EventTime,
-            audioSinkError: Exception,
-        ) {
-            sendPlayerErrorEvent("AudioSinkError", audioSinkError)
         }
 
         override fun onVideoCodecError(
@@ -199,7 +186,6 @@ class PlayerService : LifecycleService() {
         ) {
             sendPlayerErrorEvent("VideoCodecError", videoCodecError)
         }
-
 
         override fun onEvents(player: Player, events: AnalyticsListener.Events) {
 //            val s = (0 until events.size()).map {
@@ -237,13 +223,6 @@ class PlayerService : LifecycleService() {
             Timber.d("onVideoInputFormatChanged -> $format")
         }
 
-        override fun onIsPlayingChanged(
-            eventTime: AnalyticsListener.EventTime,
-            isPlaying: Boolean,
-        ) {
-            notificationHelper.isPlaying = isPlaying
-        }
-
         override fun onLoadStarted(
             eventTime: AnalyticsListener.EventTime,
             loadEventInfo: LoadEventInfo,
@@ -261,6 +240,7 @@ class PlayerService : LifecycleService() {
             wasCanceled: Boolean,
         ) {
             Timber.w(error, "onLoadError -> ${loadEventInfo.uri}")
+
             PlayerLoadErrorEvent(loadEventInfo.uri, error).emit()
         }
 
@@ -270,12 +250,10 @@ class PlayerService : LifecycleService() {
             totalBytesLoaded: Long,
             bitrateEstimate: Long,
         ) {
-
             Timber.d("onBandwidthEstimate -> $totalLoadTimeMs $bitrateEstimate")
         }
 
         override fun onTimelineChanged(eventTime: AnalyticsListener.EventTime, reason: Int) {
-
             Timber.d("onTimelineChanged -> ${reason}")
         }
 
@@ -288,6 +266,12 @@ class PlayerService : LifecycleService() {
             Timber.d("onVideoDecoderInitialized: $decoderName")
         }
 
+        override fun onVideoDisabled(
+            eventTime: AnalyticsListener.EventTime,
+            decoderCounters: DecoderCounters
+        ) {
+            Timber.d("onVideoDisabled: $decoderCounters")
+        }
     }
 
     class Binder(val service: PlayerService) : android.os.Binder()
@@ -321,26 +305,92 @@ class PlayerService : LifecycleService() {
         }
     }
 
-    private val progressiveFactory = ProgressiveMediaSource.Factory(
-        OkHttpDataSource.Factory(square.okHttpClient)
-    ).also { f ->
-//        f.setLoadErrorHandlingPolicy(object : DefaultLoadErrorHandlingPolicy() {
-//            override fun getMinimumLoadableRetryCount(dataType: Int): Int {
-//                return 8
-//            }
-//
-//            override fun getRetryDelayMsFor(loadErrorInfo: LoadErrorHandlingPolicy.LoadErrorInfo): Long {
-//                Timber.d("-> getRetryDelayMsFor ${loadErrorInfo.exception} @${loadErrorInfo.errorCount}")
-//                val e = loadErrorInfo.exception
-//                if (
-//                    e is HttpDataSource.InvalidResponseCodeException &&
-//                    e.responseCode == 404
-//                ) {
-//                    return C.TIME_UNSET
-//                }
-//                return 5_000
-//            }
-//        })
+    //バッファー状態でフリーズすることを防ぐ
+    private val retryHandler = object : AnalyticsListener {
+        private var j: Job? = null
+        private var n = 0
+
+        fun reset() {
+            j?.cancel()
+            n = 0
+        }
+
+        override fun onPlaybackStateChanged(eventTime: AnalyticsListener.EventTime, state: Int) {
+            Timber.d("onPlaybackStateChanged: $state")
+            when (state) {
+                Player.STATE_BUFFERING -> {
+                    j = lifecycleScope.launch {
+                        do {
+                            delay(15_000)
+                        } while (doReconnect())
+                    }
+                }
+                Player.STATE_READY -> {
+                    reset()
+                }
+                else -> {
+                    j?.cancel()
+                }
+            }
+        }
+
+        private fun doReconnect(): Boolean {
+            val b = n++ < MAX_RECONNECT
+            if (b) {
+                lifecycleScope.launch {
+                    Timber.i("try to reconnect.")
+                    player.stop()
+                    delay(500)
+                    player.prepare()
+                }
+            }
+            return b
+        }
+
+        override fun onVideoCodecError(
+            eventTime: AnalyticsListener.EventTime,
+            videoCodecError: Exception,
+        ) {
+            doReconnect()
+        }
+
+        override fun onPlayerError(
+            eventTime: AnalyticsListener.EventTime,
+            error: PlaybackException
+        ) {
+            if (error is ExoPlaybackException && error.type == ExoPlaybackException.TYPE_SOURCE) {
+                val se = error.sourceException
+                if (se is HttpDataSource.InvalidResponseCodeException && se.responseCode == 404) {
+                    Timber.i("404: stop reconnecting.")
+                    reset()
+                }
+            }
+        }
+    }
+
+    private val loadControl = DefaultLoadControl.Builder()
+        //.setPrioritizeTimeOverSizeThresholds(true)
+        //.setTargetBufferBytes(256 * 1024)
+        .setBackBuffer(10000, true)
+        .setBufferDurationsMs(5000, 50000, 5000, 5000)
+        .build()
+
+    private val loadErrorHandlingPolicy = object : DefaultLoadErrorHandlingPolicy() {
+//        override fun getMinimumLoadableRetryCount(dataType: Int): Int {
+//            return 0
+//        }
+
+        override fun getRetryDelayMsFor(loadErrorInfo: LoadErrorHandlingPolicy.LoadErrorInfo): Long {
+            Timber.d("-> getRetryDelayMsFor ${loadErrorInfo.exception} @${loadErrorInfo.errorCount}")
+            val e = loadErrorInfo.exception
+            if (
+                e is HttpDataSource.InvalidResponseCodeException &&
+                e.responseCode == 404
+            ) {
+                return C.TIME_UNSET
+            }
+            return 3_000
+        }
     }
 
     fun prepareFromUri(u: Uri, ch: Yp4gChannel) {
@@ -356,14 +406,16 @@ class PlayerService : LifecycleService() {
         if (u == Uri.EMPTY)
             return
 
-        val item = MediaItem.fromUri(u)
+        val sourceFactory = DefaultMediaSourceFactory(OkHttpDataSource.Factory(square.okHttpClient))
+            .setLoadErrorHandlingPolicy(loadErrorHandlingPolicy)
+        val mediaSource = sourceFactory.createMediaSource(MediaItem.fromUri(u))
 
-        player.setMediaSource(progressiveFactory.createMediaSource(item))
+        player.addMediaSource(mediaSource)
 
         if (u.isLoopbackAddress())
             bindPeerCastService()
 
-        analyticsListener.nMaxReconnect = MAX_RECONNECT
+        player.playWhenReady = false
         player.prepare()
     }
 
@@ -372,11 +424,14 @@ class PlayerService : LifecycleService() {
     val isBuffering get() = player.playbackState == Player.STATE_BUFFERING
 
     fun play() {
+        Timber.d("play!")
         player.playWhenReady = true
+        player.prepare()
     }
 
     fun stop() {
-        analyticsListener.nMaxReconnect = MAX_RECONNECT
+        Timber.d("stop!")
+        retryHandler.reset()
         player.stop()
     }
 
@@ -399,9 +454,11 @@ class PlayerService : LifecycleService() {
     private inner class DelegatedPlayer(view: PlayerView) : Player by player, Player.Listener {
         //pauseボタンの挙動をstopに変更する。
         override fun setPlayWhenReady(playWhenReady: Boolean) {
-            if (!playWhenReady)
+            if (playWhenReady) {
+                this@PlayerService.play()
+            } else {
                 this@PlayerService.stop()
-            player.playWhenReady = playWhenReady
+            }
         }
 
         private val weakView = WeakReference(view)
@@ -423,13 +480,14 @@ class PlayerService : LifecycleService() {
     }
 
     fun attachView(view: PlayerView) {
+
         view.player = DelegatedPlayer(view)
     }
 
     companion object {
         private val AA_MEDIA_MOVIE = AudioAttributes.Builder()
             .setUsage(C.USAGE_MEDIA)
-            .setContentType(C.CONTENT_TYPE_MOVIE)
+            .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
             .build()
 
         private const val MAX_RECONNECT = 3
