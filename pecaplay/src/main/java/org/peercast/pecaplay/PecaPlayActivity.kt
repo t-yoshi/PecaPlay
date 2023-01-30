@@ -205,14 +205,25 @@ class PecaPlayActivity : AppCompatActivity() {
             it.isChecked = b
         }
 
-        menu.findItem(R.id.menu_sort_order).let {
-            MenuItemCompat.setActionProvider(it, DisplayOrderMenuProvider())
-        }
-
         menu.findItem(R.id.menu_search).let { mi ->
             (mi.actionView as? SearchView)?.let(::SearchViewEventHandler)
         }
 
+        return true
+    }
+
+    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
+        super.onPrepareOptionsMenu(menu)
+        menu.findItem(R.id.menu_sort_order).let { mi->
+            val sm = checkNotNull(mi.subMenu)
+            val ordinal = appPrefs.displayOrder.ordinal
+            (0 until sm.size()).map {
+                sm.getItem(it)
+            }.getOrNull(ordinal)?.run {
+                isCheckable = true
+                isChecked = true
+            }
+        }
         return true
     }
 
@@ -243,7 +254,7 @@ class PecaPlayActivity : AppCompatActivity() {
                 val order = YpDisplayOrder.fromOrdinal(item.order)
                 viewModel.channelFilter.displayOrder.value = order
                 appPrefs.displayOrder = order
-                item.isChecked = true
+                invalidateOptionsMenu()
             }
 
             R.id.menu_speed_test -> {
@@ -294,24 +305,6 @@ class PecaPlayActivity : AppCompatActivity() {
         }
 
         super.onBackPressed()
-    }
-
-    //ソート順のサブメニュー
-    private inner class DisplayOrderMenuProvider : ActionProvider(this) {
-        override fun hasSubMenu(): Boolean = true
-        override fun onCreateActionView() = View(context)
-
-        override fun onPrepareSubMenu(menu: SubMenu) {
-            val ordinal = appPrefs.displayOrder.ordinal
-            (0 until menu.size()).map {
-                menu.getItem(it).apply {
-                    isCheckable = false
-                }
-            }.getOrNull(ordinal)?.run {
-                isCheckable = true
-                isChecked = true
-            }
-        }
     }
 
     /**

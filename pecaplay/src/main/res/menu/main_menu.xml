@@ -35,22 +35,22 @@
         <menu>
             <item
                 android:id="@+id/menu_sort_listener_desc"
-                android:checkable="true"
+                android:checkable="false"
                 android:orderInCategory="0"
                 android:title="@string/sort_listener_desc" />
             <item
                 android:id="@+id/menu_sort_listener_asc"
-                android:checkable="true"
+                android:checkable="false"
                 android:orderInCategory="1"
                 android:title="@string/sort_listener_asc" />
             <item
                 android:id="@+id/menu_sort_age_desc"
-                android:checkable="true"
+                android:checkable="false"
                 android:orderInCategory="2"
                 android:title="@string/sort_age_desc" />
             <item
                 android:id="@+id/menu_sort_age_asc"
-                android:checkable="true"
+                android:checkable="false"
                 android:orderInCategory="3"
                 android:title="@string/sort_age_asc" />
         </menu>
