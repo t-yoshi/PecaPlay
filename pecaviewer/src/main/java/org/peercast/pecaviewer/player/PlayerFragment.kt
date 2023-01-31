@@ -8,11 +8,11 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import com.google.android.exoplayer2.ui.StyledPlayerView
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
-import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 import org.peercast.pecaviewer.PecaViewerActivity
 import org.peercast.pecaviewer.PecaViewerPreference
 import org.peercast.pecaviewer.PecaViewerViewModel
@@ -75,9 +75,9 @@ class PlayerFragment : Fragment(), Toolbar.OnMenuItemClickListener {
             }
         }
 
-        binding.vPlayer.setControllerVisibilityListener {
+        binding.vPlayer.setControllerVisibilityListener(StyledPlayerView.ControllerVisibilityListener {
             viewerViewModel.isPlayerControlsVisible.value = it == View.VISIBLE
-        }
+        })
 
         vPlayerControlBar.setNavigationOnClickListener {
             (requireActivity() as PecaViewerActivity).quitOrEnterPipMode()

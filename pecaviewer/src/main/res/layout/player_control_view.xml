@@ -1,32 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
     <ImageButton
-        android:id="@+id/exo_pause"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:id="@+id/exo_play_pause"
+        android:layout_width="96dp"
+        android:layout_height="96dp"
         android:layout_gravity="center"
         android:alpha="0.8"
         android:background="?attr/selectableItemBackground"
         android:scaleType="fitCenter"
-        android:src="@drawable/ic_pause_circle_filled_black_96dp"
         app:tint="@color/grey_300"
         android:contentDescription="@null" />
-
-    <ImageButton
-        android:id="@+id/exo_play"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:alpha="0.8"
-        android:background="?attr/selectableItemBackground"
-        android:scaleType="fitCenter"
-        app:tint="@color/grey_300"
-        android:src="@drawable/ic_play_circle_filled_black_96dp"
-        android:contentDescription="@null"/>
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/vPlayerControlBar"

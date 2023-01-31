@@ -19,6 +19,7 @@ import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
 import com.google.android.exoplayer2.source.LoadEventInfo
 import com.google.android.exoplayer2.source.MediaLoadData
 import com.google.android.exoplayer2.ui.PlayerView
+import com.google.android.exoplayer2.ui.StyledPlayerView
 import com.google.android.exoplayer2.upstream.DefaultLoadErrorHandlingPolicy
 import com.google.android.exoplayer2.upstream.HttpDataSource
 import com.google.android.exoplayer2.upstream.LoadErrorHandlingPolicy
@@ -451,7 +452,7 @@ class PlayerService : LifecycleService() {
         player.release()
     }
 
-    private inner class DelegatedPlayer(view: PlayerView) : Player by player, Player.Listener {
+    private inner class DelegatedPlayer(view: StyledPlayerView) : Player by player, Player.Listener {
         //pauseボタンの挙動をstopに変更する。
         override fun setPlayWhenReady(playWhenReady: Boolean) {
             if (playWhenReady) {
@@ -479,8 +480,7 @@ class PlayerService : LifecycleService() {
         }
     }
 
-    fun attachView(view: PlayerView) {
-
+    fun attachView(view: StyledPlayerView) {
         view.player = DelegatedPlayer(view)
     }
 
