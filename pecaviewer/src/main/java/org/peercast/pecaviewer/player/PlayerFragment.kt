@@ -80,6 +80,7 @@ class PlayerFragment : Fragment(), Toolbar.OnMenuItemClickListener {
         })
 
         vPlayerControlBar.setNavigationOnClickListener {
+            binding.vPlayer.hideController()
             (requireActivity() as PecaViewerActivity).quitOrEnterPipMode()
         }
 
