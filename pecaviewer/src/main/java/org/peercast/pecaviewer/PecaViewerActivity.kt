@@ -162,8 +162,7 @@ class PecaViewerActivity : AppCompatActivity() {
                 viewerViewModel.playerService.filterNotNull(),
                 eventFlow,
             ) { s, _ ->
-                if (API26)
-                    setPictureInPictureParams(createPipParams())
+                updatePictureInPictureParams()
                 playerViewModel.isPlaying.value = s.isPlaying
             }.collect()
         }
@@ -255,6 +254,11 @@ class PecaViewerActivity : AppCompatActivity() {
         viewerViewModel.bindPlayerService()
     }
 
+    private fun updatePictureInPictureParams() {
+        if (API26)
+            setPictureInPictureParams(createPipParams())
+    }
+
     @TargetApi(Build.VERSION_CODES.O)
     private fun createPipParams(): PictureInPictureParams {
         val b = PictureInPictureParams.Builder()
@@ -342,6 +346,7 @@ class PecaViewerActivity : AppCompatActivity() {
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         isPortraitMode.value = newConfig.isPortraitMode
+        updatePictureInPictureParams()
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
