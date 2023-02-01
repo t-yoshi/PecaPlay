@@ -30,7 +30,7 @@ buildscript {
         libpeercast_version = "279492562a"
 
         androidx_version = "1.4.1"
-        core_ktx_version = "1.9.0"
+        core_ktx_version = "1.10.0-alpha01"
         material_version = "1.8.0"
         appcompat_version = "1.6.0"
 

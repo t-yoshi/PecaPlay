@@ -12,9 +12,11 @@ import android.os.Build
 import android.os.Bundle
 import android.util.Rational
 import android.view.View
+import androidx.activity.addCallback
 import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.IntentCompat
 import androidx.core.view.*
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.DefaultLifecycleObserver
@@ -91,11 +93,11 @@ class PecaViewerActivity : AppCompatActivity() {
                 viewerViewModel.isFullScreenMode.collect {
                     val controller = WindowCompat.getInsetsController(window, window.decorView)
                     if (it) {
-                        controller?.hide(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
-                        controller?.systemBarsBehavior =
+                        controller.hide(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
+                        controller.systemBarsBehavior =
                             WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
                     } else {
-                        controller?.show(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
+                        controller.show(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
                     }
                 }
             }
@@ -130,6 +132,10 @@ class PecaViewerActivity : AppCompatActivity() {
 
         isPortraitMode.value = resources.configuration.isPortraitMode
         binding.vSlidingUpPanel.addPanelSlideListener(panelSlideListener)
+
+        onBackPressedDispatcher.addCallback {
+            quitOrEnterPipMode()
+        }
 
         if (savedInstanceState?.getBoolean(stateKeyPlaying) != false)
             startPlay()
@@ -238,8 +244,8 @@ class PecaViewerActivity : AppCompatActivity() {
 
     private fun startPlay() {
         val streamUrl = checkNotNull(intent.data)
-        val channel: Yp4gChannel = checkNotNull(
-            intent.getParcelableExtra(PecaViewerIntent.EX_YP4G_CHANNEL)
+        val channel = checkNotNull(
+            IntentCompat.getParcelableExtra(intent, PecaViewerIntent.EX_YP4G_CHANNEL, Yp4gChannel::class.java)
         )
 
         viewerViewModel.startPlay(streamUrl, channel)
@@ -313,14 +319,6 @@ class PecaViewerActivity : AppCompatActivity() {
         // true: プレーヤーをPIP化 & PecaPlay起動
         // false: (再生してないので) PIP化せず、単にPecaPlayへ戻る
         backToPecaPlay(this, !hasEnteredPip)
-    }
-
-    override fun onBackPressed() {
-        if (onBackPressedDispatcher.hasEnabledCallbacks()) {
-            super.onBackPressed()
-        } else {
-            quitOrEnterPipMode()
-        }
     }
 
     override fun onPause() {
