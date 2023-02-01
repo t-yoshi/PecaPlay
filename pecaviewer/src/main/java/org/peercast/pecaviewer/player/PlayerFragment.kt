@@ -5,9 +5,12 @@ import android.os.Build
 import android.os.Bundle
 import android.view.*
 import androidx.appcompat.widget.Toolbar
+import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.exoplayer2.ui.StyledPlayerView
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
@@ -54,24 +57,28 @@ class PlayerFragment : Fragment(), Toolbar.OnMenuItemClickListener {
             it.menu.findItem(R.id.menu_background).isChecked = viewerPrefs.isBackgroundPlaying
         }
 
-        viewLifecycleOwner.lifecycleScope.run {
-            launch {
-                viewerViewModel.isFullScreenMode.collect {
-                    vPlayerControlBar.menu.run {
-                        findItem(R.id.menu_enter_fullscreen).isVisible = !it
-                        findItem(R.id.menu_exit_fullscreen).isVisible = it
-                    }
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewerViewModel.isFullScreenMode.collect {
+                vPlayerControlBar.menu.run {
+                    findItem(R.id.menu_enter_fullscreen).isVisible = !it
+                    findItem(R.id.menu_exit_fullscreen).isVisible = it
                 }
             }
-            launch {
-                viewerViewModel.playerService.filterNotNull().collect {
-                    it.attachView(binding.vPlayer)
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                viewerViewModel.playerService.collect { sv->
+                     sv?.attachView(binding.vPlayer) ?: kotlin.run {
+                         binding.vPlayer.player = null
+                     }
                 }
             }
-            launch {
-                playerViewModel.isToolbarVisible.collect {
-                    binding.vPlayerToolbar.requestLayout()
-                }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            playerViewModel.isToolbarVisible.collect {
+                binding.vPlayerToolbar.requestLayout()
             }
         }
 
@@ -92,7 +99,8 @@ class PlayerFragment : Fragment(), Toolbar.OnMenuItemClickListener {
         binding.vPlayer.useController = !isInPictureInPictureMode
     }
 
-    private inner class DoubleTapDetector : View.OnTouchListener, GestureDetector.SimpleOnGestureListener() {
+    private inner class DoubleTapDetector : View.OnTouchListener,
+        GestureDetector.SimpleOnGestureListener() {
         private val detector = GestureDetector(requireContext(), this)
 
         override fun onDoubleTap(e: MotionEvent): Boolean {
@@ -130,7 +138,9 @@ class PlayerFragment : Fragment(), Toolbar.OnMenuItemClickListener {
     }
 
     override fun onPause() {
+        super.onPause()
         val sv = viewerViewModel.playerService.value ?: return
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && sv.isPlaying) {
             viewLifecycleOwner.lifecycleScope.launch {
                 kotlin.runCatching {
@@ -140,8 +150,11 @@ class PlayerFragment : Fragment(), Toolbar.OnMenuItemClickListener {
                 }.onFailure(Timber::w)
             }
         }
+    }
 
-        super.onPause()
+    override fun onDestroyView() {
+        super.onDestroyView()
+        binding.vPlayer.player = null
     }
 
 }

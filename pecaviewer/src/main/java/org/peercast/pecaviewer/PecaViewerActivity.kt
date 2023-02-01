@@ -245,7 +245,11 @@ class PecaViewerActivity : AppCompatActivity() {
     private fun startPlay() {
         val streamUrl = checkNotNull(intent.data)
         val channel = checkNotNull(
-            IntentCompat.getParcelableExtra(intent, PecaViewerIntent.EX_YP4G_CHANNEL, Yp4gChannel::class.java)
+            IntentCompat.getParcelableExtra(
+                intent,
+                PecaViewerIntent.EX_YP4G_CHANNEL,
+                Yp4gChannel::class.java
+            )
         )
 
         viewerViewModel.startPlay(streamUrl, channel)
@@ -324,8 +328,11 @@ class PecaViewerActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
 
-        val isInPipMode = API26 && isInPictureInPictureMode
-        if (!(viewerPrefs.isBackgroundPlaying || isInPipMode)) {
+        if (viewerPrefs.isBackgroundPlaying){
+            val isInPipMode = API26 && isInPictureInPictureMode
+            if (!isInPipMode)
+                service?.enterBackgroundMode()
+        } else {
             service?.stop()
         }
     }
