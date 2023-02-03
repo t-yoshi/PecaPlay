@@ -23,13 +23,11 @@ import com.google.android.exoplayer2.decoder.DecoderCounters
 import com.google.android.exoplayer2.decoder.DecoderReuseEvaluation
 import com.google.android.exoplayer2.ext.okhttp.OkHttpDataSource
 import com.google.android.exoplayer2.mediacodec.MediaCodecDecoderException
-import com.google.android.exoplayer2.mediacodec.MediaCodecSelector
 import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
 import com.google.android.exoplayer2.source.LoadEventInfo
 import com.google.android.exoplayer2.source.MediaLoadData
 import com.google.android.exoplayer2.ui.StyledPlayerView
 import com.google.android.exoplayer2.upstream.HttpDataSource
-import com.google.android.exoplayer2.upstream.RawResourceDataSource
 import com.google.android.exoplayer2.util.EventLogger
 import com.google.android.exoplayer2.video.MediaCodecVideoDecoderException
 import kotlinx.coroutines.Job
@@ -85,7 +83,7 @@ class PlayerService : LifecycleService() {
         player = ExoPlayer.Builder(this)
             .setAudioAttributes(AA_MEDIA_MOVIE, true)
             .setWakeMode(C.WAKE_MODE_NETWORK)
-            .setLoadControl(loadControl)
+            .setLoadControl(LOAD_CONTROL)
             .setRenderersFactory(DefaultRenderersFactory(this).also {
                 it.setEnableDecoderFallback(true)
             })
@@ -150,11 +148,6 @@ class PlayerService : LifecycleService() {
         }
     }
 
-    private val loadControl = DefaultLoadControl.Builder()
-        .setBackBuffer(15000, true)
-        .setBufferDurationsMs(5000, 50000, 5000, 5000)
-        .build()
-
     fun prepareFromUri(u: Uri, ch: Yp4gChannel) {
         if (playingIntent.data == u)
             return
@@ -186,7 +179,7 @@ class PlayerService : LifecycleService() {
 
     fun play() {
         Timber.d("play!")
-        player.playWhenReady = false
+        player.seekTo(C.TIME_UNSET)
         player.prepare()
         player.playWhenReady = true
     }
@@ -216,15 +209,16 @@ class PlayerService : LifecycleService() {
         player.release()
     }
 
-    private inner class DelegatedPlayer(view: StyledPlayerView) : ForwardingPlayer(player),
+    private class DelegatedPlayer(private val sv: PlayerService, view: StyledPlayerView) : ForwardingPlayer(sv.player),
         Player.Listener {
+
+        override fun play() {
+            sv.play()
+        }
+
         //pauseボタンの挙動をstopに変更する。
-        override fun setPlayWhenReady(playWhenReady: Boolean) {
-            if (playWhenReady) {
-                this@PlayerService.play()
-            } else {
-                this@PlayerService.stop()
-            }
+        override fun pause() {
+            sv.stop()
         }
 
         private val weakView = WeakReference(view)
@@ -235,18 +229,18 @@ class PlayerService : LifecycleService() {
             if (v != null && v.player == this) {
                 v.keepScreenOn = state == Player.STATE_READY
             } else {
-                player.removeListener(this)
+                removeListener(this)
             }
         }
 
         init {
-            view.keepScreenOn = this@PlayerService.run { isBuffering || isPlaying }
-            player.addListener(this)
+            view.keepScreenOn = sv.run { isBuffering || isPlaying }
+            addListener(this)
         }
     }
 
     fun attachView(view: StyledPlayerView) {
-        view.player = DelegatedPlayer(view)
+        view.player = DelegatedPlayer(this, view)
         notificationHandler.stopForeground()
     }
 
@@ -257,6 +251,11 @@ class PlayerService : LifecycleService() {
     }
 
     companion object {
+        private val LOAD_CONTROL = DefaultLoadControl.Builder()
+            //.setBackBuffer(15000, true)
+            .setBufferDurationsMs(5000, 50000, 5000, 5000)
+            .build()
+
         private val AA_MEDIA_MOVIE = AudioAttributes.Builder()
             .setUsage(C.USAGE_MEDIA)
             .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
