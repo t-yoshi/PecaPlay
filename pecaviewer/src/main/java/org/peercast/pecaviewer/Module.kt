@@ -12,7 +12,7 @@ val pecaviewerModule = module {
 
     viewModel { PlayerViewModel(get(), get()) }
     viewModel { ChatViewModel(get()) }
-    viewModel { PecaViewerViewModel(get()) }
+    viewModel { PecaViewerViewModel(get(), get()) }
 
     single { ImageLoadingEventFlow() }
     single { PlayerServiceEventFlow() }

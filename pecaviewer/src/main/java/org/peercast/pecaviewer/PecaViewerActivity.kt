@@ -51,13 +51,12 @@ class PecaViewerActivity : AppCompatActivity() {
     private val viewerPrefs by inject<PecaViewerPreference>()
     private lateinit var binding: PecaViewerActivityBinding
     private val service: PlayerService? get() = viewerViewModel.playerService.value
-    private val eventFlow by inject<PlayerServiceEventFlow>()
     private val stateKeyPlaying get() = "STATE_PLAYING#${intent.data}"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        initViewModels()
+        viewerViewModel.initViewModels(playerViewModel, chatViewModel)
 
         requestedOrientation = when (viewerPrefs.isFullScreenMode) {
             true -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
@@ -72,7 +71,7 @@ class PecaViewerActivity : AppCompatActivity() {
             //フルスクリーン時には一時的にコントロールボタンを
             //表示させないとOSのナビゲーションバーが残る
             if (viewerViewModel.isFullScreenMode.value)
-                viewerViewModel.isPlayerControlsVisible.value = true
+                playerViewModel.isPlayerControlsVisible.value = true
             PostMessageDialogFragment.show(supportFragmentManager)
         }
 
@@ -128,6 +127,11 @@ class PecaViewerActivity : AppCompatActivity() {
                 }
             }
 
+            launch {
+                playerViewModel.isPlaying.collect {
+                    updatePictureInPictureParams()
+                }
+            }
         }
 
         isPortraitMode.value = resources.configuration.isPortraitMode
@@ -139,39 +143,6 @@ class PecaViewerActivity : AppCompatActivity() {
 
         if (savedInstanceState?.getBoolean(stateKeyPlaying) != false)
             startPlay()
-    }
-
-    private fun initViewModels() = lifecycleScope.run {
-        //遅延評価なのでインスタンス化しておく
-        "$viewerViewModel $playerViewModel $chatViewModel"
-
-        launch {
-            combine(
-                viewerViewModel.isFullScreenMode,
-                viewerViewModel.isPlayerControlsVisible,
-                viewerViewModel.slidingPanelState,
-            ) { full, control, state ->
-                (!full || control || state == 1)
-            }.collect {
-                playerViewModel.isToolbarVisible.value = it
-            }
-        }
-
-        launch {
-            chatViewModel.selectedThreadPoster.collect {
-                viewerViewModel.isPostDialogButtonEnabled.value = it != null
-            }
-        }
-
-        launch {
-            combine(
-                viewerViewModel.playerService.filterNotNull(),
-                eventFlow,
-            ) { s, _ ->
-                updatePictureInPictureParams()
-                playerViewModel.isPlaying.value = s.isPlaying
-            }.collect()
-        }
     }
 
     private fun initPanelState(state: SlidingUpPanelLayout.PanelState) {

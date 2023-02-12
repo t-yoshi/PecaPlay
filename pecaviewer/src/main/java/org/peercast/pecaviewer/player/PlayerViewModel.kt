@@ -24,6 +24,10 @@ class PlayerViewModel(a: Application, eventFlow: PlayerServiceEventFlow) : Andro
 
     val isPlaying = MutableStateFlow(false)
 
+    /**プレーヤーの再生/停止ボタンの表示。タッチして数秒後に消える*/
+    val isPlayerControlsVisible = MutableStateFlow(false)
+
+
     init {
         viewModelScope.launch {
             var j: Job? = null
@@ -67,6 +71,18 @@ class PlayerViewModel(a: Application, eventFlow: PlayerServiceEventFlow) : Andro
             }
         }
 
+        viewModelScope.launch {
+            var j: Job? = null
+            isPlayerControlsVisible.collect {
+                j?.cancel()
+                if (it) {
+                    j = launch {
+                        delay(5_000)
+                        isPlayerControlsVisible.value = false
+                    }
+                }
+            }
+        }
     }
 
 }

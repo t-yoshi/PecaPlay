@@ -83,7 +83,7 @@ class PlayerFragment : Fragment(), Toolbar.OnMenuItemClickListener {
         }
 
         binding.vPlayer.setControllerVisibilityListener(StyledPlayerView.ControllerVisibilityListener {
-            viewerViewModel.isPlayerControlsVisible.value = it == View.VISIBLE
+            playerViewModel.isPlayerControlsVisible.value = it == View.VISIBLE
         })
 
         vPlayerControlBar.setNavigationOnClickListener {

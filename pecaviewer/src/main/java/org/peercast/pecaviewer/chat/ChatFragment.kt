@@ -16,7 +16,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.combine
-import org.koin.androidx.viewmodel.ext.android.sharedViewModel
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.peercast.pecaviewer.PecaViewerViewModel
 import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.chat.adapter.MessageAdapter
@@ -31,9 +31,8 @@ import kotlin.properties.Delegates
 @Suppress("unused")
 class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener {
 
-    private val chatViewModel by sharedViewModel<ChatViewModel>()
-    private val playerViewModel by sharedViewModel<PlayerViewModel>()
-    private val appViewModel by sharedViewModel<PecaViewerViewModel>()
+    private val chatViewModel by activityViewModel<ChatViewModel>()
+    private val playerViewModel by activityViewModel<PlayerViewModel>()
     private lateinit var chatPrefs: SharedPreferences
 
     private lateinit var binding: ChatFragmentBinding

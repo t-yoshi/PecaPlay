@@ -7,15 +7,21 @@ import android.net.Uri
 import android.os.IBinder
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.peercast.pecaplay.core.app.Yp4gChannel
+import org.peercast.pecaviewer.chat.ChatViewModel
+import org.peercast.pecaviewer.player.PlayerViewModel
 import org.peercast.pecaviewer.service.PlayerService
+import org.peercast.pecaviewer.service.PlayerServiceEventFlow
 import org.peercast.pecaviewer.service.bindPlayerService
 
 
 class PecaViewerViewModel(
     private val a: Application,
+    private val eventFlow: PlayerServiceEventFlow,
 ) : AndroidViewModel(a) {
 
     /**
@@ -30,9 +36,6 @@ class PecaViewerViewModel(
     /**書き込みボタンが有効か*/
     val isPostDialogButtonEnabled = MutableStateFlow(false)
 
-    /**プレーヤーの再生/停止ボタンの表示。タッチして数秒後に消える*/
-    val isPlayerControlsVisible = MutableStateFlow(false)
-
     /**フルスクリーンモードか*/
     val isFullScreenMode = MutableStateFlow(false)
 
@@ -45,14 +48,8 @@ class PecaViewerViewModel(
     }.stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     /**書き込みボタンを表示するか*/
-    val isPostDialogButtonVisible = combine(
-        isFullScreenMode,
-        isPlayerControlsVisible,
-        isPipMode,
-    ) { full, ctrl, pip ->
-        (!full || ctrl) && !pip
-    }.stateIn(viewModelScope, SharingStarted.Lazily, false)
-
+    lateinit var isPostDialogButtonVisible: StateFlow<Boolean>
+        private set
 
     private val _playerService = MutableStateFlow<PlayerService?>(null)
 
@@ -65,6 +62,53 @@ class PecaViewerViewModel(
 
         override fun onServiceDisconnected(name: ComponentName?) {
             _playerService.value = null
+        }
+    }
+
+    fun initViewModels(pvm: PlayerViewModel, cvm: ChatViewModel) {
+        isPostDialogButtonVisible = combine(
+            isFullScreenMode,
+            pvm.isPlayerControlsVisible,
+            isPipMode,
+        ) { full, ctrl, pip ->
+            (!full || ctrl) && !pip
+        }.stateIn(viewModelScope, SharingStarted.Lazily, false)
+
+        viewModelScope.launch {
+            combine(
+                eventFlow,
+                playerService.filterNotNull(),
+            ) { _, sv ->
+                pvm.isPlaying.value = sv.isPlaying || sv.isBuffering
+            }.collect()
+        }
+
+        viewModelScope.launch {
+            combine(
+                playerService.filterNotNull(),
+                eventFlow,
+            ) { s, _ ->
+                pvm.isPlaying.value = s.run { isPlaying || isBuffering }
+            }.collect()
+        }
+
+        viewModelScope.launch {
+            combine(
+                isFullScreenMode,
+                pvm.isPlayerControlsVisible,
+                slidingPanelState,
+                isPipMode,
+            ) { full, control, state, pip ->
+                (!full || control || state == 1) && !pip
+            }.collect {
+                pvm.isToolbarVisible.value = it
+            }
+        }
+
+        viewModelScope.launch {
+            cvm.selectedThreadPoster.collect {
+                isPostDialogButtonEnabled.value = it != null
+            }
         }
     }
 
@@ -87,6 +131,5 @@ class PecaViewerViewModel(
             _playerService.value = null
         }
     }
-
 
 }

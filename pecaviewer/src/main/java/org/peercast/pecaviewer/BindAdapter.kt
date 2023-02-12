@@ -118,4 +118,25 @@ internal object BindAdapter {
         }
     }
 
+    /**アニメーションしながら visible<->gone*/
+    @JvmStatic
+    @BindingAdapter("visibleFade")
+    fun bindVisibleFade(view: View, visibility: Boolean) {
+        when {
+            visibility && !view.isVisible -> {
+                view.alpha = 0f
+                view.isVisible = true
+                view.animate()
+                    .setDuration(view.context.resources.getInteger(android.R.integer.config_shortAnimTime).toLong())
+                    .alpha(1f)
+                    .onEnd { view.alpha = 1f }
+            }
+            !visibility && view.isVisible -> {
+                view.animate()
+                    .setDuration(view.context.resources.getInteger(android.R.integer.config_mediumAnimTime).toLong())
+                    .alpha(0f)
+                    .onEnd { view.isVisible = false }
+            }
+        }
+    }
 }

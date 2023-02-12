@@ -9,14 +9,14 @@ import androidx.core.widget.doOnTextChanged
 import androidx.fragment.app.FragmentManager
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment
-import org.koin.androidx.viewmodel.ext.android.sharedViewModel
+import org.koin.androidx.viewmodel.ext.android.activityViewModel
 import org.peercast.pecaviewer.chat.net.IBoardThreadPoster
 import org.peercast.pecaviewer.chat.net.PostMessage
 import org.peercast.pecaviewer.databinding.PostMessageDialogFragmentBinding
 
 class PostMessageDialogFragment : BottomSheetDialogFragment(),
     DialogInterface.OnShowListener {
-    private val chatViewModel by sharedViewModel<ChatViewModel>()
+    private val chatViewModel by activityViewModel<ChatViewModel>()
     private lateinit var binding: PostMessageDialogFragmentBinding
     private lateinit var poster: IBoardThreadPoster
 
