@@ -23,6 +23,7 @@ import com.google.android.exoplayer2.decoder.DecoderCounters
 import com.google.android.exoplayer2.decoder.DecoderReuseEvaluation
 import com.google.android.exoplayer2.ext.okhttp.OkHttpDataSource
 import com.google.android.exoplayer2.mediacodec.MediaCodecDecoderException
+import com.google.android.exoplayer2.mediacodec.MediaCodecSelector
 import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
 import com.google.android.exoplayer2.source.LoadEventInfo
 import com.google.android.exoplayer2.source.MediaLoadData
@@ -47,7 +48,6 @@ import org.peercast.pecaviewer.PecaViewerPreference
 import org.peercast.pecaviewer.R
 import timber.log.Timber
 import java.io.IOException
-import java.lang.ref.WeakReference
 import java.util.*
 
 
@@ -86,6 +86,7 @@ class PlayerService : LifecycleService() {
             .setLoadControl(LOAD_CONTROL)
             .setRenderersFactory(DefaultRenderersFactory(this).also {
                 it.setEnableDecoderFallback(true)
+                it.setMediaCodecSelector(codecSelector)
             })
             .build()
 
@@ -148,7 +149,22 @@ class PlayerService : LifecycleService() {
         }
     }
 
-    fun prepareFromUri(u: Uri, ch: Yp4gChannel) {
+    private val codecSelector =
+        MediaCodecSelector { mimeType, requiresSecureDecoder, requiresTunnelingDecoder ->
+            val codecs = MediaCodecSelector.DEFAULT.getDecoderInfos(
+                mimeType,
+                requiresSecureDecoder,
+                requiresTunnelingDecoder
+            ).toMutableList()
+//            if (mimeType.startsWith("video/")) {
+//                Timber.i(codecs.joinToString(",", "codecs: ", transform = { it.name }))
+//                codecs.sortBy { !it.name.run { startsWith("c2.android.") || startsWith("OMX.google.") } }
+//                Timber.i(codecs.joinToString(",", "sorted codecs: ", transform = { it.name }))
+//            }
+            codecs
+        }
+
+    fun prepareFromUri(u: Uri, ch: Yp4gChannel, playWhenReady: Boolean = true) {
         if (playingIntent.data == u)
             return
         playingIntent = Intent(this, PecaViewerActivity::class.java)
@@ -169,7 +185,7 @@ class PlayerService : LifecycleService() {
         if (u.isLoopbackAddress())
             bindPeerCastService()
 
-        player.playWhenReady = false
+        player.playWhenReady = playWhenReady
         player.prepare()
     }
 
@@ -179,7 +195,6 @@ class PlayerService : LifecycleService() {
 
     fun play() {
         Timber.d("play!")
-        player.seekTo(C.TIME_UNSET)
         player.prepare()
         player.playWhenReady = true
     }
@@ -192,10 +207,12 @@ class PlayerService : LifecycleService() {
         player.stop()
     }
 
-    fun setThumbnail(b: Bitmap?) {
-        playingIntent.putExtra(EX_THUMBNAIL, b)
-        notificationHandler.updateNotification()
-    }
+    var thumbnail: Bitmap?
+        get() = IntentCompat.getParcelableExtra(playingIntent, EX_THUMBNAIL, Bitmap::class.java)
+        set(value) {
+            playingIntent.putExtra(EX_THUMBNAIL, value)
+            notificationHandler.updateNotification()
+        }
 
     val videoSize get() = player.videoSize
 
@@ -209,9 +226,7 @@ class PlayerService : LifecycleService() {
         player.release()
     }
 
-    private class DelegatedPlayer(private val sv: PlayerService, view: StyledPlayerView) : ForwardingPlayer(sv.player),
-        Player.Listener {
-
+    private class DelegatedPlayer(private val sv: PlayerService) : ForwardingPlayer(sv.player) {
         override fun play() {
             sv.play()
         }
@@ -220,31 +235,25 @@ class PlayerService : LifecycleService() {
         override fun pause() {
             sv.stop()
         }
+    }
 
-        private val weakView = WeakReference(view)
-
-        //再生中は消灯しない
-        override fun onPlaybackStateChanged(state: Int) {
-            val v = weakView.get()
-            if (v != null && v.player == this) {
-                v.keepScreenOn = state == Player.STATE_READY
-            } else {
-                removeListener(this)
-            }
-        }
-
-        init {
-            view.keepScreenOn = sv.run { isBuffering || isPlaying }
-            addListener(this)
-        }
+    private fun setVideoDisabled(disabled: Boolean) {
+        player.trackSelectionParameters =
+            player.trackSelectionParameters.buildUpon()
+                .setTrackTypeDisabled(C.TRACK_TYPE_VIDEO, disabled)
+                .build()
     }
 
     fun attachView(view: StyledPlayerView) {
-        view.player = DelegatedPlayer(this, view)
+        Timber.d("attachView: $view")
+        setVideoDisabled(false)
+        view.player = DelegatedPlayer(this)
         notificationHandler.stopForeground()
     }
 
     fun enterBackgroundMode() {
+        setVideoDisabled(true)
+
         if (isPlaying || isBuffering) {
             notificationHandler.startForeground()
         }
@@ -252,14 +261,21 @@ class PlayerService : LifecycleService() {
 
     companion object {
         private val LOAD_CONTROL = DefaultLoadControl.Builder()
-            //.setBackBuffer(15000, true)
-            .setBufferDurationsMs(5000, 50000, 5000, 5000)
+            //.setBackBuffer(10000, true)
+            .setBufferDurationsMs(1000, 30000, 1000, 1000)
             .build()
 
         private val AA_MEDIA_MOVIE = AudioAttributes.Builder()
             .setUsage(C.USAGE_MEDIA)
             .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
             .build()
+
+        fun detachView(view: StyledPlayerView) {
+            if (view.player == null)
+                return
+            Timber.d("detachView: $view")
+            view.player = null
+        }
 
         /**(Bitmap)*/
         private const val EX_THUMBNAIL = "thumbnail"
@@ -379,7 +395,11 @@ class PlayerService : LifecycleService() {
             when (state) {
                 Player.STATE_BUFFERING -> {
                     jFreeze = sv.lifecycleScope.launch {
-                        delay(15_000)
+                        when (nFreeze) {
+                            0 -> delay(15_000)
+                            else -> delay(12_000)
+                        }
+
                         if (++nFreeze <= MAX_RECOVER_FROM_FREEZE) {
                             Timber.i("freeze #$nFreeze: try to recover")
                             sv.lifecycleScope.launch {

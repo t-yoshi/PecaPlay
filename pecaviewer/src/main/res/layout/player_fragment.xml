@@ -15,6 +15,7 @@
             android:layout_height="0dp"
             android:layout_weight="1"
             android:background="@color/grey_1000b"
+            app:keep_content_on_player_reset="false"
             app:controller_layout_id="@layout/player_control_view" />
 
         <RelativeLayout

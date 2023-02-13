@@ -1,22 +1,13 @@
 package org.peercast.pecaviewer
 
 import android.app.Application
-import android.content.ComponentName
-import android.content.ServiceConnection
-import android.net.Uri
-import android.os.IBinder
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
-import org.peercast.pecaplay.core.app.Yp4gChannel
-import org.peercast.pecaviewer.chat.ChatViewModel
-import org.peercast.pecaviewer.player.PlayerViewModel
-import org.peercast.pecaviewer.service.PlayerService
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import org.peercast.pecaviewer.service.PlayerServiceEventFlow
-import org.peercast.pecaviewer.service.bindPlayerService
 
 
 class PecaViewerViewModel(
@@ -48,88 +39,6 @@ class PecaViewerViewModel(
     }.stateIn(viewModelScope, SharingStarted.Lazily, false)
 
     /**書き込みボタンを表示するか*/
-    lateinit var isPostDialogButtonVisible: StateFlow<Boolean>
-        private set
-
-    private val _playerService = MutableStateFlow<PlayerService?>(null)
-
-    val playerService: StateFlow<PlayerService?> get() = _playerService
-
-    private val playerServiceConnection = object : ServiceConnection {
-        override fun onServiceConnected(name: ComponentName, binder: IBinder) {
-            _playerService.value = (binder as PlayerService.Binder).service
-        }
-
-        override fun onServiceDisconnected(name: ComponentName?) {
-            _playerService.value = null
-        }
-    }
-
-    fun initViewModels(pvm: PlayerViewModel, cvm: ChatViewModel) {
-        isPostDialogButtonVisible = combine(
-            isFullScreenMode,
-            pvm.isPlayerControlsVisible,
-            isPipMode,
-        ) { full, ctrl, pip ->
-            (!full || ctrl) && !pip
-        }.stateIn(viewModelScope, SharingStarted.Lazily, false)
-
-        viewModelScope.launch {
-            combine(
-                eventFlow,
-                playerService.filterNotNull(),
-            ) { _, sv ->
-                pvm.isPlaying.value = sv.isPlaying || sv.isBuffering
-            }.collect()
-        }
-
-        viewModelScope.launch {
-            combine(
-                playerService.filterNotNull(),
-                eventFlow,
-            ) { s, _ ->
-                pvm.isPlaying.value = s.run { isPlaying || isBuffering }
-            }.collect()
-        }
-
-        viewModelScope.launch {
-            combine(
-                isFullScreenMode,
-                pvm.isPlayerControlsVisible,
-                slidingPanelState,
-                isPipMode,
-            ) { full, control, state, pip ->
-                (!full || control || state == 1) && !pip
-            }.collect {
-                pvm.isToolbarVisible.value = it
-            }
-        }
-
-        viewModelScope.launch {
-            cvm.selectedThreadPoster.collect {
-                isPostDialogButtonEnabled.value = it != null
-            }
-        }
-    }
-
-    fun startPlay(streamUrl: Uri, channel: Yp4gChannel) {
-        viewModelScope.launch {
-            playerService.filterNotNull().collect {
-                it.prepareFromUri(streamUrl, channel)
-                it.play()
-            }
-        }
-    }
-
-    fun bindPlayerService() {
-        a.bindPlayerService(playerServiceConnection)
-    }
-
-    fun unbindPlayerService() {
-        if (_playerService.value != null) {
-            a.unbindService(playerServiceConnection)
-            _playerService.value = null
-        }
-    }
+    val isPostDialogButtonVisible = MutableStateFlow(false)
 
 }

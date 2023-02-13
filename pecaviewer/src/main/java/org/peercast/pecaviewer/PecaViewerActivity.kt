@@ -8,6 +8,7 @@ import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.drawable.Icon
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.util.Rational
@@ -24,11 +25,9 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import com.google.android.exoplayer2.video.VideoSize
 import com.sothree.slidinguppanel.SlidingUpPanelLayout
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.viewModel
@@ -39,7 +38,7 @@ import org.peercast.pecaviewer.chat.ChatViewModel
 import org.peercast.pecaviewer.chat.PostMessageDialogFragment
 import org.peercast.pecaviewer.databinding.PecaViewerActivityBinding
 import org.peercast.pecaviewer.player.PlayerViewModel
-import org.peercast.pecaviewer.service.PlayerService
+import org.peercast.pecaviewer.service.PlayerServiceBinder
 import org.peercast.pecaviewer.service.PlayerServiceEventFlow
 import timber.log.Timber
 
@@ -49,14 +48,15 @@ class PecaViewerActivity : AppCompatActivity() {
     private val playerViewModel by viewModel<PlayerViewModel>()
     private val chatViewModel by viewModel<ChatViewModel>()
     private val viewerPrefs by inject<PecaViewerPreference>()
+    private val eventFlow by inject<PlayerServiceEventFlow>()
     private lateinit var binding: PecaViewerActivityBinding
-    private val service: PlayerService? get() = viewerViewModel.playerService.value
     private val stateKeyPlaying get() = "STATE_PLAYING#${intent.data}"
+    private val serviceBinder = PlayerServiceBinder(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        viewerViewModel.initViewModels(playerViewModel, chatViewModel)
+        initViewModels()
 
         requestedOrientation = when (viewerPrefs.isFullScreenMode) {
             true -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
@@ -130,6 +130,8 @@ class PecaViewerActivity : AppCompatActivity() {
             launch {
                 playerViewModel.isPlaying.collect {
                     updatePictureInPictureParams()
+                    //再生中は消灯しない
+                    binding.root.keepScreenOn = it
                 }
             }
         }
@@ -160,7 +162,6 @@ class PecaViewerActivity : AppCompatActivity() {
         override fun onPanelSlide(panel: View, __slideOffset: Float) {
             val b = binding.vPlayerFragmentContainer.bottom
             binding.vPlayerFragmentContainer.updatePadding(top = panel.height - b)
-            //val toolbarHeight = resources.getDimension(R.dimen.player_toolbar_height).toInt()
             val toolbarHeight = findViewById<View>(R.id.vPlayerToolbar)?.height ?: 0
             binding.vChatFragmentContainer.updatePadding(bottom = b - toolbarHeight)
         }
@@ -213,6 +214,45 @@ class PecaViewerActivity : AppCompatActivity() {
         startPlay()
     }
 
+    private fun initViewModels() = lifecycleScope.run {
+        launch(Dispatchers.Main.immediate) {
+            combine(
+                viewerViewModel.isFullScreenMode,
+                playerViewModel.isPlayerControlsVisible,
+                viewerViewModel.isPipMode,
+            ) { full, ctrl, pip ->
+                viewerViewModel.isPostDialogButtonVisible.value = (!full || ctrl) && !pip
+            }.collect()
+        }
+
+        launch(Dispatchers.Main.immediate) {
+            combine(
+                eventFlow,
+                serviceBinder.service.filterNotNull(),
+            ) { _, sv ->
+                playerViewModel.isPlaying.value = sv.isPlaying || sv.isBuffering
+            }.collect()
+        }
+
+        launch(Dispatchers.Main.immediate) {
+            combine(
+                viewerViewModel.isFullScreenMode,
+                playerViewModel.isPlayerControlsVisible,
+                viewerViewModel.slidingPanelState,
+                viewerViewModel.isPipMode,
+            ) { full, control, state, pip ->
+                playerViewModel.isToolbarVisible.value = (!full || control || state == 1) && !pip
+            }.collect()
+        }
+
+        launch(Dispatchers.Main.immediate) {
+            chatViewModel.selectedThreadPoster.collect {
+                viewerViewModel.isPostDialogButtonEnabled.value = it != null
+            }
+        }
+    }
+
+
     private fun startPlay() {
         val streamUrl = checkNotNull(intent.data)
         val channel = checkNotNull(
@@ -223,16 +263,18 @@ class PecaViewerActivity : AppCompatActivity() {
             )
         )
 
-        viewerViewModel.startPlay(streamUrl, channel)
+        lifecycleScope.launch {
+            var u = Uri.EMPTY
+            serviceBinder.service.filterNotNull().collect {
+                it.prepareFromUri(streamUrl, channel, u != streamUrl)
+                u = streamUrl
+            }
+        }
+
         chatViewModel.loadUrl(channel.url)
 
         playerViewModel.channelTitle.value = channel.name
         playerViewModel.channelComment.value = channel.run { "$genre $description $comment".trim() }
-    }
-
-    override fun onStart() {
-        super.onStart()
-        viewerViewModel.bindPlayerService()
     }
 
     private fun updatePictureInPictureParams() {
@@ -243,12 +285,12 @@ class PecaViewerActivity : AppCompatActivity() {
     @TargetApi(Build.VERSION_CODES.O)
     private fun createPipParams(): PictureInPictureParams {
         val b = PictureInPictureParams.Builder()
-        val size = service?.videoSize ?: VideoSize.UNKNOWN
+        val size = serviceBinder.service.value?.videoSize ?: VideoSize.UNKNOWN
         val ratio = Rational(size.width, size.height)
         if (size != VideoSize.UNKNOWN && ratio.toFloat() in 0.5f..2f) {
             b.setAspectRatio(ratio)
         }
-        val action = if (service?.isPlaying != true) {
+        val action = if (!playerViewModel.isPlaying.value) {
             RemoteAction(
                 Icon.createWithResource(this, R.drawable.ic_play_circle_filled_black_96dp),
                 "play",
@@ -270,7 +312,7 @@ class PecaViewerActivity : AppCompatActivity() {
     private fun enterPipMode(): Boolean {
         if (API26 &&
             packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE) &&
-            (service?.isPlaying == true || service?.isBuffering == true)
+            playerViewModel.isPlaying.value
         ) {
             Timber.i("enterPipMode")
             return enterPictureInPictureMode(createPipParams())
@@ -299,12 +341,14 @@ class PecaViewerActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
 
-        if (viewerPrefs.isBackgroundPlaying){
+        val sv = serviceBinder.service.value
+        if (viewerPrefs.isBackgroundPlaying) {
             val isInPipMode = API26 && isInPictureInPictureMode
-            if (!isInPipMode)
-                service?.enterBackgroundMode()
+            if (isInPipMode)
+                return
+            sv?.enterBackgroundMode()
         } else {
-            service?.stop()
+            sv?.stop()
         }
     }
 
@@ -313,7 +357,7 @@ class PecaViewerActivity : AppCompatActivity() {
     private val pipWindowCloseObserver = object : DefaultLifecycleObserver {
         override fun onStop(owner: LifecycleOwner) {
             Timber.i("PipWindow closed.")
-            service?.stop()
+            serviceBinder.service.value?.stop()
             lifecycle.removeObserver(this)
             finishAffinity()
         }
@@ -344,14 +388,8 @@ class PecaViewerActivity : AppCompatActivity() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putBoolean(stateKeyPlaying, viewerViewModel.playerService.value?.isPlaying ?: true)
+        outState.putBoolean(stateKeyPlaying, playerViewModel.isPlaying.value)
     }
-
-    override fun onDestroy() {
-        viewerViewModel.unbindPlayerService()
-        super.onDestroy()
-    }
-
 
     companion object {
         private val Configuration.isPortraitMode get() = orientation == Configuration.ORIENTATION_PORTRAIT

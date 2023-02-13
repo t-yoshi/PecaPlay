@@ -5,14 +5,10 @@ import android.os.Build
 import android.os.Bundle
 import android.view.*
 import androidx.appcompat.widget.Toolbar
-import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import com.google.android.exoplayer2.ui.StyledPlayerView
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import org.koin.androidx.viewmodel.ext.android.activityViewModel
@@ -21,8 +17,9 @@ import org.peercast.pecaviewer.PecaViewerPreference
 import org.peercast.pecaviewer.PecaViewerViewModel
 import org.peercast.pecaviewer.R
 import org.peercast.pecaviewer.databinding.PlayerFragmentBinding
+import org.peercast.pecaviewer.service.PlayerService
+import org.peercast.pecaviewer.service.PlayerServiceBinder
 import org.peercast.pecaviewer.util.takeScreenShot
-import timber.log.Timber
 
 @Suppress("unused")
 class PlayerFragment : Fragment(), Toolbar.OnMenuItemClickListener {
@@ -31,18 +28,18 @@ class PlayerFragment : Fragment(), Toolbar.OnMenuItemClickListener {
     private val playerViewModel by activityViewModel<PlayerViewModel>()
     private val viewerPrefs by inject<PecaViewerPreference>()
     private lateinit var binding: PlayerFragmentBinding
+    private val serviceBinder = PlayerServiceBinder(this)
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?,
     ): View {
-        return PlayerFragmentBinding.inflate(layoutInflater, container, false).let {
+        return PlayerFragmentBinding.inflate(layoutInflater, container, false).also {
             it.playerViewModel = playerViewModel
             it.lifecycleOwner = viewLifecycleOwner
             binding = it
-            it.root
-        }
+        }.root
     }
 
     private lateinit var vPlayerControlBar: Toolbar
@@ -67,18 +64,11 @@ class PlayerFragment : Fragment(), Toolbar.OnMenuItemClickListener {
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.RESUMED) {
-                viewerViewModel.playerService.collect { sv->
-                     sv?.attachView(binding.vPlayer) ?: kotlin.run {
-                         binding.vPlayer.player = null
-                     }
-                }
-            }
-        }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            playerViewModel.isToolbarVisible.collect {
-                binding.vPlayerToolbar.requestLayout()
+            serviceBinder.service.collect { sv ->
+                if (sv != null)
+                    sv.attachView(binding.vPlayer)
+                else
+                    PlayerService.detachView(binding.vPlayer)
             }
         }
 
@@ -139,22 +129,17 @@ class PlayerFragment : Fragment(), Toolbar.OnMenuItemClickListener {
 
     override fun onPause() {
         super.onPause()
-        val sv = viewerViewModel.playerService.value ?: return
 
+        val sv = serviceBinder.service.value ?: return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && sv.isPlaying) {
-            viewLifecycleOwner.lifecycleScope.launch {
-                kotlin.runCatching {
-                    takeScreenShot(binding.vPlayer.videoSurfaceView as SurfaceView, 256)
-                }.onSuccess {
-                    sv.setThumbnail(it)
-                }.onFailure(Timber::w)
+            takeScreenShot(binding.vPlayer.videoSurfaceView as SurfaceView, 256) {
+                sv.thumbnail = it
             }
         }
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        binding.vPlayer.player = null
+        PlayerService.detachView(binding.vPlayer)
     }
-
 }
