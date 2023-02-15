@@ -32,7 +32,7 @@ class DefaultAppPreferences(c: Context) : AppPreferences() {
 
     override fun isViewerEnabled(type: String): Boolean {
         return when (type.lowercase()) {
-            "flv", "mkv" -> prefs.getBoolean(KEY_PLAYER_ENABLED, true)
+            "flv", "mkv", "webm" -> prefs.getBoolean(KEY_PLAYER_ENABLED, true)
             else -> false
         }
     }
