@@ -59,6 +59,10 @@ fun takeScreenShot(view: SurfaceView, maxWidthDp: Int, callback: (Bitmap) -> Uni
         w = (view.width / dm.density).toInt()
         h = (view.height / dm.density).toInt()
     }
+
+    if (w <= 0 || h <= 0)
+        return
+
     Timber.d("Bitmap w=$w, h=$h")
 
     val b = Bitmap.createBitmap(dm, w, h, Bitmap.Config.ARGB_8888)
