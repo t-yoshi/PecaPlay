@@ -359,7 +359,7 @@ class PecaViewerActivity : AppCompatActivity() {
             Timber.i("PipWindow closed.")
             serviceBinder.service.value?.stop()
             lifecycle.removeObserver(this)
-            finishAffinity()
+            finishAndRemoveTask()
         }
     }
 
