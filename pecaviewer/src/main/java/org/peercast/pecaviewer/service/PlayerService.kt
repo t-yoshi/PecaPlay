@@ -164,7 +164,10 @@ class PlayerService : LifecycleService() {
             codecs
         }
 
-    fun prepareFromUri(u: Uri, ch: Yp4gChannel, playWhenReady: Boolean = true) {
+    fun prepareFromUri(u: Uri, ch: Yp4gChannel, playWhenReady: Boolean = false) {
+        if (u.isLoopbackAddress())
+            bindPeerCastService()
+
         if (playingIntent.data == u)
             return
         playingIntent = Intent(this, PecaViewerActivity::class.java)
@@ -182,11 +185,10 @@ class PlayerService : LifecycleService() {
         player.repeatMode = Player.REPEAT_MODE_ALL
         player.addMediaSource(sf.createMediaSource(MediaItem.fromUri(u)))
 
-        if (u.isLoopbackAddress())
-            bindPeerCastService()
-
-        player.playWhenReady = playWhenReady
-        player.prepare()
+        if (playWhenReady) {
+            player.playWhenReady = true
+            player.prepare()
+        }
     }
 
     val isPlaying get() = player.isPlaying
@@ -195,8 +197,10 @@ class PlayerService : LifecycleService() {
 
     fun play() {
         Timber.d("play!")
-        player.prepare()
+        if (isPlaying)
+            return
         player.playWhenReady = true
+        player.prepare()
     }
 
     fun stop() {
@@ -246,13 +250,13 @@ class PlayerService : LifecycleService() {
 
     fun attachView(view: StyledPlayerView) {
         Timber.d("attachView: $view")
-        setVideoDisabled(false)
+        //setVideoDisabled(false)
         view.player = DelegatedPlayer(this)
         notificationHandler.stopForeground()
     }
 
     fun enterBackgroundMode() {
-        setVideoDisabled(true)
+        //setVideoDisabled(true)
 
         if (isPlaying || isBuffering) {
             notificationHandler.startForeground()
@@ -262,7 +266,7 @@ class PlayerService : LifecycleService() {
     companion object {
         private val LOAD_CONTROL = DefaultLoadControl.Builder()
             //.setBackBuffer(10000, true)
-            .setBufferDurationsMs(1000, 30000, 1000, 1000)
+            .setBufferDurationsMs(5000, 20000, 700, 2000)
             .build()
 
         private val AA_MEDIA_MOVIE = AudioAttributes.Builder()

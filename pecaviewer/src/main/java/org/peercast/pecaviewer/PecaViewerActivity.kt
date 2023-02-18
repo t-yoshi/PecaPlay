@@ -18,6 +18,7 @@ import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.IntentCompat
+import androidx.core.os.BundleCompat
 import androidx.core.view.*
 import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.DefaultLifecycleObserver
@@ -50,8 +51,12 @@ class PecaViewerActivity : AppCompatActivity() {
     private val viewerPrefs by inject<PecaViewerPreference>()
     private val eventFlow by inject<PlayerServiceEventFlow>()
     private lateinit var binding: PecaViewerActivityBinding
-    private val stateKeyPlaying get() = "STATE_PLAYING#${intent.data}"
     private val serviceBinder = PlayerServiceBinder(this)
+
+    /**停止ボタンを押したので復帰後に勝手に再生しない*/
+    private var manuallyStoppedUrl: Uri? = null
+    private lateinit var argFlow: MutableStateFlow<Argument>
+    private val isPortraitMode = MutableStateFlow(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,6 +66,19 @@ class PecaViewerActivity : AppCompatActivity() {
         requestedOrientation = when (viewerPrefs.isFullScreenMode) {
             true -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
             else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        }
+
+        if (savedInstanceState != null) {
+            manuallyStoppedUrl = BundleCompat.getParcelable(
+                savedInstanceState,
+                STATE_MANUALLY_STOPPED_URL,
+                Uri::class.java
+            )
+        }
+
+        argFlow = MutableStateFlow(Argument(intent))
+        addOnNewIntentListener {
+            argFlow.value = Argument(it)
         }
 
         binding = DataBindingUtil.setContentView(this, R.layout.peca_viewer_activity)
@@ -78,63 +96,7 @@ class PecaViewerActivity : AppCompatActivity() {
         viewerViewModel.isFullScreenMode.value =
             requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
 
-        lifecycleScope.run {
-            launch {
-                viewerViewModel.isFullScreenMode.collect {
-                    requestedOrientation = when (it) {
-                        true -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-                        else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-                    }
-                }
-            }
-
-            launch {
-                viewerViewModel.isFullScreenMode.collect {
-                    val controller = WindowCompat.getInsetsController(window, window.decorView)
-                    if (it) {
-                        controller.hide(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
-                        controller.systemBarsBehavior =
-                            WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-                    } else {
-                        controller.show(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
-                    }
-                }
-            }
-
-            launch {
-                chatViewModel.snackbarFactory.consumeEach {
-                    it.show(
-                        findViewById(android.R.id.content),
-                        findViewById(R.id.vPostDialogButton)
-                    )
-                }
-            }
-
-            launch {
-                isPortraitMode.collect {
-                    val ap = 0.01f * if (it) {
-                        resources.getInteger(R.integer.sliding_up_panel_anchor_point_port)
-                    } else {
-                        resources.getInteger(R.integer.sliding_up_panel_anchor_point_land)
-                    }
-                    binding.vSlidingUpPanel.anchorPoint = ap
-                    binding.vSlidingUpPanel
-                    if (it) {
-                        initPanelState(viewerPrefs.initPanelState)
-                    } else {
-                        initPanelState(SlidingUpPanelLayout.PanelState.EXPANDED)
-                    }
-                }
-            }
-
-            launch {
-                playerViewModel.isPlaying.collect {
-                    updatePictureInPictureParams()
-                    //再生中は消灯しない
-                    binding.root.keepScreenOn = it
-                }
-            }
-        }
+        collectFlows()
 
         isPortraitMode.value = resources.configuration.isPortraitMode
         binding.vSlidingUpPanel.addPanelSlideListener(panelSlideListener)
@@ -142,9 +104,6 @@ class PecaViewerActivity : AppCompatActivity() {
         onBackPressedDispatcher.addCallback {
             quitOrEnterPipMode()
         }
-
-        if (savedInstanceState?.getBoolean(stateKeyPlaying) != false)
-            startPlay()
     }
 
     private fun initPanelState(state: SlidingUpPanelLayout.PanelState) {
@@ -156,7 +115,92 @@ class PecaViewerActivity : AppCompatActivity() {
         }
     }
 
-    private val isPortraitMode = MutableStateFlow(false)
+    private data class Argument(private val it: Intent) {
+        val streamUrl = checkNotNull(it.data)
+        val channel = checkNotNull(
+            IntentCompat.getParcelableExtra(
+                it, PecaViewerIntent.EX_YP4G_CHANNEL,
+                Yp4gChannel::class.java
+            )
+        )
+    }
+
+    private fun collectFlows(): Unit = lifecycleScope.run {
+        launch {
+            viewerViewModel.isFullScreenMode.collect {
+                requestedOrientation = when (it) {
+                    true -> ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+                    else -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+                }
+            }
+        }
+
+        launch {
+            viewerViewModel.isFullScreenMode.collect {
+                val controller = WindowCompat.getInsetsController(window, window.decorView)
+                if (it) {
+                    controller.hide(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
+                    controller.systemBarsBehavior =
+                        WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+                } else {
+                    controller.show(WindowInsetsCompat.Type.statusBars() or WindowInsetsCompat.Type.navigationBars())
+                }
+            }
+        }
+
+        launch {
+            chatViewModel.snackbarFactory.consumeEach {
+                it.show(
+                    findViewById(android.R.id.content),
+                    findViewById(R.id.vPostDialogButton)
+                )
+            }
+        }
+
+        launch {
+            isPortraitMode.collect {
+                val ap = 0.01f * if (it) {
+                    resources.getInteger(R.integer.sliding_up_panel_anchor_point_port)
+                } else {
+                    resources.getInteger(R.integer.sliding_up_panel_anchor_point_land)
+                }
+                binding.vSlidingUpPanel.anchorPoint = ap
+                binding.vSlidingUpPanel
+                if (it) {
+                    initPanelState(viewerPrefs.initPanelState)
+                } else {
+                    initPanelState(SlidingUpPanelLayout.PanelState.EXPANDED)
+                }
+            }
+        }
+
+        launch {
+            playerViewModel.isPlaying.collect {
+                updatePictureInPictureParams()
+                //再生中は消灯しない
+                binding.root.keepScreenOn = it
+            }
+        }
+
+        launch {
+            combine(
+                serviceBinder.service.filterNotNull(),
+                argFlow,
+            ) { sv, arg ->
+                chatViewModel.loadUrl(arg.channel.url)
+                playerViewModel.channelTitle.value = arg.channel.name
+                playerViewModel.channelComment.value =
+                    arg.channel.run { "$genre $description $comment".trim() }
+
+                sv.prepareFromUri(
+                    arg.streamUrl,
+                    arg.channel,
+                    arg.streamUrl != manuallyStoppedUrl
+                )
+            }.collect()
+        }
+
+    }
 
     private val panelSlideListener = object : SlidingUpPanelLayout.PanelSlideListener {
         override fun onPanelSlide(panel: View, __slideOffset: Float) {
@@ -207,14 +251,7 @@ class PecaViewerActivity : AppCompatActivity() {
         }
     }
 
-    override fun onNewIntent(intent: Intent?) {
-        super.onNewIntent(intent)
-        setIntent(intent)
-
-        startPlay()
-    }
-
-    private fun initViewModels() = lifecycleScope.run {
+    private fun initViewModels(): Unit = lifecycleScope.run {
         launch(Dispatchers.Main.immediate) {
             combine(
                 viewerViewModel.isFullScreenMode,
@@ -250,31 +287,6 @@ class PecaViewerActivity : AppCompatActivity() {
                 viewerViewModel.isPostDialogButtonEnabled.value = it != null
             }
         }
-    }
-
-
-    private fun startPlay() {
-        val streamUrl = checkNotNull(intent.data)
-        val channel = checkNotNull(
-            IntentCompat.getParcelableExtra(
-                intent,
-                PecaViewerIntent.EX_YP4G_CHANNEL,
-                Yp4gChannel::class.java
-            )
-        )
-
-        lifecycleScope.launch {
-            var u = Uri.EMPTY
-            serviceBinder.service.filterNotNull().collect {
-                it.prepareFromUri(streamUrl, channel, u != streamUrl)
-                u = streamUrl
-            }
-        }
-
-        chatViewModel.loadUrl(channel.url)
-
-        playerViewModel.channelTitle.value = channel.name
-        playerViewModel.channelComment.value = channel.run { "$genre $description $comment".trim() }
     }
 
     private fun updatePictureInPictureParams() {
@@ -340,14 +352,20 @@ class PecaViewerActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-
         val sv = serviceBinder.service.value
+
+        manuallyStoppedUrl = when (sv?.isPlaying) {
+            true -> null
+            else -> argFlow.value.streamUrl
+        }
+
         if (viewerPrefs.isBackgroundPlaying) {
             val isInPipMode = API26 && isInPictureInPictureMode
             if (isInPipMode)
                 return
             sv?.enterBackgroundMode()
         } else {
+            manuallyStoppedUrl = argFlow.value.streamUrl
             sv?.stop()
         }
     }
@@ -388,10 +406,14 @@ class PecaViewerActivity : AppCompatActivity() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putBoolean(stateKeyPlaying, playerViewModel.isPlaying.value)
+        manuallyStoppedUrl?.let {
+            outState.putParcelable(STATE_MANUALLY_STOPPED_URL, it)
+        }
     }
 
     companion object {
+        private const val STATE_MANUALLY_STOPPED_URL = "STATE_MANUALLY_STOPPED_URL"
+
         private val Configuration.isPortraitMode get() = orientation == Configuration.ORIENTATION_PORTRAIT
 
         @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.O)
