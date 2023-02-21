@@ -4,10 +4,12 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
 import android.os.Bundle
+import android.os.Parcelable
 import android.view.*
 import androidx.appcompat.widget.Toolbar
 import androidx.core.content.ContextCompat
 import androidx.core.content.edit
+import androidx.core.view.doOnNextLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -225,13 +227,6 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener {
         }
     }
 
-    @SuppressLint("NotifyDataSetChanged")
-    override fun onResume() {
-        super.onResume()
-        //復帰時に再描画
-        messageAdapter.notifyDataSetChanged()
-    }
-
     override fun onPause() {
         super.onPause()
         cancelAutoReload()
@@ -286,6 +281,21 @@ class ChatFragment : Fragment(), Toolbar.OnMenuItemClickListener {
                 }
             } finally {
                 chatViewModel.reloadRemain.value = -1
+            }
+        }
+    }
+
+    private var pipState: Parcelable? = null
+
+    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean) {
+        when (isInPictureInPictureMode) {
+            true -> {
+                pipState = binding.vMessageList.layoutManager?.onSaveInstanceState()
+            }
+            else -> {
+                binding.vMessageList.doOnNextLayout {
+                    binding.vMessageList.layoutManager?.onRestoreInstanceState(pipState)
+                }
             }
         }
     }
