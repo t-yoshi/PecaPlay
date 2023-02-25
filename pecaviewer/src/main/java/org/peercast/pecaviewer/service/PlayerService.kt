@@ -35,6 +35,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
+import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
 import org.peercast.core.lib.PeerCastController
 import org.peercast.core.lib.notify.NotifyMessageType
@@ -53,7 +55,7 @@ import java.util.*
 
 class PlayerService : LifecycleService() {
 
-    private val square by inject<Square>()
+    private lateinit var okHttpClient: OkHttpClient
     private lateinit var player: ExoPlayer
 
     private var pecaController: PeerCastController? = null
@@ -79,6 +81,9 @@ class PlayerService : LifecycleService() {
 
     override fun onCreate() {
         super.onCreate()
+
+        okHttpClient = get<Square>().okHttpClient.newBuilder()
+            .addInterceptor(CorruptFlvInterceptor()).build()
 
         player = ExoPlayer.Builder(this)
             .setAudioAttributes(AA_MEDIA_MOVIE, true)
@@ -180,7 +185,8 @@ class PlayerService : LifecycleService() {
         if (u == Uri.EMPTY)
             return
 
-        val sf = DefaultMediaSourceFactory(OkHttpDataSource.Factory(square.okHttpClient))
+
+        val sf = DefaultMediaSourceFactory(OkHttpDataSource.Factory(okHttpClient))
 
         player.repeatMode = Player.REPEAT_MODE_ALL
         player.addMediaSource(sf.createMediaSource(MediaItem.fromUri(u)))
