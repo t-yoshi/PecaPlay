@@ -287,6 +287,15 @@ class PecaViewerActivity : AppCompatActivity() {
                 viewerViewModel.isPostDialogButtonEnabled.value = it != null
             }
         }
+
+        launch(Dispatchers.Main.immediate) {
+            combine(
+                playerViewModel.channelWarning,
+                viewerViewModel.slidingPanelState,
+            ) { w, s ->
+                playerViewModel.isDragHandleVisible.value = s == 1 //&& w.isBlank()
+            }.collect()
+        }
     }
 
     private fun updatePictureInPictureParams() {

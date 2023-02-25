@@ -72,6 +72,19 @@
                 android:paddingRight="10dp"
                 android:paddingLeft="10dp" />
 
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/baseline_drag_handle_24"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentBottom="true"
+                android:paddingRight="10dp"
+                android:paddingBottom="3dp"
+                android:visibility="@{playerViewModel.isDragHandleVisible ? View.VISIBLE : View.INVISIBLE}"
+                android:contentDescription="@null"
+                app:tint="@color/grey_500" />
+
         </RelativeLayout>
     </LinearLayout>
 

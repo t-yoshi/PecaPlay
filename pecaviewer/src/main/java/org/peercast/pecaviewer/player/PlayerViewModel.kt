@@ -27,6 +27,7 @@ class PlayerViewModel(a: Application, eventFlow: PlayerServiceEventFlow) : Andro
     /**プレーヤーの再生/停止ボタンの表示。タッチして数秒後に消える*/
     val isPlayerControlsVisible = MutableStateFlow(false)
 
+    val isDragHandleVisible = MutableStateFlow(false)
 
     init {
         viewModelScope.launch {
