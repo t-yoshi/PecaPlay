@@ -3,10 +3,7 @@ package org.peercast.pecaviewer.service
 import okhttp3.Interceptor
 import okhttp3.Response
 import okhttp3.ResponseBody
-import okio.Buffer
-import okio.BufferedSource
-import okio.Source
-import okio.buffer
+import okio.*
 import timber.log.Timber
 
 /**
@@ -51,28 +48,28 @@ class CorruptFlvInterceptor : Interceptor {
         }
     }
 
-    private class FlvSource(private val src: Source) : Source by src {
+    private class FlvSource(src: Source) : ForwardingSource(src) {
         private var isHeader = true
 
         override fun read(sink: Buffer, byteCount: Long): Long {
             if (!isHeader)
-                return src.read(sink, byteCount)
+                return super.read(sink, byteCount)
 
             val buf = Buffer()
-            val n = src.read(buf, byteCount)
+            val n = super.read(buf, byteCount)
             if (n <= 0)
                 return n
             isHeader = false
 
             val a = buf.readByteArray()
             Timber.d("FLV Header: " + a.joinToString(limit = 5, transform = { "%02x".format(it) }))
-            if (n > 5 && a[0].toInt() == 0x46 && // 'F'
+            if (n >= 5 && a[0].toInt() == 0x46 && // 'F'
                 a[1].toInt() == 0x4c && // 'L'
                 a[2].toInt() == 0x56 && // 'V'
                 a[3].toInt() == 0x01 && // Always 1
-                a[4].toInt() == 0x04 // Audio Only
+                a[4].toInt() != 0x05 // Frags
             ) {
-                Timber.i("Overwrite FLV flags: 0x04 -> 0x05")
+                Timber.i("Overwrite FLV flags: 0x%02x -> 0x05", a[4])
                 a[4] = 0x05 //Audio+Videoに書き換える
             }
             sink.write(a)
