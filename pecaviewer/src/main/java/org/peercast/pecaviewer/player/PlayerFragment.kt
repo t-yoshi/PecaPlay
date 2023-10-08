@@ -20,6 +20,7 @@ import org.peercast.pecaviewer.databinding.PlayerFragmentBinding
 import org.peercast.pecaviewer.service.PlayerService
 import org.peercast.pecaviewer.service.PlayerServiceBinder
 import org.peercast.pecaviewer.util.takeScreenShot
+import timber.log.Timber
 
 @Suppress("unused")
 class PlayerFragment : Fragment(), Toolbar.OnMenuItemClickListener {
@@ -113,6 +114,7 @@ class PlayerFragment : Fragment(), Toolbar.OnMenuItemClickListener {
                 viewerViewModel.isFullScreenMode.value = true
                 viewerPrefs.isFullScreenMode = true
             }
+
             R.id.menu_exit_fullscreen -> {
                 viewerViewModel.isFullScreenMode.value = false
                 viewerPrefs.isFullScreenMode = false
@@ -132,8 +134,12 @@ class PlayerFragment : Fragment(), Toolbar.OnMenuItemClickListener {
 
         val sv = serviceBinder.service.value ?: return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N && sv.isPlaying) {
-            takeScreenShot(binding.vPlayer.videoSurfaceView as SurfaceView, 256) {
-                sv.thumbnail = it
+            try {
+                takeScreenShot(binding.vPlayer.videoSurfaceView as SurfaceView, 256) {
+                    sv.thumbnail = it
+                }
+            } catch (e: IllegalArgumentException) {
+                Timber.e(e, "takeScreenShot failed:")
             }
         }
     }
