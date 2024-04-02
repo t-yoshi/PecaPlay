@@ -10,7 +10,7 @@
     </style>
 
     <style name="AppTheme" parent="BaseAppTheme.Override">
-        <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
+<!--        <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>-->
         <item name="materialAlertDialogTheme">@style/BaseAppDialogTheme</item>
         <item name="alertDialogTheme">@style/BaseAppDialogTheme</item>
     </style>

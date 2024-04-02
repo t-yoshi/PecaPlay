@@ -18,8 +18,8 @@ android {
         minSdkVersion min_sdk_version
         targetSdkVersion target_sdk_version
 
-        versionCode 8_03_02_02
-        versionName '8.3.2-2'
+        versionCode 8_03_03_00
+        versionName '8.3.3-0'
         buildConfigField "long", "TIMESTAMP", System.currentTimeMillis() + "L"
 
         javaCompileOptions {
@@ -31,9 +31,7 @@ android {
     }
 
     buildFeatures {
-        dataBinding {
-            enabled = true
-        }
+        dataBinding true
     }
 
     buildTypes {
@@ -56,12 +54,13 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8.toString()
+        jvmTarget = JavaVersion.VERSION_17.toString()
     }
+    namespace 'org.peercast.pecaplay'
 }
 
 dependencies {
@@ -69,14 +68,14 @@ dependencies {
     implementation project(":core")
 
     implementation "androidx.appcompat:appcompat:$androidx_version"
-    implementation 'androidx.core:core-ktx:1.9.0'
-    implementation 'androidx.preference:preference-ktx:1.2.0'
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.preference:preference-ktx:1.2.1'
     implementation 'androidx.cardview:cardview:1.0.0'
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
-    implementation 'com.google.android.material:material:1.8.0'
-    implementation 'androidx.annotation:annotation:1.5.0'
+    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.annotation:annotation:1.7.1'
 
-    def room_version = "2.5.0"
+    def room_version = "2.6.1"
     implementation "androidx.room:room-runtime:$room_version"
     implementation "androidx.room:room-ktx:$room_version"
     kapt "androidx.room:room-compiler:$room_version"
@@ -101,9 +100,9 @@ dependencies {
     implementation "io.insert-koin:koin-android:$koin_version"
 
     implementation 'org.unbescape:unbescape:1.1.6.RELEASE'
-    implementation 'com.google.android.gms:play-services-oss-licenses:17.0.0'
+    implementation 'com.google.android.gms:play-services-oss-licenses:17.0.1'
 
-    implementation platform('com.google.firebase:firebase-bom:28.1.0')
+    implementation platform('com.google.firebase:firebase-bom:32.8.0')
     implementation 'com.google.firebase:firebase-analytics'
     implementation 'com.google.firebase:firebase-crashlytics'
 
@@ -112,7 +111,7 @@ dependencies {
     testImplementation 'net.sf.kxml:kxml2:2.3.0'
     testImplementation 'junit:junit:4.13.2'
     testImplementation "android.arch.core:core-testing:1.1.1"
-    androidTestImplementation 'androidx.test:runner:1.4.0'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+    androidTestImplementation 'androidx.test:runner:1.5.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }
 

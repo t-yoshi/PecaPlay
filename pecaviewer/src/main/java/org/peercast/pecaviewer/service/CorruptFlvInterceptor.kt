@@ -67,7 +67,7 @@ class CorruptFlvInterceptor : Interceptor {
                 a[1].toInt() == 0x4c && // 'L'
                 a[2].toInt() == 0x56 && // 'V'
                 a[3].toInt() == 0x01 && // Always 1
-                a[4].toInt() != 0x05 // Frags
+                a[4].toInt() == 0x04 // Frags
             ) {
                 Timber.i("Overwrite FLV flags: 0x%02x -> 0x05", a[4])
                 a[4] = 0x05 //Audio+Videoに書き換える

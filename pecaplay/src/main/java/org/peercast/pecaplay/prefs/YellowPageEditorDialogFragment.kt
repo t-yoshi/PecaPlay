@@ -4,8 +4,8 @@ import android.os.Bundle
 import android.text.Editable
 import android.view.LayoutInflater
 import androidx.appcompat.app.AlertDialog
-import androidx.lifecycle.ViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.setViewTreeLifecycleOwner
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.launchIn
@@ -61,7 +61,7 @@ class YellowPageEditorDialogFragment : BaseEntityEditDialogFragment<YellowPage>(
         val inflater = LayoutInflater.from(builder.context)
         PrefYellowpageEditorBinding.inflate(inflater).also { b ->
             b.lifecycleOwner = this
-            ViewTreeLifecycleOwner.set(b.root, this)
+            b.root.setViewTreeLifecycleOwner(this)
 
             b.pr = BindingPresenter()
             b.yp = yellowPage

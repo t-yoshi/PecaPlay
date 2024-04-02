@@ -14,6 +14,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
+import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
 import androidx.lifecycle.*
 import com.google.android.exoplayer2.*
@@ -83,7 +84,8 @@ class PlayerService : LifecycleService() {
         super.onCreate()
 
         okHttpClient = get<Square>().okHttpClient.newBuilder()
-            .addInterceptor(CorruptFlvInterceptor()).build()
+            .addInterceptor(CorruptFlvInterceptor())
+            .build()
 
         player = ExoPlayer.Builder(this)
             .setAudioAttributes(AA_MEDIA_MOVIE, true)
@@ -110,11 +112,13 @@ class PlayerService : LifecycleService() {
             }
         }
 
-        registerReceiver(receiver, IntentFilter().also {
-            it.addAction(PecaViewerIntent.ACTION_PLAY)
-            it.addAction(PecaViewerIntent.ACTION_STOP)
-            it.addAction(PecaViewerIntent.ACTION_PAUSE)
-        })
+        ContextCompat.registerReceiver(this, receiver,
+            IntentFilter().also {
+                it.addAction(PecaViewerIntent.ACTION_PLAY)
+                it.addAction(PecaViewerIntent.ACTION_STOP)
+                it.addAction(PecaViewerIntent.ACTION_PAUSE)
+            }, ContextCompat.RECEIVER_NOT_EXPORTED
+        )
     }
 
     class Binder(val service: PlayerService) : android.os.Binder()

@@ -7,8 +7,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.databinding.ViewDataBinding
-import androidx.lifecycle.ViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.setViewTreeLifecycleOwner
 import androidx.recyclerview.widget.RecyclerView
 import org.peercast.pecaviewer.BR
 import org.peercast.pecaviewer.R
@@ -65,9 +65,7 @@ class MessageAdapter(private val fragment: ChatFragment) :
 
         init {
             binding.lifecycleOwner = fragment.viewLifecycleOwner
-            vThumbnail?.let {
-                ViewTreeLifecycleOwner.set(it, binding.lifecycleOwner)
-            }
+            vThumbnail?.setViewTreeLifecycleOwner(binding.lifecycleOwner)
 
             if (!binding.setVariable(BR.viewModel, viewModel))
                 throw RuntimeException("Not defined viewModel in layout.")

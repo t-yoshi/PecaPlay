@@ -46,9 +46,9 @@ open class DefaultImageLoader(
     private val requestListener = object : RequestListener<Drawable> {
         override fun onLoadFailed(
             e: GlideException?,
-            model: Any,
+            model: Any?,
             target: Target<Drawable>,
-            isFirstResource: Boolean,
+            isFirstResource: Boolean
         ): Boolean {
             Timber.w(e)
             jEvent?.cancel()

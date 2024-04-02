@@ -32,7 +32,7 @@ android {
         jvmTarget = '1.8'
     }
     buildFeatures {
-        dataBinding = true
+        dataBinding true
     }
     kapt {
         javacOptions {
@@ -41,6 +41,7 @@ android {
             option("-Xmaxerrs", 500)
         }
     }
+    namespace 'org.peercast.pecaviewer'
 }
 
 dependencies {
@@ -49,8 +50,8 @@ dependencies {
 
     implementation "androidx.appcompat:appcompat:$appcompat_version"
     implementation "androidx.core:core-ktx:$core_ktx_version"
-    implementation "androidx.preference:preference-ktx:1.2.0"
-    implementation "androidx.recyclerview:recyclerview:1.2.1"
+    implementation "androidx.preference:preference-ktx:1.2.1"
+    implementation "androidx.recyclerview:recyclerview:1.3.2"
 
     implementation "com.google.android.material:material:$material_version"
     implementation 'com.android.support.constraint:constraint-layout:2.0.4'
@@ -73,7 +74,7 @@ dependencies {
 
     implementation 'org.unbescape:unbescape:1.1.6.RELEASE'
 
-    def exoplayer_version = "2.18.2"
+    def exoplayer_version = "2.19.1"
     implementation "com.google.android.exoplayer:exoplayer-core:$exoplayer_version"
     implementation "com.google.android.exoplayer:exoplayer-ui:$exoplayer_version"
     implementation "com.google.android.exoplayer:extension-okhttp:$exoplayer_version"
@@ -84,6 +85,6 @@ dependencies {
 
 
     testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }
