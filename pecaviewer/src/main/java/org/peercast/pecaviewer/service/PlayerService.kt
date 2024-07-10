@@ -84,7 +84,7 @@ class PlayerService : LifecycleService() {
         super.onCreate()
 
         okHttpClient = get<Square>().okHttpClient.newBuilder()
-            .addInterceptor(CorruptFlvInterceptor())
+            .addInterceptor(CorruptFlvInterceptor)
             .build()
 
         player = ExoPlayer.Builder(this)
