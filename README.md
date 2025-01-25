@@ -8,10 +8,9 @@ PeerCast for Androidと共にインストールしてください。
 
 <table vlign="center" align="center">
  <tr>
-  <th> <a href='https://play.google.com/store/apps/details?id=org.peercast.pecaplay&pcampaignid=pcampaignidMKT-Other-global-all-co-prtnr-py-PartBadge-Mar2515-1'><img width="150" alt='Google Play で手に入れよう' src='https://play.google.com/intl/en_us/badges/static/images/badges/ja_badge_web_generic.png'/></a> </th>
-  <th> 
-   <a href="https://github.com/t-yoshi/PecaPlay/releases">apkファイル</a> </th>
- </tr>  
+  <th><a href="https://github.com/t-yoshi/PecaPlay/releases">apkファイル</a></th>
+  <th>Google Playでの提供は終了しました。</th>
+</tr>
 </table>
 
 
